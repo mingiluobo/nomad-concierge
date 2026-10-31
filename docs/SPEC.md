@@ -802,7 +802,7 @@ class InterpreterError extends Error { reason: FailureReason }
 6. 调用计划生成器（纯函数）。
 7. 单个事务：在事务内复核第 2～5 步，条件更新会话 `collecting → completed`，插入计划，写事件 `plan.created`、`conversation.upserted`。返回 201。
 
-**标记已读 `markRead(conversationId, seq)`**：`last_read_seq = MAX(当前值, seq)`（`seq` 不超过 `last_seq`）；值有变化时写事件 `read_state.updated`。返回 200 `{ lastReadSeq }`。
+**标记已读 `markRead(conversationId, seq)`**：先把请求的 `seq` 夹到 `last_seq`，再取 `last_read_seq = MAX(当前值, 夹取后的 seq)`；请求 `seq > last_seq` 时仍返回 200，不作为校验错误。值有变化时写事件 `read_state.updated`。返回 200 `{ lastReadSeq }`。
 
 ### 9.5 恢复与停机
 
@@ -973,7 +973,7 @@ interface PlanDto extends PlanSummaryDto { content: PlanContent }
 
 **分页**：不带 `before` 时返回最新的一页；带 `before=s` 时返回 `seq < s` 的最近 `limit` 条。返回的 `items` 按序号升序；还有更早的消息时，`nextCursor` 为本页最小的序号，否则为 null。因为序号写入后不变，并发写入新消息不会导致重复或遗漏。
 
-**登录**：用户名去首尾空格后按小写查找，不存在就创建。生成 32 字节随机令牌，库里存其 SHA-256；该用户的令牌超过 `TOKENS_PER_USER`（默认 10）个时，删除最早的，并关闭用被删令牌建立的 WebSocket 连接（关闭码 4401）。Cookie：`nc_token`，`HttpOnly; SameSite=Lax; Path=/; Max-Age=315360000`；生产环境且为 https 时加 `Secure`。
+**登录**：用户名去首尾空格后按小写查找，不存在就创建。生成 32 字节随机令牌，库里存其 SHA-256；该用户的令牌超过 `TOKENS_PER_USER`（默认 10）个时，删除最早的，并关闭用被删令牌建立的 WebSocket 连接（关闭码 4401）。Cookie：`nc_token`，`HttpOnly; SameSite=Lax; Path=/; Max-Age=315360000`；只在生产环境且请求本身为 https 时加 `Secure`。不设置 `trust proxy`，不信任 `X-Forwarded-Proto`、`Forwarded` 等代理头。`tokenCookieOptions` 的生产/非生产与 HTTPS/HTTP 四种组合均须有单元测试。部署到 HTTPS 需要反向代理，作为已知限制写入 README。
 
 ### 11.4 错误码（`packages/shared/src/errors.ts`）
 
@@ -1008,7 +1008,7 @@ interface PlanDto extends PlanSummaryDto { content: PlanContent }
   - `Origin` 必须在允许列表中（`WEB_ORIGIN`；生产模式下还允许与 `Host` 同源），否则返回 403。
   - Cookie 中的令牌有效，否则返回 401。
 - 服务端记录每个连接所用令牌的哈希。退出登录、令牌因超出数量被删除时，关闭用该令牌建立的所有连接（关闭码 4401），之后不再向它们推送。
-- 客户端单条消息最大 4 KB；服务端每 25 秒发送 ping，连续两次没有 pong 就断开。
+- 客户端单条消息最大 4 KB；超过 4 KB 的帧以关闭码 1009 关闭。坏 JSON 或合法 JSON 但结构不符合客户端消息 schema 的内容均忽略，不因此关闭连接。服务端每 25 秒发送 ping，连续两次没有 pong 就断开。
 
 ### 12.2 消息
 
@@ -1334,7 +1334,7 @@ interface KnowledgeFile { country: string; coverage: 'full' | 'generic'; version
 | 数据库 | 唯一约束冲突（`errcode` 2067）按业务含义转换（例如重复的 clientMessageId 走幂等分支）；其他视为 500 |
 | 理解引擎 | 一律归类为 `InterpreterError`，由回退链处理；永远不会让任务因为大模型失败而失败 |
 | 回复任务 | 见第 9.3 节 |
-| WebSocket | 解析失败的客户端消息直接忽略；发送失败就关闭连接（前端会重连） |
+| WebSocket | 坏 JSON 或合法 JSON 但结构不合法的客户端消息直接忽略、不关闭；超过 4 KB 的帧以 1009 关闭；发送失败就关闭连接（前端会重连） |
 | 前端 | 每个请求都有加载和错误状态；请求函数统一解析错误格式，把 code 映射成中文提示 |
 
 ---
