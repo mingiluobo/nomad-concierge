@@ -1,0 +1,661 @@
+{
+  "candidate": "50a1bdbf660bb942f661fe7175a1afe2c812007b",
+  "qaCode": "2dcc348",
+  "scope": "Previously unexecuted tax and company inputs only; API-042 remains failed due to visa input.",
+  "snapshots": [
+    {
+      "scope": {
+        "part": "company",
+        "input": "我是中国籍，开公司合法吗？"
+      },
+      "candidate": "50a1bdbf660bb942f661fe7175a1afe2c812007b",
+      "state": {
+        "conversation": {
+          "id": "c1f6e96a-db91-4420-a79b-795af133e422",
+          "title": "新的出海咨询",
+          "status": "collecting",
+          "enginePreference": "rules",
+          "lastSeq": 2,
+          "lastAssistantSeq": 2,
+          "messageCount": 2,
+          "lastMessagePreview": "能不能申请某类签证（或者要交多少税），需要持牌专业人士根据完整材料判断，我没办法给出结论；这里用到的资料也只是演示用途，可能不完整或过时。影响这个问题的主要条件有：\n\n公司业务类型：待了解；本人国籍：中国；外国人在目的国开公司，通常还取决于",
+          "planId": null,
+          "version": 3,
+          "createdAt": "2026-10-31T10:35:01.627Z",
+          "updatedAt": "2026-10-31T10:35:01.632Z",
+          "profile": {
+            "slots": {
+              "destination": {
+                "status": "missing"
+              },
+              "goals": {
+                "status": "known",
+                "value": [
+                  "company"
+                ],
+                "sourceMessageId": "22ebe8e1-a188-496d-aad8-81a26b31d6f5",
+                "updatedAt": "2026-10-31T10:35:01.631Z"
+              },
+              "applicantNationality": {
+                "status": "known",
+                "value": "CN",
+                "sourceMessageId": "22ebe8e1-a188-496d-aad8-81a26b31d6f5",
+                "updatedAt": "2026-10-31T10:35:01.631Z"
+              },
+              "hasPartner": {
+                "status": "missing"
+              },
+              "partnerNationality": {
+                "status": "missing"
+              },
+              "childrenCount": {
+                "status": "missing"
+              },
+              "childrenAges": {
+                "status": "missing"
+              },
+              "currentResidence": {
+                "status": "missing"
+              },
+              "residenceStatus": {
+                "status": "missing"
+              },
+              "timeline": {
+                "status": "missing"
+              },
+              "incomeSource": {
+                "status": "missing"
+              },
+              "businessType": {
+                "status": "missing"
+              },
+              "incomeCountry": {
+                "status": "missing"
+              },
+              "schoolPreference": {
+                "status": "missing"
+              },
+              "hasHealthInsurance": {
+                "status": "missing"
+              }
+            },
+            "pendingSlots": [
+              "destination",
+              "hasPartner"
+            ]
+          },
+          "progress": {
+            "required": 9,
+            "answered": 2,
+            "missing": [
+              "destination",
+              "hasPartner",
+              "childrenCount",
+              "currentResidence",
+              "residenceStatus",
+              "timeline",
+              "businessType"
+            ],
+            "unsure": [],
+            "isComplete": false,
+            "canGenerateEarly": false
+          }
+        },
+        "activeTurn": null,
+        "latestTurn": {
+          "id": "c1aed464-e46b-4b59-9a00-7f51ccb22487",
+          "conversationId": "c1f6e96a-db91-4420-a79b-795af133e422",
+          "status": "completed",
+          "stage": "done",
+          "engineRequested": "rules",
+          "engineUsed": "rules",
+          "fallbacks": [],
+          "errorCode": null,
+          "timings": {
+            "queuedMs": 1,
+            "understandingMs": 3,
+            "decidingMs": 1,
+            "replyingMs": 0,
+            "totalMs": 4
+          },
+          "promptVersion": null,
+          "retryOfTurnId": null,
+          "attempt": 1,
+          "version": 5,
+          "createdAt": "2026-10-31T10:35:01.627Z",
+          "startedAt": "2026-10-31T10:35:01.628Z",
+          "finishedAt": "2026-10-31T10:35:01.632Z"
+        },
+        "plan": null,
+        "readState": {
+          "lastReadSeq": 0
+        }
+      },
+      "last": {
+        "message": {
+          "id": "8d3c5484-6068-45af-9ef7-63b8f402facd",
+          "conversationId": "c1f6e96a-db91-4420-a79b-795af133e422",
+          "seq": 2,
+          "content": "能不能申请某类签证（或者要交多少税），需要持牌专业人士根据完整材料判断，我没办法给出结论；这里用到的资料也只是演示用途，可能不完整或过时。影响这个问题的主要条件有：\n\n公司业务类型：待了解；本人国籍：中国；外国人在目的国开公司，通常还取决于在当地的居留身份：待了解\n\n生成的计划会把这些列为需要持牌专业人士确认的事项。\n\n已记录：本人国籍 中国；诉求 开公司\n\n还需要了解：你打算去哪个国家？ 有配偶或伴侣一起去吗？",
+          "clientMessageId": null,
+          "turnId": "c1aed464-e46b-4b59-9a00-7f51ccb22487",
+          "createdAt": "2026-10-31T10:35:01.632Z",
+          "role": "assistant",
+          "payload": {
+            "recorded": [
+              {
+                "slot": "applicantNationality",
+                "label": "本人国籍",
+                "display": "中国"
+              },
+              {
+                "slot": "goals",
+                "label": "诉求",
+                "display": "开公司"
+              }
+            ],
+            "corrections": [],
+            "notices": [
+              {
+                "kind": "professional",
+                "text": "能不能申请某类签证（或者要交多少税），需要持牌专业人士根据完整材料判断，我没办法给出结论；这里用到的资料也只是演示用途，可能不完整或过时。影响这个问题的主要条件有：",
+                "conditions": [
+                  {
+                    "label": "公司业务类型",
+                    "known": false,
+                    "display": "待了解"
+                  },
+                  {
+                    "label": "本人国籍",
+                    "known": true,
+                    "display": "中国"
+                  },
+                  {
+                    "label": "外国人在目的国开公司，通常还取决于在当地的居留身份",
+                    "known": false
+                  }
+                ]
+              }
+            ],
+            "questions": [
+              {
+                "slot": "destination",
+                "text": "你打算去哪个国家？",
+                "options": [
+                  {
+                    "label": "葡萄牙",
+                    "value": "PT"
+                  }
+                ],
+                "allowUnsure": false
+              },
+              {
+                "slot": "hasPartner",
+                "text": "有配偶或伴侣一起去吗？",
+                "options": [
+                  {
+                    "label": "是",
+                    "value": true
+                  },
+                  {
+                    "label": "否",
+                    "value": false
+                  }
+                ],
+                "allowUnsure": false
+              }
+            ],
+            "progress": {
+              "required": 9,
+              "answered": 2,
+              "missing": [
+                "destination",
+                "hasPartner",
+                "childrenCount",
+                "currentResidence",
+                "residenceStatus",
+                "timeline",
+                "businessType"
+              ],
+              "unsure": [],
+              "isComplete": false,
+              "canGenerateEarly": false
+            },
+            "process": {
+              "engineUsed": "rules",
+              "fallbacks": [],
+              "timings": {
+                "queuedMs": 1,
+                "understandingMs": 3,
+                "decidingMs": 1,
+                "replyingMs": 0,
+                "totalMs": 4
+              },
+              "promptVersion": null
+            }
+          }
+        },
+        "payload": {
+          "recorded": [
+            {
+              "slot": "applicantNationality",
+              "label": "本人国籍",
+              "display": "中国"
+            },
+            {
+              "slot": "goals",
+              "label": "诉求",
+              "display": "开公司"
+            }
+          ],
+          "corrections": [],
+          "notices": [
+            {
+              "kind": "professional",
+              "text": "能不能申请某类签证（或者要交多少税），需要持牌专业人士根据完整材料判断，我没办法给出结论；这里用到的资料也只是演示用途，可能不完整或过时。影响这个问题的主要条件有：",
+              "conditions": [
+                {
+                  "label": "公司业务类型",
+                  "known": false,
+                  "display": "待了解"
+                },
+                {
+                  "label": "本人国籍",
+                  "known": true,
+                  "display": "中国"
+                },
+                {
+                  "label": "外国人在目的国开公司，通常还取决于在当地的居留身份",
+                  "known": false
+                }
+              ]
+            }
+          ],
+          "questions": [
+            {
+              "slot": "destination",
+              "text": "你打算去哪个国家？",
+              "options": [
+                {
+                  "label": "葡萄牙",
+                  "value": "PT"
+                }
+              ],
+              "allowUnsure": false
+            },
+            {
+              "slot": "hasPartner",
+              "text": "有配偶或伴侣一起去吗？",
+              "options": [
+                {
+                  "label": "是",
+                  "value": true
+                },
+                {
+                  "label": "否",
+                  "value": false
+                }
+              ],
+              "allowUnsure": false
+            }
+          ],
+          "progress": {
+            "required": 9,
+            "answered": 2,
+            "missing": [
+              "destination",
+              "hasPartner",
+              "childrenCount",
+              "currentResidence",
+              "residenceStatus",
+              "timeline",
+              "businessType"
+            ],
+            "unsure": [],
+            "isComplete": false,
+            "canGenerateEarly": false
+          },
+          "process": {
+            "engineUsed": "rules",
+            "fallbacks": [],
+            "timings": {
+              "queuedMs": 1,
+              "understandingMs": 3,
+              "decidingMs": 1,
+              "replyingMs": 0,
+              "totalMs": 4
+            },
+            "promptVersion": null
+          }
+        }
+      }
+    },
+    {
+      "scope": {
+        "part": "tax",
+        "input": "我是中国籍，要交多少税？"
+      },
+      "candidate": "50a1bdbf660bb942f661fe7175a1afe2c812007b",
+      "state": {
+        "conversation": {
+          "id": "815d6ba8-8574-48c9-a608-9fc97458a50c",
+          "title": "新的出海咨询",
+          "status": "collecting",
+          "enginePreference": "rules",
+          "lastSeq": 2,
+          "lastAssistantSeq": 2,
+          "messageCount": 2,
+          "lastMessagePreview": "能不能申请某类签证（或者要交多少税），需要持牌专业人士根据完整材料判断，我没办法给出结论；这里用到的资料也只是演示用途，可能不完整或过时。影响这个问题的主要条件有：\n\n主要收入来源国：待了解；主要收入来源：待了解；税务居民身份取决于实际居住",
+          "planId": null,
+          "version": 3,
+          "createdAt": "2026-10-31T10:35:01.444Z",
+          "updatedAt": "2026-10-31T10:35:01.450Z",
+          "profile": {
+            "slots": {
+              "destination": {
+                "status": "missing"
+              },
+              "goals": {
+                "status": "known",
+                "value": [
+                  "tax"
+                ],
+                "sourceMessageId": "91fc4897-4f35-4159-9fd5-4c5cb306c514",
+                "updatedAt": "2026-10-31T10:35:01.449Z"
+              },
+              "applicantNationality": {
+                "status": "known",
+                "value": "CN",
+                "sourceMessageId": "91fc4897-4f35-4159-9fd5-4c5cb306c514",
+                "updatedAt": "2026-10-31T10:35:01.449Z"
+              },
+              "hasPartner": {
+                "status": "missing"
+              },
+              "partnerNationality": {
+                "status": "missing"
+              },
+              "childrenCount": {
+                "status": "missing"
+              },
+              "childrenAges": {
+                "status": "missing"
+              },
+              "currentResidence": {
+                "status": "missing"
+              },
+              "residenceStatus": {
+                "status": "missing"
+              },
+              "timeline": {
+                "status": "missing"
+              },
+              "incomeSource": {
+                "status": "missing"
+              },
+              "businessType": {
+                "status": "missing"
+              },
+              "incomeCountry": {
+                "status": "missing"
+              },
+              "schoolPreference": {
+                "status": "missing"
+              },
+              "hasHealthInsurance": {
+                "status": "missing"
+              }
+            },
+            "pendingSlots": [
+              "destination",
+              "hasPartner"
+            ]
+          },
+          "progress": {
+            "required": 9,
+            "answered": 2,
+            "missing": [
+              "destination",
+              "hasPartner",
+              "childrenCount",
+              "currentResidence",
+              "residenceStatus",
+              "timeline",
+              "incomeCountry"
+            ],
+            "unsure": [],
+            "isComplete": false,
+            "canGenerateEarly": false
+          }
+        },
+        "activeTurn": null,
+        "latestTurn": {
+          "id": "59337ba2-c164-4918-b1e9-edc082472f96",
+          "conversationId": "815d6ba8-8574-48c9-a608-9fc97458a50c",
+          "status": "completed",
+          "stage": "done",
+          "engineRequested": "rules",
+          "engineUsed": "rules",
+          "fallbacks": [],
+          "errorCode": null,
+          "timings": {
+            "queuedMs": 0,
+            "understandingMs": 4,
+            "decidingMs": 0,
+            "replyingMs": 1,
+            "totalMs": 5
+          },
+          "promptVersion": null,
+          "retryOfTurnId": null,
+          "attempt": 1,
+          "version": 5,
+          "createdAt": "2026-10-31T10:35:01.445Z",
+          "startedAt": "2026-10-31T10:35:01.445Z",
+          "finishedAt": "2026-10-31T10:35:01.450Z"
+        },
+        "plan": null,
+        "readState": {
+          "lastReadSeq": 0
+        }
+      },
+      "last": {
+        "message": {
+          "id": "794c8179-92a6-40db-9b25-c6932a5677ca",
+          "conversationId": "815d6ba8-8574-48c9-a608-9fc97458a50c",
+          "seq": 2,
+          "content": "能不能申请某类签证（或者要交多少税），需要持牌专业人士根据完整材料判断，我没办法给出结论；这里用到的资料也只是演示用途，可能不完整或过时。影响这个问题的主要条件有：\n\n主要收入来源国：待了解；主要收入来源：待了解；税务居民身份取决于实际居住时间，以及两国之间的税收协定：待了解\n\n生成的计划会把这些列为需要持牌专业人士确认的事项。\n\n已记录：本人国籍 中国；诉求 税务\n\n还需要了解：你打算去哪个国家？ 有配偶或伴侣一起去吗？",
+          "clientMessageId": null,
+          "turnId": "59337ba2-c164-4918-b1e9-edc082472f96",
+          "createdAt": "2026-10-31T10:35:01.450Z",
+          "role": "assistant",
+          "payload": {
+            "recorded": [
+              {
+                "slot": "applicantNationality",
+                "label": "本人国籍",
+                "display": "中国"
+              },
+              {
+                "slot": "goals",
+                "label": "诉求",
+                "display": "税务"
+              }
+            ],
+            "corrections": [],
+            "notices": [
+              {
+                "kind": "professional",
+                "text": "能不能申请某类签证（或者要交多少税），需要持牌专业人士根据完整材料判断，我没办法给出结论；这里用到的资料也只是演示用途，可能不完整或过时。影响这个问题的主要条件有：",
+                "conditions": [
+                  {
+                    "label": "主要收入来源国",
+                    "known": false,
+                    "display": "待了解"
+                  },
+                  {
+                    "label": "主要收入来源",
+                    "known": false,
+                    "display": "待了解"
+                  },
+                  {
+                    "label": "税务居民身份取决于实际居住时间，以及两国之间的税收协定",
+                    "known": false
+                  }
+                ]
+              }
+            ],
+            "questions": [
+              {
+                "slot": "destination",
+                "text": "你打算去哪个国家？",
+                "options": [
+                  {
+                    "label": "葡萄牙",
+                    "value": "PT"
+                  }
+                ],
+                "allowUnsure": false
+              },
+              {
+                "slot": "hasPartner",
+                "text": "有配偶或伴侣一起去吗？",
+                "options": [
+                  {
+                    "label": "是",
+                    "value": true
+                  },
+                  {
+                    "label": "否",
+                    "value": false
+                  }
+                ],
+                "allowUnsure": false
+              }
+            ],
+            "progress": {
+              "required": 9,
+              "answered": 2,
+              "missing": [
+                "destination",
+                "hasPartner",
+                "childrenCount",
+                "currentResidence",
+                "residenceStatus",
+                "timeline",
+                "incomeCountry"
+              ],
+              "unsure": [],
+              "isComplete": false,
+              "canGenerateEarly": false
+            },
+            "process": {
+              "engineUsed": "rules",
+              "fallbacks": [],
+              "timings": {
+                "queuedMs": 0,
+                "understandingMs": 4,
+                "decidingMs": 0,
+                "replyingMs": 1,
+                "totalMs": 5
+              },
+              "promptVersion": null
+            }
+          }
+        },
+        "payload": {
+          "recorded": [
+            {
+              "slot": "applicantNationality",
+              "label": "本人国籍",
+              "display": "中国"
+            },
+            {
+              "slot": "goals",
+              "label": "诉求",
+              "display": "税务"
+            }
+          ],
+          "corrections": [],
+          "notices": [
+            {
+              "kind": "professional",
+              "text": "能不能申请某类签证（或者要交多少税），需要持牌专业人士根据完整材料判断，我没办法给出结论；这里用到的资料也只是演示用途，可能不完整或过时。影响这个问题的主要条件有：",
+              "conditions": [
+                {
+                  "label": "主要收入来源国",
+                  "known": false,
+                  "display": "待了解"
+                },
+                {
+                  "label": "主要收入来源",
+                  "known": false,
+                  "display": "待了解"
+                },
+                {
+                  "label": "税务居民身份取决于实际居住时间，以及两国之间的税收协定",
+                  "known": false
+                }
+              ]
+            }
+          ],
+          "questions": [
+            {
+              "slot": "destination",
+              "text": "你打算去哪个国家？",
+              "options": [
+                {
+                  "label": "葡萄牙",
+                  "value": "PT"
+                }
+              ],
+              "allowUnsure": false
+            },
+            {
+              "slot": "hasPartner",
+              "text": "有配偶或伴侣一起去吗？",
+              "options": [
+                {
+                  "label": "是",
+                  "value": true
+                },
+                {
+                  "label": "否",
+                  "value": false
+                }
+              ],
+              "allowUnsure": false
+            }
+          ],
+          "progress": {
+            "required": 9,
+            "answered": 2,
+            "missing": [
+              "destination",
+              "hasPartner",
+              "childrenCount",
+              "currentResidence",
+              "residenceStatus",
+              "timeline",
+              "incomeCountry"
+            ],
+            "unsure": [],
+            "isComplete": false,
+            "canGenerateEarly": false
+          },
+          "process": {
+            "engineUsed": "rules",
+            "fallbacks": [],
+            "timings": {
+              "queuedMs": 0,
+              "understandingMs": 4,
+              "decidingMs": 0,
+              "replyingMs": 1,
+              "totalMs": 5
+            },
+            "promptVersion": null
+          }
+        }
+      }
+    }
+  ]
+}

@@ -39,7 +39,7 @@ export async function writeSummary(reportRoot: string, runDirectory: string, inf
     `README SHA-256：${info.readmeSha256}；锁文件 SHA-256：${info.lockSha256}。环境、构建方式和实际进程见 metadata.json、build.log 及每例 instance.json。`, '',
     ...(mode === 'round' ? ['本报告仅统计当前候选这一轮的实际结果；单轮通过不代表满足业务连续三轮及全部环境、人工、缺陷处置的放行要求。', ''] : []),
     `结论：${pass ? '同候选的用例、轮次、人工登记与缺陷处置符合进入下一环节的要求。' : '不可放行：有未通过、未执行、未登记的必测项或缺陷处置。'}`, '',
-    runnerErrors.length ? `运行错误：${runnerErrors.join('; ')}` : '',
+    runnerErrors.length ? `运行错误：${runnerErrors.join('; ')}` : '', '',
     '| 类型 | 用例数 | 不适用数 | 通过数 | 适用项通过率 |', '| --- | --- | --- | --- | --- |',
     ...['api', 'e2e', 'ws', 'env', 'manual'].map(type => { const selected = cases.filter(row => row.type === type); const applicable = selected.filter(row => !row.notApplicable); const count = applicable.filter(row => result(row.id) === '通过').length; return `| ${type} | ${selected.length} | ${selected.length - applicable.length} | ${count} | ${applicable.length ? `${Math.round(count / applicable.length * 100)}%` : '不适用'} |`; }), '',
     '| 优先级 | 用例数 | 不适用数 | 通过数 |', '| --- | --- | --- | --- |',
