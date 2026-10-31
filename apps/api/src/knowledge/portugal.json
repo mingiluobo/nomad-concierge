@@ -1,0 +1,529 @@
+{
+  "country": "PT",
+  "coverage": "full",
+  "version": "v1",
+  "steps": [
+    {
+      "id": "pt-passport",
+      "goal": "general",
+      "phase": "before",
+      "priority": 10,
+      "title": "确认护照与身份文件状态",
+      "why": "先核对身份文件，便于后续咨询和材料整理。",
+      "materials": [
+        "家庭成员身份文件清单",
+        "护照有效期记录"
+      ],
+      "dependsOn": [],
+      "needsProfessional": false,
+      "sources": [
+        {
+          "label": "葡萄牙政府服务门户 ePortugal"
+        }
+      ]
+    },
+    {
+      "id": "pt-documents",
+      "goal": "general",
+      "phase": "before",
+      "priority": 20,
+      "title": "了解文件翻译与认证要求",
+      "why": "不同用途的文件可能有不同形式要求，应向接收机构核实。",
+      "materials": [
+        "现有证明文件清单",
+        "拟办理事项清单"
+      ],
+      "dependsOn": [
+        "pt-passport"
+      ],
+      "needsProfessional": false,
+      "sources": [
+        {
+          "label": "葡萄牙政府服务门户 ePortugal"
+        }
+      ]
+    },
+    {
+      "id": "pt-tax-number",
+      "goal": "general",
+      "phase": "before",
+      "priority": 30,
+      "title": "了解税号办理及使用场景",
+      "why": "向官方渠道了解税号与计划事项的关联，不据此判断个人税务义务。",
+      "materials": [
+        "身份证明",
+        "拟办理事项说明"
+      ],
+      "dependsOn": [],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "税务门户 Portal das Finanças"
+        }
+      ],
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-residence-route",
+      "goal": "residence",
+      "phase": "before",
+      "priority": 25,
+      "title": "咨询适用的居留方向",
+      "why": "按个人情况了解值得进一步咨询的居留类型，不代表资格判断。",
+      "materials": [
+        "国籍与居住背景摘要",
+        "收入来源说明"
+      ],
+      "dependsOn": [],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "移民机构 AIMA"
+        }
+      ],
+      "when": {
+        "applicantGroup": "non_eu"
+      },
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-residence-income",
+      "goal": "residence",
+      "phase": "before",
+      "priority": 35,
+      "title": "了解并准备收入证明材料",
+      "why": "具体证明形式取决于拟了解的路径，应先向专业人士确认。",
+      "materials": [
+        "收入来源记录",
+        "可提供的证明文件清单"
+      ],
+      "dependsOn": [
+        "pt-residence-route"
+      ],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "移民机构 AIMA"
+        }
+      ],
+      "when": {
+        "applicantGroup": "non_eu"
+      },
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-residence-background",
+      "goal": "residence",
+      "phase": "before",
+      "priority": 40,
+      "title": "确认无犯罪记录等证明的要求",
+      "why": "核实具体程序是否要求相关证明及其形式。",
+      "materials": [
+        "曾居住国家清单",
+        "已有证明文件清单"
+      ],
+      "dependsOn": [
+        "pt-residence-route"
+      ],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "移民机构 AIMA"
+        }
+      ],
+      "when": {
+        "applicantGroup": "non_eu"
+      },
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-residence-address",
+      "goal": "residence",
+      "phase": "before",
+      "priority": 45,
+      "title": "了解住所证明的要求",
+      "why": "先确认可被接受的住所材料，再安排后续准备。",
+      "materials": [
+        "拟居住地区",
+        "可获得的住所材料清单"
+      ],
+      "dependsOn": [
+        "pt-residence-route"
+      ],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "移民机构 AIMA"
+        }
+      ],
+      "when": {
+        "applicantGroup": "non_eu"
+      },
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-residence-application",
+      "goal": "residence",
+      "phase": "before",
+      "priority": 50,
+      "title": "咨询申请程序与提交材料",
+      "why": "提交前由持牌专业人士核对路径、材料和当前程序。",
+      "materials": [
+        "拟了解的居留路径",
+        "收入、住所与背景证明清单"
+      ],
+      "dependsOn": [
+        "pt-residence-income",
+        "pt-residence-background",
+        "pt-residence-address"
+      ],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "移民机构 AIMA"
+        }
+      ],
+      "when": {
+        "applicantGroup": "non_eu"
+      },
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-residence-card",
+      "goal": "residence",
+      "phase": "arrival",
+      "priority": 20,
+      "title": "确认抵达后的居留登记事项",
+      "why": "按实际获准路径核实抵达后需要办理的事项。",
+      "materials": [
+        "入境与获准文件",
+        "住所与联系方式"
+      ],
+      "dependsOn": [
+        "pt-residence-application"
+      ],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "移民机构 AIMA"
+        }
+      ],
+      "when": {
+        "applicantGroup": "non_eu"
+      },
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-residence-eu",
+      "goal": "residence",
+      "phase": "arrival",
+      "priority": 15,
+      "title": "了解欧盟相关居住登记事项",
+      "why": "国籍分组只用于提示咨询方向，具体登记条件仍需核实。",
+      "materials": [
+        "国籍证明",
+        "拟居住安排"
+      ],
+      "dependsOn": [],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "葡萄牙政府服务门户 ePortugal"
+        }
+      ],
+      "when": {
+        "applicantGroup": "eu"
+      },
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-residence-family",
+      "goal": "residence",
+      "phase": "before",
+      "priority": 28,
+      "title": "咨询配偶相关的家庭居留方向",
+      "why": "配偶国籍可能影响可咨询的路径，不能据此直接判断资格。",
+      "materials": [
+        "双方国籍与关系资料",
+        "同行计划"
+      ],
+      "dependsOn": [],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "移民机构 AIMA"
+        }
+      ],
+      "when": {
+        "hasPartner": true,
+        "partnerGroup": "eu"
+      },
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-company-form",
+      "goal": "company",
+      "phase": "before",
+      "priority": 35,
+      "title": "咨询合适的公司形式",
+      "why": "结合业务与个人身份了解公司形式及后续义务。",
+      "materials": [
+        "业务类型说明",
+        "参与人和经营安排"
+      ],
+      "dependsOn": [],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "葡萄牙政府服务门户 ePortugal"
+        }
+      ],
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-company-register",
+      "goal": "company",
+      "phase": "before",
+      "priority": 55,
+      "title": "了解公司注册所需资料和程序",
+      "why": "在核实形式与适用条件后，再整理注册所需资料。",
+      "materials": [
+        "拟用名称与业务说明",
+        "参与人身份资料"
+      ],
+      "dependsOn": [
+        "pt-company-form"
+      ],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "葡萄牙政府服务门户 ePortugal"
+        }
+      ],
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-company-bank",
+      "goal": "company",
+      "phase": "arrival",
+      "priority": 40,
+      "title": "确认公司银行开户要求",
+      "why": "向机构了解当前开户资料与核验流程。",
+      "materials": [
+        "公司资料清单",
+        "负责人身份资料"
+      ],
+      "dependsOn": [
+        "pt-company-register"
+      ],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "葡萄牙政府服务门户 ePortugal"
+        }
+      ],
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-company-accounting",
+      "goal": "company",
+      "phase": "ongoing",
+      "priority": 30,
+      "title": "咨询会计与持续申报安排",
+      "why": "了解经营期间需要跟进的会计和申报事项。",
+      "materials": [
+        "业务与交易类型说明",
+        "拟选公司形式"
+      ],
+      "dependsOn": [
+        "pt-company-form"
+      ],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "税务门户 Portal das Finanças"
+        }
+      ],
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-tax-residence",
+      "goal": "tax",
+      "phase": "before",
+      "priority": 32,
+      "title": "咨询税务居民身份的判断条件",
+      "why": "实际居住安排等条件会影响专业判断，不能仅凭目的国得出结论。",
+      "materials": [
+        "各国居住时间记录",
+        "收入来源国清单"
+      ],
+      "dependsOn": [],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "税务门户 Portal das Finanças"
+        }
+      ],
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-tax-treaty",
+      "goal": "tax",
+      "phase": "before",
+      "priority": 38,
+      "title": "了解相关税收协定及需确认的问题",
+      "why": "跨国收入处理需结合两国规则和完整情况咨询。",
+      "materials": [
+        "收入来源与类别",
+        "当前和计划居住背景"
+      ],
+      "dependsOn": [
+        "pt-tax-residence"
+      ],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "税务门户 Portal das Finanças"
+        }
+      ],
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-tax-filing",
+      "goal": "tax",
+      "phase": "ongoing",
+      "priority": 35,
+      "title": "确认持续申报义务与资料管理方式",
+      "why": "请专业人士说明适用申报事项，并保留支持材料。",
+      "materials": [
+        "收入与经营记录",
+        "专业咨询后的事项清单"
+      ],
+      "dependsOn": [
+        "pt-tax-residence"
+      ],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "税务门户 Portal das Finanças"
+        }
+      ],
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-school-public",
+      "goal": "education",
+      "phase": "before",
+      "priority": 42,
+      "title": "了解公立学校信息与入学咨询入口",
+      "why": "结合孩子年龄和居住安排向学校确认适用信息。",
+      "materials": [
+        "孩子年龄与在读情况",
+        "拟居住地区"
+      ],
+      "dependsOn": [],
+      "needsProfessional": false,
+      "sources": [
+        {
+          "label": "葡萄牙政府服务门户 ePortugal"
+        }
+      ],
+      "when": {
+        "hasChildren": true,
+        "schoolPreferenceIn": [
+          "public"
+        ]
+      }
+    },
+    {
+      "id": "pt-school-international",
+      "goal": "education",
+      "phase": "before",
+      "priority": 42,
+      "title": "了解国际学校信息与咨询入口",
+      "why": "结合家庭偏好了解学校设置和入学资料。",
+      "materials": [
+        "孩子年龄与在读情况",
+        "语言和学校偏好"
+      ],
+      "dependsOn": [],
+      "needsProfessional": false,
+      "sources": [
+        {
+          "label": "葡萄牙政府服务门户 ePortugal"
+        }
+      ],
+      "when": {
+        "hasChildren": true,
+        "schoolPreferenceIn": [
+          "international"
+        ]
+      }
+    },
+    {
+      "id": "pt-school-documents",
+      "goal": "education",
+      "phase": "before",
+      "priority": 48,
+      "title": "确认孩子入学材料清单",
+      "why": "学校具体要求需向目标学校核实后再准备。",
+      "materials": [
+        "孩子身份与监护关系材料",
+        "现有学籍资料"
+      ],
+      "dependsOn": [],
+      "needsProfessional": false,
+      "sources": [
+        {
+          "label": "葡萄牙政府服务门户 ePortugal"
+        }
+      ],
+      "when": {
+        "hasChildren": true
+      }
+    },
+    {
+      "id": "pt-health-register",
+      "goal": "healthcare",
+      "phase": "arrival",
+      "priority": 30,
+      "title": "了解医疗服务登记条件和入口",
+      "why": "向官方服务机构确认适用条件及登记资料。",
+      "materials": [
+        "身份与居留背景",
+        "住址和已有保险情况"
+      ],
+      "dependsOn": [],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "葡萄牙国家医疗服务 SNS"
+        }
+      ],
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "pt-health-insurance",
+      "goal": "healthcare",
+      "phase": "before",
+      "priority": 39,
+      "title": "了解私人医疗保险选择与保障范围",
+      "why": "结合已有保障和家庭需要，咨询保险适用范围。",
+      "materials": [
+        "家庭成员情况",
+        "已有医疗保障资料"
+      ],
+      "dependsOn": [],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "葡萄牙国家医疗服务 SNS"
+        }
+      ],
+      "when": {
+        "hasHealthInsurance": false
+      },
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    }
+  ]
+}

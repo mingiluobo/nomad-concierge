@@ -1,0 +1,164 @@
+{
+  "country": "*",
+  "coverage": "generic",
+  "version": "v1",
+  "steps": [
+    {
+      "id": "generic-passport",
+      "goal": "general",
+      "phase": "before",
+      "priority": 10,
+      "title": "确认护照与身份文件状态",
+      "why": "先整理身份文件，便于向目的国官方渠道咨询。",
+      "materials": [
+        "家庭成员身份文件清单"
+      ],
+      "dependsOn": [],
+      "needsProfessional": false,
+      "sources": [
+        {
+          "label": "目的国官方政府服务门户"
+        }
+      ]
+    },
+    {
+      "id": "generic-documents",
+      "goal": "general",
+      "phase": "before",
+      "priority": 20,
+      "title": "了解文件翻译与认证要求",
+      "why": "按拟办理事项向接收机构核实文件形式。",
+      "materials": [
+        "现有证明文件清单"
+      ],
+      "dependsOn": [
+        "generic-passport"
+      ],
+      "needsProfessional": false,
+      "sources": [
+        {
+          "label": "目的国官方政府服务门户"
+        }
+      ]
+    },
+    {
+      "id": "generic-residence",
+      "goal": "general",
+      "phase": "before",
+      "priority": 25,
+      "title": "咨询目的国居留类型与条件",
+      "why": "这里只提供通用准备方向，适用路径需由专业人士判断。",
+      "materials": [
+        "国籍和居住背景",
+        "跨国生活计划"
+      ],
+      "dependsOn": [],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "目的国官方移民管理机构"
+        }
+      ],
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "generic-income",
+      "goal": "general",
+      "phase": "before",
+      "priority": 30,
+      "title": "确认需准备的收入证明",
+      "why": "根据咨询结果核实是否需要及如何准备证明。",
+      "materials": [
+        "收入来源与可提供材料"
+      ],
+      "dependsOn": [
+        "generic-residence"
+      ],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "目的国官方移民管理机构"
+        }
+      ],
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "generic-insurance",
+      "goal": "general",
+      "phase": "before",
+      "priority": 35,
+      "title": "了解医疗保险安排",
+      "why": "核实目的国医疗服务与保险的适用要求。",
+      "materials": [
+        "已有保险资料",
+        "家庭成员情况"
+      ],
+      "dependsOn": [],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "目的国官方医疗服务机构"
+        }
+      ],
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "generic-address",
+      "goal": "general",
+      "phase": "before",
+      "priority": 40,
+      "title": "了解住所安排与证明要求",
+      "why": "依据拟了解的路径确认住所资料。",
+      "materials": [
+        "拟居住地区",
+        "可提供的住所材料"
+      ],
+      "dependsOn": [],
+      "needsProfessional": false,
+      "sources": [
+        {
+          "label": "目的国官方政府服务门户"
+        }
+      ]
+    },
+    {
+      "id": "generic-tax",
+      "goal": "general",
+      "phase": "before",
+      "priority": 45,
+      "title": "咨询税务居民身份与跨国收入问题",
+      "why": "居住安排及收入来源会影响判断，应由专业人士确认。",
+      "materials": [
+        "各国居住与收入来源资料"
+      ],
+      "dependsOn": [],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "目的国官方税务机构"
+        }
+      ],
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    },
+    {
+      "id": "generic-adviser",
+      "goal": "general",
+      "phase": "ongoing",
+      "priority": 10,
+      "title": "整理待确认事项并咨询持牌专业人士",
+      "why": "将未知信息与咨询结果持续整理，避免把通用清单当成专业结论。",
+      "materials": [
+        "当前档案",
+        "待确认条件清单"
+      ],
+      "dependsOn": [],
+      "needsProfessional": true,
+      "sources": [
+        {
+          "label": "目的国官方政府服务门户"
+        }
+      ],
+      "professionalNote": "请由持牌专业人士根据完整情况确认适用条件与所需材料。"
+    }
+  ]
+}
