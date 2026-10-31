@@ -22,7 +22,8 @@ export async function writeSummary(reportRoot: string, runDirectory: string, inf
     const required = definition.type === 'manual' ? 1 : definition.type === 'env' ? 1 : 3;
     const bad = ['失败', '受阻', '不稳定', '跳过'].find(state => found.some(row => row.result === state));
     if (bad) return bad;
-    return found.length === required && found.every(row => row.result === '通过') ? '通过' : found.length ? `未执行（已完成 ${found.length}/${required} 轮）` : '未执行';
+    const passedRounds = found.filter(row => row.result === '通过').length;
+    return passedRounds === required ? '通过' : passedRounds ? `未执行（已完成 ${passedRounds}/${required} 轮）` : '未执行';
   };
   let defectsReviewed = false;
   let defectDescription = '尚未登记同候选缺陷审阅；不据此宣称零缺陷。';
