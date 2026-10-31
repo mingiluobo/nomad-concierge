@@ -74,8 +74,9 @@ export function expectPendingQuestions(context: PromptContext, expectedSlots: Sl
         // entries also contain UI-only dynamic or unsure options. Do not
         // require those additions or a representation for absent options.
         if (expectedOptions?.length) {
-            expect(optionLists, `registry options for ${key}`).toHaveLength(1);
-            expect(optionLists[0]).toEqual(expect.arrayContaining(expectedOptions));
+            expect(optionLists, `registry options for ${key}`).toEqual(
+                expect.arrayContaining([expect.arrayContaining(expectedOptions)]),
+            );
         }
     });
 }

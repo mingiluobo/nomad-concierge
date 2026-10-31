@@ -6,6 +6,7 @@ import { assertNoEnv } from './app.js';
 
 export interface Candidate {
   candidateCommit: string; productCommit: string; qaCommit: string;
+  reviewedQaCommit?: string;
   wp6Ready: boolean; declaredReadyBy: string;
   specVersion: string; readmeSha256: string; lockSha256: string;
 }
@@ -18,6 +19,10 @@ export async function candidate(root: string, path: string): Promise<Candidate> 
   }
   if (!value.wp6Ready || !value.declaredReadyBy?.trim()) throw new Error('Candidate must be declared ready by the integration owner');
   for (const revision of [value.productCommit, value.qaCommit]) await command('git', ['merge-base', '--is-ancestor', revision, value.candidateCommit], root);
+  if (value.reviewedQaCommit) {
+    if (!/^[a-f0-9]{40}$/.test(value.reviewedQaCommit)) throw new Error('Reviewed QA requires a full commit');
+    await command('git', ['cat-file', '-e', `${value.reviewedQaCommit}^{commit}`], root);
+  }
   const readme = await command('git', ['show', `${value.candidateCommit}:README.md`], root);
   const lock = await command('git', ['show', `${value.candidateCommit}:package-lock.json`], root);
   // command trims stdout; file hashes below are authoritative after checkout.
@@ -30,8 +35,15 @@ export async function verifySnapshot(root: string, info: Candidate): Promise<voi
   if (sha256(await readFile(join(root, 'package-lock.json'))) !== info.lockSha256) throw new Error('Lockfile differs from declared candidate');
   const spec = await readFile(join(root, 'docs/SPEC.md'), 'utf8');
   if (!spec.includes(`版本：${info.specVersion}`)) throw new Error('SPEC version differs from declared candidate');
-  const dirty = await command('git', ['status', '--porcelain', '--untracked-files=no'], root);
-  if (dirty) throw new Error('Candidate has tracked modifications');
+  if (info.reviewedQaCommit) {
+    // Candidate contract review may adjust QA only. Require the exact frozen QA tree.
+    const changed = await command('git', ['diff', '--name-only', info.candidateCommit], root);
+    if (changed.split('\n').filter(Boolean).some(path => !path.startsWith('qa/'))) throw new Error('Product differs from declared candidate');
+    await command('git', ['diff', '--exit-code', info.reviewedQaCommit, '--', 'qa/'], root);
+  } else {
+    const dirty = await command('git', ['status', '--porcelain', '--untracked-files=no'], root);
+    if (dirty) throw new Error('Candidate has tracked modifications');
+  }
   await assertNoEnv(root);
 }
 export async function freshClone(source: string, commit: string, target: string, log: string): Promise<void> {

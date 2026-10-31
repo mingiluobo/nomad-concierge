@@ -19,7 +19,7 @@
 | 环境 | 实际结果 | 版本与路径/证据 |
 | --- | --- | --- |
 | macOS Node 22.13.0 | 已准备 | Node `v22.13.0` / npm `10.9.2`；`qa/reports/toolchains/node-v22.13.0-darwin-arm64/bin/node`；官方发行包 SHA256 与 SHASUMS 一致 |
-| macOS Node 24 | 已准备 | Node `v24.22.1` / npm `12.1.0`；`/Users/zcm/.nvm/versions/node/v24.22.1/bin/node`；复用已有安装 |
+| macOS Node 24 | 已准备 | Node `v24.22.1` / npm `12.1.0`；`用户目录/.nvm/versions/node/v24.22.1/bin/node`；复用已有安装 |
 | Docker | 可用 | Docker Engine `29.8.1`，Docker Desktop `4.93.0`，`desktop-linux` / `linux/arm64` |
 | node:24-bookworm-slim | 已拉取并验证可启动 | digest `sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c`；无网络、自动删除容器内 Node `v24.22.2` / npm `11.19.1`；确认本轮容器已删除 |
 

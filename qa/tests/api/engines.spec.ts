@@ -21,7 +21,7 @@ test.describe('remote controlled responses', () => {
         expect(calls(app.fakeRemote)).toHaveLength(1);
         expect(state.conversation.profile.slots.destination.value).toBe('PT');
         expect(state.latestTurn!.engineUsed).toBe('remote');
-        expect(state.latestTurn!.promptVersion).toBe('v3');
+        expect(state.latestTurn!.promptVersion).toBe('v4');
         const process = (await reply(api.request, made.conversation.id)).payload.process;
         expect(process.engineUsed).toBe('remote');
         expect(process.timings.totalMs).toBeGreaterThanOrEqual(0);
@@ -97,8 +97,8 @@ test.describe('remote controlled responses', () => {
         const before = (await reply(api.request, made.conversation.id)).payload;
         await send(api.request, made.conversation.id, '我是中国籍');
         const state = await settle(api.request, made.conversation.id);
-        expect(state.latestTurn!.promptVersion).toBe('v3');
-        expect((await reply(api.request, made.conversation.id)).payload.process.promptVersion).toBe('v3');
+        expect(state.latestTurn!.promptVersion).toBe('v4');
+        expect((await reply(api.request, made.conversation.id)).payload.process.promptVersion).toBe('v4');
         const request = calls(app.fakeRemote).at(-1)!;
         expect(request.headers.authorization).toBe('Bearer qa-fake-key');
         expect(request.headers['content-type']).toContain('application/json');

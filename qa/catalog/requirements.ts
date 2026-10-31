@@ -45,7 +45,7 @@ export const requirements: Requirement[] = [
   { id: 'F-production', text: '生产静态服务和 SPA 深链接', extraCases: ['ENV-006'] },
   { id: 'F-docker', text: 'README Docker 启动及卷持久化', extraCases: ['ENV-004'] },
   { id: 'F-environment', text: 'macOS Node 22.13.0/24 及干净 Linux 环境矩阵', extraCases: ['ENV-001', 'ENV-002', 'ENV-003'] },
-  { id: 'SPEC-8.3', text: '模型请求、输出校验与上下文契约：promptVersion v3，pendingQuestions 按 pendingSlots 同序由槽位注册表派生' },
+  { id: 'SPEC-8.3', text: '模型请求、输出校验与上下文契约：promptVersion v4，pendingQuestions 按 pendingSlots 同序由槽位注册表派生' },
   { id: 'UX-01', text: 'SPEC §5.4/11.2/13.5：自由文本作答槽位提示、校验、逐段隔离、持久化及传输，发送重试保留、后续操作清除' },
   { id: 'UX-03', text: 'SPEC §8.2：固定相对时间说法映射到约定枚举，不引入按当前日期推算' },
   { id: 'UX-04', text: 'SPEC §5.4/8.2：陈述保险、业务或学校事实不扩大诉求，整体替换后同句事实不加回旧诉求' },
