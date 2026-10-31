@@ -58,7 +58,7 @@ describe('Chinese country aliases', () => {
     expect(countries.map(country => country.code).sort()).toEqual(expectedAliases.map(([code]) => code).sort());
     expect(countries).toHaveLength(45);
   });
-  it.each(['巴黎', '柏林', '欧洲', '北美', '大和族', '马来族', '大马', '迪拜', '英格兰', '苏格兰'])('does not register the city, region, ethnicity or ambiguous shorthand %s as a country', alias => {
+  it.each(['巴黎', '柏林', '欧洲', '北美', '大和族', '马来族', '加国', '大马', '迪拜', '英格兰', '苏格兰'])('does not register the city, region, ethnicity or ambiguous shorthand %s as a country', alias => {
     expect(countries.some(country => country.aliases.includes(alias))).toBe(false);
   });
 });

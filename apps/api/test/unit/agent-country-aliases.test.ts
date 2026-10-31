@@ -19,6 +19,20 @@ describe('country aliases in rule interpretation', () => {
       intent: 'provide_info', updates: [{ slot: 'destination', value: code }], unsure: [],
     });
   });
+  it.each(['currentResidence', 'incomeCountry', 'partnerNationality', 'applicantNationality'] as SlotKey[])('uses the pending %s for a bare country full name', async slot => {
+    expect((await interpret('中华人民共和国', [slot])).interpretation.updates).toEqual([{ slot, value: 'CN' }]);
+  });
+  it('does not infer nationality from a character inside a bare country name without a pending country question', async () => {
+    expect((await interpret('中华人民共和国')).interpretation.updates).toEqual([]);
+  });
+  it.each([
+    ['中国人', 'CN'], ['中国籍', 'CN'], ['葡萄牙人', 'PT'], ['葡萄牙籍', 'PT'],
+    ['中华人民共和国人', 'CN'], ['中华人民共和国籍', 'CN'], ['中华人民共和国国籍', 'CN'],
+    ['中华人民共和国护照', 'CN'], ['国籍中华人民共和国', 'CN'], ['护照中华人民共和国', 'CN'],
+    ['我是中华人民共和国', 'CN'],
+  ])('keeps the explicit nationality clue in %s', async (text, code) => {
+    expect((await interpret(text, ['destination'])).interpretation.updates).toEqual([{ slot: 'applicantNationality', value: code }]);
+  });
   it.each(['大不列颠及北爱尔兰联合王国', '大不列颠和北爱尔兰联合王国'])('keeps the embedded Ireland name inside %s within the UK mention', async name => {
     const result = await interpret(`前往${name}`);
     expect(result.interpretation.updates).toEqual([{ slot: 'destination', value: 'GB' }]);
@@ -45,7 +59,7 @@ describe('country aliases in rule interpretation', () => {
     expect(result.interpretation.updates.filter(update => countrySlots.includes(update.slot))).toEqual(expected);
     expect(result.droppedUpdates).toEqual([]);
   });
-  it.each(['前往巴黎', '目前住在柏林', '收入来自北美', '前往欧洲', '前往迪拜', '前往大马士革'])('does not assign a country from %s', async text => {
-    expect((await interpret(text)).interpretation.updates.filter(update => countrySlots.includes(update.slot))).toEqual([]);
+  it.each(['前往巴黎', '目前住在柏林', '收入来自北美', '前往欧洲', '前往迪拜', '前往大马士革', '参加国际会议'])('does not assign a country from %s', async text => {
+    expect((await interpret(text, ['destination'])).interpretation.updates.filter(update => countrySlots.includes(update.slot))).toEqual([]);
   });
 });
