@@ -64,6 +64,56 @@ async function localServer(handler: RequestListener) {
 }
 
 describe('real application composition', () => {
+  it('records nationality from a hinted text answer without filling the earlier destination question', async () => {
+    const app = await fixture();
+    const created = await app.agent.post('/api/conversations').send({ content: '我想了解税务。', clientMessageId: randomUUID(), enginePreference: 'rules' }).expect(201);
+    const id = created.body.conversation.id as string;
+    const first = await completed(app.agent, id);
+    expect(first.conversation.profile.pendingSlots).toEqual(['destination', 'applicantNationality']);
+    const payload = { answeringSlot: 'applicantNationality' };
+    const posted = await app.agent.post(`/api/conversations/${id}/messages`).send({ content: '日本', clientMessageId: randomUUID(), payload }).expect(202);
+    expect(posted.body.message.payload).toEqual(payload);
+    const answered = await completed(app.agent, id);
+    expect(answered.conversation.profile.slots.applicantNationality).toMatchObject({ status: 'known', value: 'JP' });
+    expect(answered.conversation.profile.slots.destination).toEqual({ status: 'missing' });
+    const messages = messagesResponseSchema.parse((await app.agent.get(`/api/conversations/${id}/messages`).expect(200)).body);
+    expect(messages.items.find(message => message.id === posted.body.message.id)?.payload).toEqual(payload);
+    await app.agent.post(`/api/conversations/${id}/messages`).send({ content: '葡萄牙', clientMessageId: randomUUID() }).expect(202);
+    const next = await completed(app.agent, id);
+    expect(next.conversation.profile.slots.destination.value).toBe('PT');
+    expect(next.conversation.profile.slots.applicantNationality.value).toBe('JP');
+  });
+
+  it.each([true, false])('publishes persisted plan completeness metadata across every summary surface (early=%s)', async early => {
+    const app = await fixture();
+    const created = await app.agent.post('/api/conversations').send({ content: '我想了解税务。', clientMessageId: randomUUID(), enginePreference: 'rules' }).expect(201);
+    const id = created.body.conversation.id as string;
+    await completed(app.agent, id);
+    const answers = [
+      { slot: 'destination', value: 'PT', label: '葡萄牙' }, { slot: 'applicantNationality', value: 'CN', label: '中国' },
+      ...early ? [] : [
+        { slot: 'hasPartner', value: false, label: '一个人' }, { slot: 'childrenCount', value: 0, label: '没有孩子' },
+        { slot: 'currentResidence', value: 'CN', label: '中国' }, { slot: 'residenceStatus', value: 'citizen', label: '公民' },
+        { slot: 'timeline', value: '3to6m', label: '半年内' }, { slot: 'incomeCountry', value: 'CN', label: '中国' },
+      ],
+    ];
+    await app.agent.post(`/api/conversations/${id}/messages`).send({ content: '', clientMessageId: randomUUID(), payload: { answers } }).expect(202);
+    const ready = await completed(app.agent, id);
+    expect(ready.conversation.progress.isComplete).toBe(!early);
+    const generated = await app.agent.post(`/api/conversations/${id}/plan`).send({ allowIncomplete: early }).expect(201);
+    const plan = generated.body.plan;
+    const expected = { generatedEarly: early, knownCount: plan.content.profileSummary.known.length, unknownCount: plan.content.profileSummary.unknown.length };
+    expect(plan).toMatchObject(expected);
+    expect((await app.agent.get('/api/plans').expect(200)).body.items).toEqual([expect.objectContaining({ id: plan.id, ...expected })]);
+    expect((await app.agent.get(`/api/conversations/${id}`).expect(200)).body.plan).toMatchObject(expected);
+    const event = app.database.prepare("SELECT payload_json FROM events WHERE type = 'plan.created' AND conversation_id = ?").get<{ payload_json: string }>(id)!;
+    expect(serverMessageSchema.parse({ type: 'event', id: 1, eventType: 'plan.created', conversationId: id,
+      createdAt: plan.createdAt, payload: JSON.parse(event.payload_json) })).toMatchObject({ payload: { plan: expected } });
+    await app.shutdown();
+    const restored = await fixture({}, app.databasePath);
+    expect((await restored.agent.get('/api/plans').expect(200)).body.items[0]).toMatchObject(expected);
+  });
+
   it('runs rules, quick answers, corrections, durable plans and authenticated events through the real modules', async () => {
     const app = await fixture();
     const frames: ServerMessage[] = [];
