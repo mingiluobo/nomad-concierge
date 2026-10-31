@@ -190,7 +190,7 @@ $env:LOCAL_LLM_MODEL = 'qwen2.5:7b-instruct'
 npm.cmd run dev
 ```
 
-打开页面并登录，在咨询顶部的“理解方式”中选择“本地模型”，再发送消息。回复下方的处理信息应显示本地模型；如果出现回退提示，则这一轮未由本地模型完成。模型探测异步进行，不阻塞应用启动；刚启动时可稍等再刷新页面。未安装指定模型或服务不可达时，选项置灰并显示原因。以上配置会保留在当前终端，后续重启或运行评估命令时继续生效。真实模型可能返回不合格结果并触发回退；本次三种理解方式的实测对比及局限见 `docs/eval-results.md`。
+打开页面并登录，在咨询顶部的“理解方式”中选择“本地模型”，再发送消息。回复下方的处理信息应显示本地模型；如果出现回退提示，则这一轮未由本地模型完成。模型探测异步进行，不阻塞应用启动；刚启动时可稍等再刷新页面。未安装指定模型或服务不可达时，选项置灰并显示原因。以上配置会保留在当前终端，后续重启或运行评估命令时继续生效。真实模型可能返回不合格结果并触发回退；即使没有回退，本地模型仍可能填入用户未提供的信息，使用时需核对咨询档案。本次三种理解方式的实测对比及局限见 `docs/eval-results.md`。
 
 例如在 Bash/zsh 的当前命令启用演示延迟（PowerShell 可用 `$env:DEMO_DELAY_MS = '1500'` 后运行 npm）：
 
@@ -228,7 +228,7 @@ DEMO_DELAY_MS=1500 npm run dev
 
 ## CI
 
-`.github/workflows/ci.yml` 在 push 和 pull request 时运行，环境为 `ubuntu-latest`，Node 矩阵为精确的 `22.13.0` 和 `24`：`npm ci` → `npm run check` → `npm test` → `npm run build`。不运行浏览器端到端测试，不需要真实模型配置。目前未关联远程仓库，未执行在线 CI，因此不展示执行状态徽标。
+`.github/workflows/ci.yml` 在 push 和 pull request 时运行，环境为 `ubuntu-latest`，Node 矩阵为精确的 `22.13.0` 和 `24`：`npm ci` → `npm run check` → `npm test` → `npm run build`。不运行浏览器端到端测试，不需要真实模型配置。11-01，提交 `ed58798` 的两组检查均通过，见 [CI 运行记录](https://github.com/mingiluobo/nomad-concierge/actions/runs/41226949091)；其他提交的结果以各自的运行记录为准。
 
 ## 技术选型
 
