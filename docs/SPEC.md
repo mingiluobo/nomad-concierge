@@ -339,7 +339,7 @@ interface Interpretation {
 | `goals` | `set` | 整体替换；与原集合不同时，旧值记入 `previousValue`，`corrected = true` |
 | 不允许"不确定"的槽位 | unsure | **忽略**，记入 `droppedUpdates`。规则引擎、大模型、快捷选项三个来源都按注册表的 `allowUnsure` 统一执行，不只靠界面不显示选项 |
 
-**合并顺序（保持消息的真实先后）**：一轮可能包含多条输入消息。按 `seq` 把它们切成段：每条快捷选项消息单独成一段；相邻的文本消息合成一段。按段的先后**逐段处理**：文本段调用一次理解（输入的 `profile` 是合并了此前各段之后的档案）后合并，快捷段直接合并；后面的覆盖前面的。文本段的 `sourceMessageId` 记为该段最后一条消息（段内不再细分）。绝大多数轮次只有一段；多段时共用本轮的总截止时间，不为每段重新计时；任务的 `engineUsed` 记最后一次理解调用实际使用的引擎，`fallbacks` 汇总各次调用的回退记录。全部合并完再执行一次一致性检查；`recorded`、`corrected`、`invalidated` 汇总各段的结果。
+**合并顺序（保持消息的真实先后）**：一轮可能包含多条输入消息。按 `seq` 把它们切成段：每条快捷选项消息、每条带 `payload.answeringSlot` 的文本消息分别单独成一段；仅相邻且不带提示的普通文本消息合成一段，提示不传递给前后消息。按段的先后**逐段处理**：文本段调用一次理解（输入的 `profile` 是合并了此前各段之后的档案）后合并，快捷段直接合并；后面的覆盖前面的。文本段的 `sourceMessageId` 记为该段最后一条消息（段内不再细分）。绝大多数轮次只有一段；多段时共用本轮的总截止时间，不为每段重新计时；任务的 `engineUsed` 记最后一次理解调用实际使用的引擎，`fallbacks` 汇总各次调用的回退记录。全部合并完再执行一次一致性检查；`recorded`、`corrected`、`invalidated` 汇总各段的结果。
 
 **诉求的显示**：`goals` 的 `add` 只记入 `recorded`（不算修正）；`remove` 和 `set` 记入 `corrected`，`from` / `to` 为变化前后的集合（例如"居留、开公司 → 居留"）。
 
@@ -359,6 +359,8 @@ interface Interpretation {
 `providedSlots` 记录本次输入中通过槽位取值校验、操作合法的 `updates` 所明确提供的槽位，包含与现值相同的更新；`unsure` 不算明确新值。执行器对各文本段和快捷答案段的 `providedSlots` 取并集，作为必传第三参数传给 `reconcile`。当前居住国变化时，只有这个并集中没有 `residenceStatus` 才使旧身份失效。例如原为中国公民，本轮明确改为居住在葡萄牙并再次明确公民身份，即使身份值同为 `citizen` 也保留；不能仅以值是否变化推断本轮是否给过身份。
 
 **快捷选项的结构化答案**：用户消息 `payload.answers` 中的 `{slot, value}` 直接作为 `SlotUpdate` 合并；`{ unsure: true }` 只对它所属的那个槽位记为 unsure。**带 `payload.answers` 的消息，`content`（选项文字）只用于展示，整条消息不参与文本理解**，避免选项文字被再次理解、误填到其他槽位。点快捷选项时前端直接发送，不与自由文本混在同一条消息里。
+
+**自由文本的回答提示**：`payload.answeringSlot?: SlotKey` 表示用户正在回答哪个问题，仅辅助理解短回答，不是槽位更新。它必须与非空 `content` 一起发送，不能与 `payload.answers` 混用；非法槽位、空文本或混用返回 422 `VALIDATION_ERROR`。解释该消息段时，只把传给理解器的 `pendingSlots` 收窄为 `[answeringSlot]`，档案及本轮显式事实照常使用，不强制把所有事实写入提示槽位；其他段仍使用正常追问上下文。消息持久化、HTTP 返回、WebSocket 事件和重试均保留该提示，无需新增数据库字段或理解器输入字段。
 
 **完整度**
 
@@ -925,7 +927,10 @@ interface MessageDto {
   payload: UserPayload | AssistantPayload | null;
   clientMessageId: string | null; turnId: string | null; createdAt: string;
 }
-interface UserPayload { answers?: { slot: SlotKey; value: unknown; label: string }[] }
+interface UserPayload {
+  answers?: { slot: SlotKey; value: unknown; label: string }[];
+  answeringSlot?: SlotKey; // 仅自由文本回答提示；与 answers 互斥，要求非空 content
+}
 interface AssistantPayload {
   recorded: { slot: SlotKey; label: string; display: string }[];
   corrections: { slot: SlotKey; label: string; from: string; to: string }[];
@@ -949,9 +954,12 @@ interface PlanSummaryDto {
   id: string; conversationId: string; title: string; destination: string;
   coverage: 'full' | 'generic'; householdSummary: string; goals: Goal[];
   toConfirmCount: number; createdAt: string;
+  generatedEarly?: boolean; knownCount?: number; unknownCount?: number;
 }
 interface PlanDto extends PlanSummaryDto { content: PlanContent }
 ```
+
+计划摘要新增的 `generatedEarly`、`knownCount`、`unknownCount` 为只读展示元数据：服务端总是从已保存的 `PlanContent.generatedEarly`、`profileSummary.known.length`、`profileSummary.unknown.length` 提供，列表、会话详情、计划详情和 `plan.created` 事件一致。契约允许字段缺失以兼容旧摘要；不新增业务规则或数据库字段，客户端无需逐卡请求计划详情。
 
 ### 11.3 接口清单
 

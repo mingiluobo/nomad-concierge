@@ -20,7 +20,7 @@ export const turnDtoSchema = z.object({
 });
 export type TurnDto = z.infer<typeof turnDtoSchema>;
 export interface StructuredAnswer { slot: z.infer<typeof slotKeySchema>; value: unknown; label: string }
-export interface UserPayload { answers?: StructuredAnswer[] }
+export interface UserPayload { answers?: StructuredAnswer[]; answeringSlot?: z.infer<typeof slotKeySchema> }
 export const structuredAnswerSchema = z.object({ slot: slotKeySchema, value: z.unknown(), label: z.string() }).superRefine((answer, context) => {
   if (!Object.hasOwn(answer, 'value')) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ['value'], message: 'value is required' });
@@ -33,7 +33,13 @@ export const structuredAnswerSchema = z.object({ slot: slotKeySchema, value: z.u
     context.addIssue({ code: z.ZodIssueCode.custom, path: ['value'], message: 'Invalid slot value' });
   }
 }) as z.ZodType<StructuredAnswer>;
-export const userPayloadSchema: z.ZodType<UserPayload> = z.object({ answers: z.array(structuredAnswerSchema).min(1).optional() }).strict();
+export const userPayloadSchema: z.ZodType<UserPayload> = z.object({
+  answers: z.array(structuredAnswerSchema).min(1).optional(), answeringSlot: slotKeySchema.optional(),
+}).strict().superRefine((payload, context) => {
+  if (payload.answers && payload.answeringSlot) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ['answeringSlot'], message: 'A text answer hint cannot accompany structured answers' });
+  }
+});
 export const assistantPayloadSchema = z.object({
   recorded: z.array(z.object({ slot: slotKeySchema, label: z.string(), display: z.string() })),
   corrections: z.array(z.object({ slot: slotKeySchema, label: z.string(), from: z.string(), to: z.string() })),
@@ -66,6 +72,7 @@ export type ConversationDetailDto = z.infer<typeof conversationDetailDtoSchema>;
 export const planSummaryDtoSchema = z.object({
   id: z.string(), conversationId: z.string(), title: z.string(), destination: countryCodeSchema, coverage: z.enum(['full', 'generic']),
   householdSummary: z.string(), goals: z.array(goalSchema), toConfirmCount: z.number().int().nonnegative(), createdAt: z.string(),
+  generatedEarly: z.boolean().optional(), knownCount: z.number().int().nonnegative().optional(), unknownCount: z.number().int().nonnegative().optional(),
 });
 export type PlanSummaryDto = z.infer<typeof planSummaryDtoSchema>;
 export const planDtoSchema = planSummaryDtoSchema.extend({ content: planContentSchema });
