@@ -1,5 +1,5 @@
 import { countries, slotDefinitions, slots } from '@nomad/shared';
-import type { Goal, Interpretation, ProfessionalTopic, SlotKey, SlotUpdate } from '@nomad/shared';
+import type { Goal, Interpretation, ProfessionalTopic, Profile, SlotKey, SlotUpdate } from '@nomad/shared';
 import type { InterpretInput, InterpretResult, Interpreter } from '../interpreter.js';
 import { throwIfAborted } from '../interpreter.js';
 import { chineseNumber, numberPattern } from './numbers.js';
@@ -18,10 +18,24 @@ function countryMentions(text: string): { code: string; alias: string; index: nu
   }
   return found.sort((a, b) => a.index - b.index);
 }
-function professionalTopic(text: string): ProfessionalTopic | undefined {
-  const applicationQuestion = /(?:能|可以)申请(?:[^，。！？；,!?;\n]{0,20}(?:签证|居留))?吗/.test(text);
-  if (!applicationQuestion && !/能不能申请|(?:能|可以)申请哪(?:个|种)签证|符合.{0,20}条件|要交多少|税率|多少税|合法吗|会被拒吗/.test(text)) return undefined;
-  return /税/.test(text) ? 'tax_amount' : /公司|注册|创业/.test(text) ? 'company_setup' : /签证|申请|拒|居留/.test(text) ? 'visa_eligibility' : 'other';
+function professionalTopic(text: string, profile: Profile): ProfessionalTopic | undefined {
+  const knownGoals = profile.slots.goals.status === 'known' ? profile.slots.goals.value as Goal[] : [];
+  const context = knownGoals.length === 1 ? ({ residence: 'visa_eligibility', tax: 'tax_amount', company: 'company_setup' } as Partial<Record<Goal, ProfessionalTopic>>)[knownGoals[0]!] : undefined;
+  for (const clause of text.split(/[，。！？；,!?;\n]+/)) {
+    const judgment = /能不能|能否|可不可以|(?:能|可以).{0,20}(?:吗|么)|有(?:没有)?资格|符合.{0,20}条件|需要(?:什么|哪些)(?:资格|条件)|合法吗|合规吗|申请得下来|会被拒吗/;
+    if (/税/.test(clause) && /税率|多少税|(?:税额|税款|交税|缴税).{0,12}(?:多少|几成|怎么算|如何计算)/.test(clause)) return 'tax_amount';
+    const subject = [...clause.matchAll(/税|公司|注册|创业|签证|居留/g)].at(-1)?.[0];
+    if (subject && judgment.test(clause)) return ({ 税: 'tax_amount', 公司: 'company_setup', 注册: 'company_setup', 创业: 'company_setup', 签证: 'visa_eligibility', 居留: 'visa_eligibility' } as Record<string, ProfessionalTopic>)[subject];
+    if (/签证|居留/.test(clause) && /(?:能|可以)申请哪(?:个|种)/.test(clause)) return 'visa_eligibility';
+    if (/(?:能不能|能否|可以|能)申请(?:吗|么)?$|(?:能否|能不能)获批|申请得下来(?:吗|么)?$/.test(clause)) return 'visa_eligibility';
+    if (/有(?:没有)?资格|符合.{0,20}条件|合法吗|会被拒吗/.test(clause)) return context ?? 'other';
+  }
+  return undefined;
+}
+function isBackgroundFact(goal: Goal, text: string): boolean {
+  const factSlots: Record<Goal, SlotKey[]> = { residence: ['residenceStatus'], company: ['businessType', 'incomeSource'], education: ['schoolPreference'], healthcare: ['hasHealthInsurance'], tax: [] };
+  return enumWords.some(entry => factSlots[goal].includes(entry.slot) && entry.values.some(([, expression]) => expression.test(text)))
+    || goal === 'tax' && /收入|工资|客户/.test(text);
 }
 function interpretMessage(text: string, input: InterpretInput, droppedUpdates: InterpretResult['droppedUpdates']): Interpretation {
   const updates: SlotUpdate[] = [];
@@ -52,6 +66,7 @@ function interpretMessage(text: string, input: InterpretInput, droppedUpdates: I
       let key: SlotKey | undefined;
       if (/收入来自|客户(?:都)?在|工资从/.test(prefix)) key = 'incomeCountry';
       else if (/现在住在|目前(?:住)?在|人在|居住在/.test(prefix)) key = 'currentResidence';
+      else if (/(?:申请|办理|拿到|获得|获取)[^，。！？；,!?;\n]{0,12}$/.test(prefix) && /^(?:的)?(?:[a-z]\d{0,2})?(?:签证|居留)/i.test(suffix)) key = 'destination';
       else if (/搬到|移居|前往|定居|(?:去|到)[^，。]*$/.test(prefix)) key = 'destination';
       else if (/籍|国籍|护照|人/.test(mention.alias + suffix) || /国籍|护照|是/.test(prefix)) {
         if (/都是|我们.*都是/.test(prefix)) { add('applicantNationality', mention.code); add('partnerNationality', mention.code); continue; }
@@ -73,15 +88,25 @@ function interpretMessage(text: string, input: InterpretInput, droppedUpdates: I
       const ages = [...clause.matchAll(new RegExp(`(${numberPattern})\\s*岁`, 'g'))].map(match => chineseNumber(match[1]!)).filter((value): value is number => value !== null);
       if (ages.length) { add('childrenAges', ages); if (!explicitCount) add('childrenCount', ages.length); }
     }
-    const operations = new Map<SlotUpdate['op'], Goal[]>();
-    for (const [goal, expression] of goalWords) {
-      const hit = expression.exec(clause);
-      if (!hit) continue;
-      const prefix = clause.slice(0, hit.index);
-      const op = /只想|只要|只(?:了解|开)|改成|替换成/.test(clause) ? 'set' : /(?:不|没)(?:开|要|需要|考虑|想|了解|办|再|注册){0,3}$/.test(prefix) ? 'remove' : 'add';
-      operations.set(op, [...(operations.get(op) ?? []), goal]);
+    for (const part of clause.split(/(?=而且|并且|另外|同时|但是)|(?<![和及与])(?=已经|已有)/).filter(Boolean)) {
+      const operations = new Map<SlotUpdate['op'], Goal[]>();
+      const explicitRequest = /了解|咨询|建议|方案|帮助|申请|办理|(?:想|计划|打算|准备|要|需要).{0,8}(?:开|注册|创业|做生意)|搬到|移居|定居/.test(part);
+      const topic = professionalTopic(part, input.profile);
+      for (const [goal, expression] of goalWords) {
+        const hit = expression.exec(part);
+        if (!hit) continue;
+        const prefix = part.slice(0, hit.index);
+        const op = /只想|只要|仅(?:想|要|需|了解)|只(?:了解|开)|改成|替换成/.test(part) ? 'set' : /(?:不|没)(?:开|要|需要|考虑|想|了解|办|再|注册){0,3}$/.test(prefix) ? 'remove' : 'add';
+        const professionalRequest = goal === 'residence' && topic === 'visa_eligibility' || goal === 'company' && topic === 'company_setup' || goal === 'tax' && topic === 'tax_amount';
+        const requestIndex = [...prefix.matchAll(/了解|咨询|建议|方案|帮助|申请|办理|改成|替换成|(?:想|计划|打算|准备|要|需要).{0,8}(?:开|注册|创业|做生意)/g)].at(-1)?.index ?? -1;
+        const requestTargetsEarlierGoal = goalWords.some(([earlierGoal, expression]) => earlierGoal !== goal && [...prefix.matchAll(new RegExp(expression.source, 'g'))].some(match => match.index > requestIndex));
+        const coordinatedRequest = /(?:和|及|与)(?:已有的?|已经有的?)?$/.test(prefix);
+        // An earlier request about another topic does not turn the following fact into a request.
+        if (op !== 'remove' && isBackgroundFact(goal, part) && !(explicitRequest && (!requestTargetsEarlierGoal || coordinatedRequest)) && !professionalRequest) continue;
+        operations.set(op, [...(operations.get(op) ?? []), goal]);
+      }
+      for (const [op, value] of operations) add('goals', value, op);
     }
-    for (const [op, value] of operations) add('goals', value, op);
     for (const entry of enumWords) {
       const matches = entry.values.flatMap(([value, expression]) => [...clause.matchAll(new RegExp(expression.source, 'g'))].map(match => ({ value, start: match.index, end: match.index + match[0].length })));
       // A negative phrase can contain a positive one, for example 没有保险 / 有保险.
@@ -96,8 +121,8 @@ function interpretMessage(text: string, input: InterpretInput, droppedUpdates: I
     if (input.pendingSlots[0] === 'hasPartner' && /^(是|有|没有|否|不)$/.test(clause)) add('hasPartner', /^(是|有)$/.test(clause));
     if (input.pendingSlots[0] === 'childrenCount' && /^(没有|无)$/.test(clause)) add('childrenCount', 0);
   }
-  const topic = professionalTopic(text);
-  const related = /出国|出海|移民|签证|目的国|居留|葡萄牙|税|学校|孩子|配偶|公司|医疗/.test(text);
+  const topic = professionalTopic(text, input.profile);
+  const related = /出国|出海|移民|签证|目的国|居留|葡萄牙|税|学校|孩子|配偶|公司|医疗|出发|启程|动身|时间/.test(text);
   const intent = topic ? 'ask_professional' : updates.length || unsure.size || unsureWords.test(text) || related ? 'provide_info' : 'off_topic';
   const combined: SlotUpdate[] = [];
   let lastGoals: SlotUpdate | undefined;

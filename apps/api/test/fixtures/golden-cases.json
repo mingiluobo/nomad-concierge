@@ -2580,13 +2580,6 @@
       "intent": "provide_info",
       "updates": [
         {
-          "slot": "goals",
-          "value": [
-            "company"
-          ],
-          "op": "add"
-        },
-        {
           "slot": "businessType",
           "value": "software"
         }
@@ -2659,13 +2652,6 @@
       "intent": "provide_info",
       "updates": [
         {
-          "slot": "goals",
-          "value": [
-            "education"
-          ],
-          "op": "add"
-        },
-        {
           "slot": "schoolPreference",
           "value": "public"
         }
@@ -2737,13 +2723,6 @@
     "expected": {
       "intent": "provide_info",
       "updates": [
-        {
-          "slot": "goals",
-          "value": [
-            "healthcare"
-          ],
-          "op": "add"
-        },
         {
           "slot": "hasHealthInsurance",
           "value": true
@@ -3887,6 +3866,1481 @@
     "tags": [
       "llm-only",
       "holdout"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G050",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "我能拿到签证吗？"
+    },
+    "expected": {
+      "intent": "ask_professional",
+      "updates": [
+        {
+          "slot": "goals",
+          "value": [
+            "residence"
+          ],
+          "op": "add"
+        }
+      ],
+      "unsure": [],
+      "professionalTopic": "visa_eligibility"
+    },
+    "tags": [
+      "rules",
+      "key",
+      "ux-professional",
+      "visa-eligibility"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G051",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "我是中国籍，有资格申请葡萄牙签证吗？"
+    },
+    "expected": {
+      "intent": "ask_professional",
+      "updates": [
+        {
+          "slot": "applicantNationality",
+          "value": "CN"
+        },
+        {
+          "slot": "destination",
+          "value": "PT"
+        },
+        {
+          "slot": "goals",
+          "value": [
+            "residence"
+          ],
+          "op": "add"
+        }
+      ],
+      "unsure": [],
+      "professionalTopic": "visa_eligibility"
+    },
+    "tags": [
+      "rules",
+      "key",
+      "ux-professional",
+      "country-role"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G052",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "配偶是德国籍，收入来自美国，我能申请葡萄牙签证吗？"
+    },
+    "expected": {
+      "intent": "ask_professional",
+      "updates": [
+        {
+          "slot": "partnerNationality",
+          "value": "DE"
+        },
+        {
+          "slot": "incomeCountry",
+          "value": "US"
+        },
+        {
+          "slot": "destination",
+          "value": "PT"
+        },
+        {
+          "slot": "goals",
+          "value": [
+            "residence"
+          ],
+          "op": "add"
+        }
+      ],
+      "unsure": [],
+      "professionalTopic": "visa_eligibility"
+    },
+    "tags": [
+      "rules",
+      "key",
+      "ux-professional",
+      "country-role"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G053",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "我是中国籍，我能注册公司吗？"
+    },
+    "expected": {
+      "intent": "ask_professional",
+      "updates": [
+        {
+          "slot": "applicantNationality",
+          "value": "CN"
+        },
+        {
+          "slot": "goals",
+          "value": [
+            "company"
+          ],
+          "op": "add"
+        }
+      ],
+      "unsure": [],
+      "professionalTopic": "company_setup"
+    },
+    "tags": [
+      "rules",
+      "ux-professional",
+      "company-setup"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G054",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "收入来自中国，我该缴多少税？"
+    },
+    "expected": {
+      "intent": "ask_professional",
+      "updates": [
+        {
+          "slot": "incomeCountry",
+          "value": "CN"
+        },
+        {
+          "slot": "goals",
+          "value": [
+            "tax"
+          ],
+          "op": "add"
+        }
+      ],
+      "unsure": [],
+      "professionalTopic": "tax_amount"
+    },
+    "tags": [
+      "rules",
+      "ux-professional",
+      "tax-amount"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G055",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "签证申请得下来吗？"
+    },
+    "expected": {
+      "intent": "ask_professional",
+      "updates": [
+        {
+          "slot": "goals",
+          "value": [
+            "residence"
+          ],
+          "op": "add"
+        }
+      ],
+      "unsure": [],
+      "professionalTopic": "visa_eligibility"
+    },
+    "tags": [
+      "rules",
+      "ux-professional",
+      "visa-eligibility"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G056",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "只想了解税务，已经有医疗保险"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "goals",
+          "value": [
+            "tax"
+          ],
+          "op": "set"
+        },
+        {
+          "slot": "hasHealthInsurance",
+          "value": true
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "key",
+      "ux-scope",
+      "background-fact"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G057",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "只想了解税务而且已经有医疗保险"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "goals",
+          "value": [
+            "tax"
+          ],
+          "op": "set"
+        },
+        {
+          "slot": "hasHealthInsurance",
+          "value": true
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "key",
+      "ux-scope",
+      "background-fact"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G058",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "公司主要做软件，孩子想上公立学校"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "businessType",
+          "value": "software"
+        },
+        {
+          "slot": "schoolPreference",
+          "value": "public"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "ux-scope",
+      "background-fact"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G059",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "想咨询孩子上公立学校的事情"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "goals",
+          "value": [
+            "education"
+          ],
+          "op": "add"
+        },
+        {
+          "slot": "schoolPreference",
+          "value": "public"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "ux-scope",
+      "explicit-request"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G060",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "计划三个月后出发"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "timeline",
+          "value": "3to6m"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "key",
+      "ux-time",
+      "boundary"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G061",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "计划半年后出发"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "timeline",
+          "value": "6to12m"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "key",
+      "ux-time",
+      "boundary"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G062",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "三个月内出发"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "timeline",
+          "value": "lt3m"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "key",
+      "ux-time",
+      "boundary"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G063",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "下周出发"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "timeline",
+          "value": "lt3m"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "ux-time",
+      "relative-duration"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G064",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "两个月后出发"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "timeline",
+          "value": "lt3m"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "ux-time",
+      "relative-duration"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G065",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "四个月后出发"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "timeline",
+          "value": "3to6m"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "ux-time",
+      "relative-duration"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G066",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "一年后出发"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "timeline",
+          "value": "gt12m"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "ux-time",
+      "relative-duration"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G067",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": [
+          "timeline"
+        ]
+      },
+      "pendingSlots": [
+        "timeline"
+      ],
+      "text": "等事情处理完再出发"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "key",
+      "ux-time",
+      "relevant-unrecognized"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G068",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "想了解医疗保险"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "goals",
+          "value": [
+            "healthcare"
+          ],
+          "op": "add"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "ux-scope",
+      "explicit-request"
     ],
     "reviewed": false
   }
