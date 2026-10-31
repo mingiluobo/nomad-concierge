@@ -97,7 +97,7 @@ function interpretMessage(text: string, input: InterpretInput, droppedUpdates: I
   }
   const topic = professionalTopic(text);
   const related = /出国|出海|移民|签证|目的国|居留|葡萄牙|税|学校|孩子|配偶|公司|医疗/.test(text);
-  const intent = topic ? 'ask_professional' : updates.length || unsure.size || related ? 'provide_info' : 'off_topic';
+  const intent = topic ? 'ask_professional' : updates.length || unsure.size || unsureWords.test(text) || related ? 'provide_info' : 'off_topic';
   const combined: SlotUpdate[] = [];
   let lastGoals: SlotUpdate | undefined;
   for (const update of updates) {

@@ -9,6 +9,7 @@ const cases = JSON.parse(readFileSync(new URL('../fixtures/golden-cases.json', i
 const engine = new RulesInterpreter();
 const normalize = (result: Interpretation) => ({ ...result, unsure: [...result.unsure].sort(), updates: result.updates.map(update => ({ ...update, op: update.op ?? (update.slot === 'goals' ? 'add' : 'set'), value: update.slot === 'goals' ? [...update.value as string[]].sort() : update.value })).sort((a, b) => a.slot.localeCompare(b.slot)) });
 const interpret = (text: string, pendingSlots: SlotKey[] = []) => engine.interpret({ profile: createEmptyProfile(), pendingSlots, recentMessages: [], newMessages: [{ id: 'm', content: text }] }, new AbortController().signal);
+const uncertaintyExpressions = ['不知道', '不确定', '还没想好', '没想好', '看情况', '跳过', '不清楚'];
 
 describe('rule interpreter', () => {
   it.each(cases.filter(item => item.tags.includes('rules')))('$id follows the independently authored expected interpretation', async item => {
@@ -64,6 +65,29 @@ describe('rule interpreter', () => {
     const result = await interpret('目的地不知道');
     expect(result.interpretation.unsure).toEqual([]);
     expect(result.droppedUpdates).toEqual([{ slot: 'destination', reason: 'This slot does not allow unsure' }]);
+  });
+  describe.each([
+    { context: 'no pending slot', pendingSlots: [] as SlotKey[], unsure: [] as SlotKey[] },
+    { context: 'multiple pending slots', pendingSlots: ['timeline', 'incomeSource'] as SlotKey[], unsure: [] as SlotKey[] },
+    { context: 'one slot forbidding uncertainty', pendingSlots: ['applicantNationality'] as SlotKey[], unsure: [] as SlotKey[] },
+    { context: 'one slot allowing uncertainty', pendingSlots: ['timeline'] as SlotKey[], unsure: ['timeline'] as SlotKey[] },
+  ])('uncertainty with $context', ({ pendingSlots, unsure }) => {
+    it.each(uncertaintyExpressions)('keeps %s relevant without inventing a slot value', async text => {
+      expect((await interpret(text, pendingSlots)).interpretation).toEqual({ intent: 'provide_info', updates: [], unsure });
+    });
+  });
+  it.each([
+    { text: '时间不清楚', unsure: ['timeline'] },
+    { text: '都不知道', unsure: ['timeline', 'incomeSource'] },
+    { text: '都不确定', unsure: ['timeline', 'incomeSource'] },
+    { text: '都没想好', unsure: ['timeline', 'incomeSource'] },
+  ])('preserves explicit uncertainty targeting for $text', async ({ text, unsure }) => {
+    expect((await interpret(text, ['timeline', 'incomeSource'])).interpretation).toEqual({ intent: 'provide_info', updates: [], unsure });
+  });
+  it('gives professional questions priority over uncertainty while preserving extracted information', async () => {
+    expect((await interpret('时间不知道，我是自由职业者，能不能申请？', ['timeline', 'incomeSource'])).interpretation).toEqual({
+      intent: 'ask_professional', professionalTopic: 'visa_eligibility', updates: [{ slot: 'incomeSource', value: 'freelancer' }], unsure: ['timeline'],
+    });
   });
   it.each([['零', 0], ['两', 2], ['十', 10], ['二十五', 25], ['9', 9], ['abc', null]] as const)('parses number %s', (input, value) => expect(chineseNumber(input)).toBe(value));
 });
