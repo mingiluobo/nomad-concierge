@@ -28,7 +28,7 @@ describe('OpenAI-compatible client and interpretation', () => {
     let captured: { url?: string; authorization?: string; body?: unknown } = {};
     const baseUrl = await fake((request, res, body) => { captured = { url: request.url, authorization: request.headers.authorization, body: JSON.parse(body) }; res.end(response(JSON.stringify(legal))); });
     const result = await new LlmInterpreter('remote', { baseUrl, model: 'test-model', apiKey: 'fake-key', timeoutMs: 1000 }).interpret(input(), new AbortController().signal);
-    expect(result).toMatchObject({ interpretation: legal, engineUsed: 'remote', fallbacks: [], droppedUpdates: [], promptVersion: 'v3' });
+    expect(result).toMatchObject({ interpretation: legal, engineUsed: 'remote', fallbacks: [], droppedUpdates: [], promptVersion: 'v4' });
     expect(captured.url).toBe('/v1/chat/completions');
     expect(captured.authorization).toBe('Bearer fake-key');
     expect(captured.body).toEqual({ model: 'test-model', messages: buildPrompt(input()), temperature: 0, max_tokens: 800, response_format: { type: 'json_object' } });
@@ -84,7 +84,7 @@ describe('OpenAI-compatible client and interpretation', () => {
     request.profile.slots.goals = { status: 'known', value: ['tax'] };
     request.profile.slots.incomeSource = { status: 'known', value: 'freelancer' };
     const prompt = buildPrompt(request);
-    expect(PROMPT_VERSION).toBe('v3');
+    expect(PROMPT_VERSION).toBe('v4');
     for (const slot of slotDefinitions) expect(prompt[0]!.content).toContain(slot.llmHint);
     expect(prompt[0]!.content).toContain('不能根据用户使用的语言推断');
     expect(prompt[0]!.content).toContain('只输出newMessages');
