@@ -109,6 +109,18 @@ describe('conversation scroll intent', () => {
     chat.position(150); height = 1800; chat.receive(assistant(6));
     expect(smoothCalls()).toHaveLength(2); expect(top).toBe(150);
   });
+  it('keeps following when pending confirmation shrinks the container and clamps the animation to its new bottom', async () => {
+    const gate = deferred<Awaited<ReturnType<typeof api.send>>>();
+    const send = vi.spyOn(api, 'send').mockReturnValue(gate.promise);
+    const chat = await setup(); chat.position(100); height = 1400; sendText();
+    chat.position(990);
+    height = 1360;
+    await act(async () => gate.resolve({ message: message(5, send.mock.calls[0]![2]), turn: null }));
+    chat.position(960);
+    expect(smoothCalls()).toHaveLength(1);
+    height = 1560; chat.receive(assistant(6));
+    expect(smoothCalls()).toHaveLength(2);
+  });
   it('does not mistake the start of a smooth scroll for requesting older messages', async () => {
     vi.spyOn(api, 'send').mockReturnValue(new Promise(() => undefined));
     const chat = await setup(3); top = 0; sendText(); chat.position(1);
