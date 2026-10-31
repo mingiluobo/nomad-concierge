@@ -1,0 +1,130 @@
+{
+  "candidateCommit": "eb2cecbd30571f870876374d429b05ea4eca4a1f",
+  "executedQaCommit": "77bfd882b108b1e03f55ebe97b3e822d0570c0ea",
+  "initialRegressionQa": "d7709587286d35695da3680579cbc316639c3b96",
+  "specSha256": "8e44ba57788f2284d79b4f98108c7b7e65fa36cfbca50da84b40411a05c0c0a4",
+  "sourceFullRound": "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/results.json",
+  "sourceRegression": "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/results.json",
+  "requiredFullBusinessRounds": 1,
+  "disposition": "处置：规格调整（负责人决定）。优雅停机 attempt 不变、崩溃恢复递增及上限均按候选SPEC回归通过；不记为代码已修复。",
+  "fullBusinessRows": [
+    {
+      "id": "API-073",
+      "title": "API-073 实际 API 进程 SIGKILL 恢复",
+      "result": "通过",
+      "duration": 1569,
+      "evidence": [
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-073-retry0-0-HTTP_201__api_conversations",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-073-retry0-1-HTTP_200__api_conversations_b6fcc81c-2b61-4cc4-b465-a5be317494c2",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-073-retry0-2-HTTP_200__api_conversations_b6fcc81c-2b61-4cc4-b465-a5be317494c2",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-073-retry0-3-HTTP_200__api_conversations_b6fcc81c-2b61-4cc4-b465-a5be317494c2_messages",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-observable-delay-b286f-PI-073-实际-API-进程-SIGKILL-恢复-api/attachments/owned-instance-489b6e9f31acacef2467364afebcd25b8187d4fc.json",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-observable-delay-b286f-PI-073-实际-API-进程-SIGKILL-恢复-api/attachments/fake-requests-c63bb920553439a5c03d24e3f13209f83d694986.json",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-observable-delay-b286f-PI-073-实际-API-进程-SIGKILL-恢复-api/attachments/api-process-bdd088d6f4063f4ec949eb10b5fe80863673f41d.log",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-observable-delay-b286f-PI-073-实际-API-进程-SIGKILL-恢复-api/trace.zip"
+      ],
+      "errors": []
+    },
+    {
+      "id": "API-074",
+      "title": "API-074 SIGTERM 优雅停机续跑",
+      "result": "通过",
+      "duration": 1570,
+      "evidence": [
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-074-retry0-0-HTTP_201__api_conversations",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-074-retry0-1-HTTP_200__api_conversations_d9b118d1-c34b-4802-b07a-7e098c2dc1c8",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-074-retry0-2-graceful-shutdown-events",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-074-retry0-3-HTTP_200__api_conversations_d9b118d1-c34b-4802-b07a-7e098c2dc1c8",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-074-retry0-4-HTTP_200__api_conversations_d9b118d1-c34b-4802-b07a-7e098c2dc1c8_messages",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-074-retry0-5-graceful-attempt-observation",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-observable-delayed-tasks-API-074-SIGTERM-优雅停机续跑-api/attachments/owned-instance-70edc3a36ec009b841f759bd414716404468cdf0.json",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-observable-delayed-tasks-API-074-SIGTERM-优雅停机续跑-api/attachments/fake-requests-16784a9e52efb44eb1ff70da06f4e6a450879c95.json",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-observable-delayed-tasks-API-074-SIGTERM-优雅停机续跑-api/attachments/api-process-762f6cfd7a2409eac35f9d84705088d0ef402309.log",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-observable-delayed-tasks-API-074-SIGTERM-优雅停机续跑-api/trace.zip"
+      ],
+      "errors": []
+    },
+    {
+      "id": "API-075",
+      "title": "API-075 重复崩溃达到恢复次数上限",
+      "result": "通过",
+      "duration": 619,
+      "evidence": [
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-075-retry0-0-HTTP_201__api_conversations",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-075-retry0-1-HTTP_200__api_conversations_dc6cb73a-3980-4f7c-a66a-729c0491825f",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-075-retry0-2-HTTP_200__api_conversations_dc6cb73a-3980-4f7c-a66a-729c0491825f",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-075-retry0-3-HTTP_200__api_conversations_dc6cb73a-3980-4f7c-a66a-729c0491825f",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-075-retry0-4-HTTP_200__api_conversations_dc6cb73a-3980-4f7c-a66a-729c0491825f",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-075-retry0-5-HTTP_200__api_conversations_dc6cb73a-3980-4f7c-a66a-729c0491825f_messages",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-recovery-cap-API-075-重复崩溃达到恢复次数上限-api/attachments/owned-instance-b6530a62f2a215d1ddee6f830bf4afd80237446e.json",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-recovery-cap-API-075-重复崩溃达到恢复次数上限-api/attachments/fake-requests-98ef11186cdecc32415b99bae382eacfd193cc05.json",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-recovery-cap-API-075-重复崩溃达到恢复次数上限-api/attachments/api-process-6d0ccf139539d863123be331481d3c60021a3d78.log",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-recovery-cap-API-075-重复崩溃达到恢复次数上限-api/trace.zip"
+      ],
+      "errors": []
+    },
+    {
+      "id": "API-103",
+      "title": "API-103 第三次尝试优雅停机不耗恢复次数",
+      "result": "通过",
+      "duration": 10733,
+      "evidence": [
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-103-retry0-0-HTTP_201__api_conversations",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-103-retry0-1-HTTP_200__api_conversations_535cc256-fc68-4c2f-9d7d-b8e014aea582",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-103-retry0-2-HTTP_200__api_conversations_535cc256-fc68-4c2f-9d7d-b8e014aea582",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-103-retry0-3-HTTP_200__api_conversations_535cc256-fc68-4c2f-9d7d-b8e014aea582",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-103-retry0-4-HTTP_200__api_conversations_535cc256-fc68-4c2f-9d7d-b8e014aea582",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-103-retry0-5-HTTP_200__api_conversations_535cc256-fc68-4c2f-9d7d-b8e014aea582_messages",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-103-retry0-6-attempt-three-graceful-recovery",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/attachments/API-103-retry0-7-attempt-three-socket-events",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-recovery-cap-API-103-第三次尝试优雅停机不耗恢复次数-api/attachments/owned-instance-97863d3b6f227fd5d4abda71d073258ebe37fe92.json",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-recovery-cap-API-103-第三次尝试优雅停机不耗恢复次数-api/attachments/fake-requests-3003591248dacbf801d5d860dc8fdff1da28ad3d.json",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-recovery-cap-API-103-第三次尝试优雅停机不耗恢复次数-api/attachments/api-process-abe18f1531d7dd6133b641c7b6fe32a00958add3.log",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/round-1/artifacts/api-turns-recovery-cap-API-103-第三次尝试优雅停机不耗恢复次数-api/trace.zip"
+      ],
+      "errors": []
+    }
+  ],
+  "targetedRows": [
+    {
+      "id": "API-074",
+      "title": "API-074 SIGTERM 优雅停机续跑",
+      "result": "通过",
+      "duration": 1567,
+      "evidence": [
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/attachments/API-074-retry0-0-HTTP_201__api_conversations",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/attachments/API-074-retry0-1-HTTP_200__api_conversations_812625b8-e9b3-4c4c-a4a3-6e4e68552a28",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/attachments/API-074-retry0-2-graceful-shutdown-events",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/attachments/API-074-retry0-3-HTTP_200__api_conversations_812625b8-e9b3-4c4c-a4a3-6e4e68552a28",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/attachments/API-074-retry0-4-HTTP_200__api_conversations_812625b8-e9b3-4c4c-a4a3-6e4e68552a28_messages",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/attachments/API-074-retry0-5-graceful-attempt-observation",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/artifacts/api-turns-observable-delayed-tasks-API-074-SIGTERM-优雅停机续跑-api/attachments/owned-instance-202f809d58e9b30fe67d9538bec19494c148f5b4.json",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/artifacts/api-turns-observable-delayed-tasks-API-074-SIGTERM-优雅停机续跑-api/attachments/fake-requests-8f5ffa0c776c9d3fe0501077cf11dc1a21efd2cc.json",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/artifacts/api-turns-observable-delayed-tasks-API-074-SIGTERM-优雅停机续跑-api/attachments/api-process-40c6346e41b5e6110fd09e41c3f917960c6483e6.log",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/artifacts/api-turns-observable-delayed-tasks-API-074-SIGTERM-优雅停机续跑-api/trace.zip"
+      ],
+      "errors": []
+    },
+    {
+      "id": "API-103",
+      "title": "API-103 第三次尝试优雅停机不耗恢复次数",
+      "result": "通过",
+      "duration": 10713,
+      "evidence": [
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/attachments/API-103-retry0-0-HTTP_201__api_conversations",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/attachments/API-103-retry0-1-HTTP_200__api_conversations_70575f26-52fe-459f-ae50-5450c6823bf1",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/attachments/API-103-retry0-2-HTTP_200__api_conversations_70575f26-52fe-459f-ae50-5450c6823bf1",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/attachments/API-103-retry0-3-HTTP_200__api_conversations_70575f26-52fe-459f-ae50-5450c6823bf1",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/attachments/API-103-retry0-4-HTTP_200__api_conversations_70575f26-52fe-459f-ae50-5450c6823bf1",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/attachments/API-103-retry0-5-HTTP_200__api_conversations_70575f26-52fe-459f-ae50-5450c6823bf1_messages",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/attachments/API-103-retry0-6-attempt-three-graceful-recovery",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/attachments/API-103-retry0-7-attempt-three-socket-events",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/artifacts/api-turns-recovery-cap-API-103-第三次尝试优雅停机不耗恢复次数-api/attachments/owned-instance-e0e4818b53c588d72653e1ce42c64cbc3c3be8dd.json",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/artifacts/api-turns-recovery-cap-API-103-第三次尝试优雅停机不耗恢复次数-api/attachments/fake-requests-5a05f2493fd0a43da4c72f0216f7f5f168c77ebe.json",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/artifacts/api-turns-recovery-cap-API-103-第三次尝试优雅停机不耗恢复次数-api/attachments/api-process-f8b291e0c6c85ee7f5eb441cad833da64a61fa2e.log",
+        "qa/reports/2026-10-31T13-36-03.597Z-122febfa/regression/round-1/artifacts/api-turns-recovery-cap-API-103-第三次尝试优雅停机不耗恢复次数-api/trace.zip"
+      ],
+      "errors": []
+    }
+  ]
+}

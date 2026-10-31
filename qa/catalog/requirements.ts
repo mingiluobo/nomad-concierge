@@ -1,6 +1,10 @@
 export interface Requirement { id: string; text: string; extraCases?: string[] }
 const numbered = (prefix: string, texts: string[]): Requirement[] => texts.map((text, index) => ({ id: `${prefix}-${String(index + 1).padStart(2, '0')}`, text }));
 export const requirements: Requirement[] = [
+  { id: 'FIX-country-aliases', text: 'SPEC §5.1/8.2：国家别称扩充保持代码、展示名及上下文；排除加国/大马碰词', extraCases: ['API-104', 'API-105'] },
+  { id: 'FIX-short-answers', text: 'SPEC §8.2：有追问的无法归属短答不猜档案并重新追问；无追问及明确无关请求保持原意图', extraCases: ['API-106', 'API-107', 'API-108'] },
+  { id: 'FIX-process-summary', text: 'SPEC §13.5：按当前配置区分未配置与故障回退摘要；缺少当前状态仍提示回退，保存过程数据不改写', extraCases: ['E2E-006', 'E2E-036', 'E2E-037', 'E2E-038'] },
+  { id: 'FIX-scroll', text: 'SPEC §13.5：本人发送平滑到底，其他消息仅近底部跟随，历史翻页及切会话保留正确定位', extraCases: ['E2E-012', 'E2E-018', 'E2E-032', 'E2E-033', 'E2E-034', 'E2E-035'] },
   ...numbered('H', [
     '无模型本地多轮交互、按已知信息调整下一问、计划相关', '部分回答和修正保留已有有效信息、不重复询问、不固定输出',
     '中文不等于国籍、居住国或身份', '可恢复结构化档案和可执行初步计划，便于用户与人工理解',

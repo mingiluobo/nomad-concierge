@@ -61,6 +61,20 @@ class Normalizer:
         if '/' not in text and '\\' not in text:
             return text
         text = re.sub(r'file://(?=/(?:Users|home|private|var/folders|tmp)/)', '', text)
+        if not source and ('../' in text or '..qa/' in text):
+            # Some CLI reporters relativize an absolute artifact path from a
+            # temporary working directory, producing ../../Users/... . Consume
+            # that whole known-root prefix before the absolute-root mapping.
+            for old, new in self.mappings:
+                if not old.startswith('/'):
+                    continue
+                pattern = r'(?<![\w./])(?:\.\./)+' + re.escape(old.lstrip('/'))
+                if not old.endswith('/'):
+                    pattern += r'(?=/|[\s"\'<>`):,]|$)'
+                text = re.sub(pattern, lambda _: new, text)
+            # Repair the exact malformed prefix emitted by older normalization.
+            # Keep this out of source files so relative imports remain untouched.
+            text = re.sub(r'(?<![\w./])(?:\.\./)*\.\.qa/', 'qa/', text)
         for old, new in self.mappings:
             # A mapping is a complete root or a root plus slash, never a partial directory name.
             if old.endswith('/'):
@@ -282,7 +296,15 @@ def self_test(directory):
                       'resources/image.png': png})
     report = make_zip({'report.json': json.dumps({'attachments': [{'path': 'data/trace.zip'}], 'file': root + '/qa/tests/ws/protocol.spec.ts'})})
     html = '<html><script id="playwrightReportBase64">data:application/zip;base64,' + base64.b64encode(report).decode() + '</script><img src="data:image/png;base64,' + base64.b64encode(png).decode() + '"></html>'
-    fixtures = {'trace.zip': trace, 'index.html': html.encode(), 'metadata.json': json.dumps({'root': root, 'candidate': candidate, 'cache': '/root/.npm/_logs/check.log', 'status': 'failed'}).encode()}
+    cli_paths = '\n'.join([
+        '../' * 9 + root.lstrip('/') + '/qa/reports/trace.zip',
+        '../' * 9 + quote(root.lstrip('/'), safe='/') + '/qa/reports/trace.zip',
+        '../' * 8 + '..qa/reports/trace.zip',
+    ]) + '\n'
+    relative_imports = "import { value } from '../../../../qa/fixtures/example.js';\nimport other from '../support.js';\n"
+    fixtures = {'trace.zip': trace, 'index.html': html.encode(),
+                'metadata.json': json.dumps({'root': root, 'candidate': candidate, 'cache': '/root/.npm/_logs/check.log', 'status': 'failed'}).encode(),
+                'cli-paths.log': cli_paths.encode(), 'relative-imports.ts': relative_imports.encode()}
     outputs = {}
     for name, before in fixtures.items():
         after = normalizer.bytes(before, name)
@@ -309,13 +331,15 @@ def self_test(directory):
         assert report_json['file'] == 'qa/tests/ws/protocol.spec.ts'
     assert base64.b64decode(uris[1].group(2)) == png
     assert json.loads(outputs['metadata.json'])['status'] == 'failed'
+    assert outputs['cli-paths.log'].decode() == 'qa/reports/trace.zip\n' * 3
+    assert outputs['relative-imports.ts'].decode() == relative_imports
     assert not normalizer.findings, normalizer.findings
     repeated = Normalizer(root, candidate)
     for name, after in outputs.items():
         assert repeated.bytes(after, name) == after
     assert not repeated.findings
     result = {'purpose': 'qa-tool-self-check', 'productTestsExecuted': False, 'passed': True,
-              'checks': ['ZIP CRC', 'embedded report ZIP', 'JSON and JSONL parsing', 'resource reference preservation', 'SHA1 source-link remapping', 'binary preservation', 'HTTP route and signal preservation', 'source system constant preservation', 'idempotent bytes', 'no machine paths']}
+              'checks': ['ZIP CRC', 'embedded report ZIP', 'JSON and JSONL parsing', 'resource reference preservation', 'SHA1 source-link remapping', 'binary preservation', 'HTTP route and signal preservation', 'source system constant preservation', 'CLI relative root normalization', 'malformed QA prefix repair', 'relative source import preservation', 'idempotent bytes', 'no machine paths']}
     (directory / 'self-test-result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')
     print(json.dumps(result, ensure_ascii=False))
 
