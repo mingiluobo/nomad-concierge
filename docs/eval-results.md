@@ -1,5 +1,118 @@
 # Interpretation evaluation
 
+Run time: 2026-10-31T12:15:47.480Z
+Dataset SHA-256: aa77d3aa1ec79be3c472af24a98cd6518d2e11caedc5fb38e672038026a13e22
+Dataset: 68 cases; tags: ages, all-unsure, ambiguous-unsure, append-goals, arabic-number, assignment, background-fact, boundary, business, chinese-number, company-setup, correction, country-role, explicit-request, holdout, income, insurance, invalid-country, key, llm-only, mixed-information, multi-slot, negation, no-children, no-nationality-inference, not-professional-question, off-topic, ordinary-intention, preserve-unmentioned, professional, prompt-injection, question-variant, relative-duration, relevant-unrecognized, replace-goals, residence-status, rules, school, shared-nationality, short-answer, solo, targeted-unsure, tax-amount, timeline, unsupported-destination, unsure, unsure-forbidden, ux-professional, ux-scope, ux-time, visa-eligibility; key cases reviewed: 26/26
+Models: rules: deterministic rules; remote: deepseek-chat; local: qwen2.5:7b-instruct
+Prompt version: v4 (LLM only; rules: n/a)
+
+| Engine | Intent accuracy | Update precision | Update recall | Unsure accuracy | Semantic accuracy | Average ms | Failures |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| rules | 62/62 (100.0%) | 81/81 (100.0%) | 81/81 (100.0%) | 62/62 (100.0%) | 62/62 (100.0%) | 0.28 | {} |
+| remote | 67/68 (98.5%) | 92/92 (100.0%) | 92/92 (100.0%) | 68/68 (100.0%) | 68/68 (100.0%) | 1024.89 | {} |
+| local | 58/68 (85.3%) | 52/64 (81.3%) | 52/92 (56.5%) | 56/68 (82.4%) | 37/68 (54.4%) | 1209.11 | {"invalid_output":9} |
+
+Update matches compare (slot, normalized value, operation); absent operations mean add for goals and set otherwise. Goal values are compared as sets. Semantic accuracy compares the resulting reconciled profiles. Failed cases remain in accuracy/recall denominators.
+
+Skipped cases / engines:
+- rules G044: llm-only case
+- rules G045: llm-only case
+- rules G046: llm-only case
+- rules G047: llm-only case
+- rules G048: llm-only case
+- rules G049: llm-only case
+
+## 第5次真实评估：范围与保留决定
+
+- 冻结产品提交 `3da5f25fa72d46e641f1185a492a8ecb7d84cbc5`，提示词v4。唯一代码变更为提示词措辞和版本；单元测试仅同步两处版本元数据断言。业务规则、标准用例、校验器、规则引擎和评估算法均未修改。
+- 本轮仅执行一次 `--engines rules,remote,local`，Node 24.22.2 / macOS arm64；两种模型各68次解释调用，无重跑、无额外真实产品冒烟。规则执行62条，其余6条按llm-only标签明确跳过。
+- 数据集与v3字节相同（SHA-256见原始汇总），26/26 key用例已人工审核。作者未读取对照内容或真实评估结果；冻结前经独立规则一致性审查。旧40条与6条对照的文本、输入和期望在v2/v3/v4间完全相同（审核标记不参与评分）。
+- 在评估开始前确定保留条件：remote旧40条严格通过高于29/40；remote独立6条不低于5/6；remote UX-04已通过的8条范围/事实用例G034–G036、G056–G059、G068不退步。local实际结果单独披露，不通过重复运行挑分数。
+- 本次判定：**保留v4**。remote旧40严格39/40，对照6/6，remote范围/事实用例8/8。评估后不再修改提示词或继续调参。
+- 第5次结果与下面历史v3、v2均为单次样本，不代表稳定性保证。耗时可能受服务和模型加载状态影响，没有为提高分数额外预热或延长应用超时配置。
+- 评估直接调用各指定引擎，invalid_output等错误没有用规则回退结果替代；所有失败留在准确率与召回分母。真实模型评估不计入QA放行。
+
+## v2 / v3 / v4：旧40条与独立6条
+
+严格逐项通过同时检查意图、专业主题、更新的值和操作、unsure及合并后的档案，不能与仅比较档案的Semantic accuracy混用。旧40为G001–G043剔除因UX-04改变期望的G034–G036；独立6条为G044–G049。
+
+| 分组 / 引擎 | 最终v2 | v3 | v4 |
+| --- | --- | --- | --- |
+| 旧40 / remote | 35/40 (87.5%) | 29/40 (72.5%) | 39/40 (97.5%) |
+| 独立6 / remote | 5/6 | 5/6 | 6/6 |
+| 旧40 / local | 未运行 | 18/40 (45.0%) | 19/40 (47.5%) |
+| 独立6 / local | 未运行 | 3/6 | 3/6 |
+
+local改善有限：总体invalid_output由12次降至9次，但旧40条内由5次增至7次，保护UX-04组仍仅4/8；不能把remote的8/8用于描述local。
+
+历史旧40严格数由原始逐例未通过清单核算；未保存的历史分组耗时和完整逐例输出不重建、不估算。规则旧40在v2/v3/v4均40/40，独立6条一直按标签跳过。
+
+| 对照 | remote v2 | remote v3 | remote v4 | local v3 | local v4 |
+| --- | --- | --- | --- | --- | --- |
+| G044 | 通过 | 通过 | 通过 | 通过 | 通过 |
+| G045 | 通过 | 通过 | 通过 | 通过 | 通过 |
+| G046 | 通过 | 通过 | 通过 | invalid_output | 内容不一致 |
+| G047 | 通过 | 通过 | 通过 | 内容不一致 | 内容不一致 |
+| G048 | 通过 | 通过 | 通过 | 通过 | 通过 |
+| G049 | 内容不一致 | 内容不一致 | 通过 | invalid_output | 内容不一致 |
+
+## v4 remote逐条未通过
+
+严格通过67/68。以下分类只描述可观察差异，不推断模型内部原因。
+
+| 用例 | 差异 |
+| --- | --- |
+| G012 | intent off_topic，期望provide_info |
+
+## v4 local逐条未通过
+
+严格通过32/68。以下分类只描述可观察差异，不推断模型内部原因。
+
+| 用例 | 差异 |
+| --- | --- |
+| G001 | invalid_output（未得到合法Interpretation） |
+| G004 | unsure ['childrenAges']，期望[] |
+| G006 | 遗漏/不同值或op：["goals",["company"],"remove"]；多出/不同值或op：["goals",["residence"],"remove"] |
+| G008 | 遗漏/不同值或op：["goals",["residence"],"add"] |
+| G010 | 遗漏/不同值或op：["goals",["residence"],"add"] |
+| G011 | intent provide_info，期望off_topic |
+| G013 | 遗漏/不同值或op：["goals",["tax"],"add"]；多出/不同值或op：["goals",["company","residence","tax"],"add"] |
+| G015 | unsure []，期望['timeline', 'incomeSource'] |
+| G021 | 遗漏/不同值或op：["childrenCount",2,"set"] |
+| G023 | invalid_output（未得到合法Interpretation） |
+| G024 | 遗漏/不同值或op：["partnerNationality","CN","set"]；多出/不同值或op：["hasPartner",true,"set"] |
+| G027 | invalid_output（未得到合法Interpretation） |
+| G028 | invalid_output（未得到合法Interpretation） |
+| G029 | invalid_output（未得到合法Interpretation） |
+| G031 | 遗漏/不同值或op：["goals",["residence"],"add"] |
+| G038 | 遗漏/不同值或op：["timeline","6to12m","set"]；多出/不同值或op：["hasPartner",true,"set"], ["timeline","gt12m","set"]；逐值校验丢弃1项 |
+| G039 | 遗漏/不同值或op：["goals",["residence"],"add"] |
+| G040 | 遗漏/不同值或op：["goals",["tax"],"add"] |
+| G041 | invalid_output（未得到合法Interpretation） |
+| G042 | 遗漏/不同值或op：["goals",["residence"],"add"] |
+| G043 | invalid_output（未得到合法Interpretation） |
+| G046 | 多出/不同值或op：["goals",["residence"],"remove"] |
+| G047 | 遗漏/不同值或op：["goals",["education"],"set"]；多出/不同值或op：["goals",["education"],"remove"] |
+| G049 | 遗漏/不同值或op：["incomeSource","freelancer","set"]；unsure []，期望['timeline'] |
+| G050 | invalid_output（未得到合法Interpretation） |
+| G051 | 遗漏/不同值或op：["destination","PT","set"], ["goals",["residence"],"add"] |
+| G052 | 遗漏/不同值或op：["destination","PT","set"], ["goals",["residence"],"add"] |
+| G053 | 遗漏/不同值或op：["goals",["company"],"add"] |
+| G054 | 遗漏/不同值或op：["goals",["tax"],"add"] |
+| G055 | invalid_output（未得到合法Interpretation） |
+| G056 | 遗漏/不同值或op：["goals",["tax"],"set"]；多出/不同值或op：["goals",["tax"],"add"] |
+| G057 | 遗漏/不同值或op：["goals",["tax"],"set"]；多出/不同值或op：["goals",["tax"],"add"] |
+| G059 | 遗漏/不同值或op：["schoolPreference","public","set"] |
+| G060 | 遗漏/不同值或op：["timeline","3to6m","set"]；多出/不同值或op：["timeline","lt3m","set"] |
+| G067 | 多出/不同值或op：["timeline","gt12m","set"] |
+| G068 | 遗漏/不同值或op：["goals",["healthcare"],"add"]；多出/不同值或op：["hasHealthInsurance",true,"set"] |
+
+## 历史记录：第4次v3与此前v1/v2
+
+下文保留此前报告、指标和逐条差异。其中“最终v3”“最终v2”、产品冒烟、审核状态及阶段性次数描述均指各自历史阶段，不表示当前候选仍采用该版本。没有重新执行这些历史实验；本轮仅新增前面的第5次v4结果。
+
+### Interpretation evaluation
+
 Run time: 2026-10-31T11:54:23.595Z
 Dataset SHA-256: aa77d3aa1ec79be3c472af24a98cd6518d2e11caedc5fb38e672038026a13e22
 Dataset: 68 cases; tags: ages, all-unsure, ambiguous-unsure, append-goals, arabic-number, assignment, background-fact, boundary, business, chinese-number, company-setup, correction, country-role, explicit-request, holdout, income, insurance, invalid-country, key, llm-only, mixed-information, multi-slot, negation, no-children, no-nationality-inference, not-professional-question, off-topic, ordinary-intention, preserve-unmentioned, professional, prompt-injection, question-variant, relative-duration, relevant-unrecognized, replace-goals, residence-status, rules, school, shared-nationality, short-answer, solo, targeted-unsure, tax-amount, timeline, unsupported-destination, unsure, unsure-forbidden, ux-professional, ux-scope, ux-time, visa-eligibility; key cases reviewed: 26/26
@@ -22,7 +135,7 @@ Skipped cases / engines:
 - rules G048: llm-only case
 - rules G049: llm-only case
 
-## 最终 v3 执行范围与解释
+### 最终 v3 执行范围与解释
 
 - 本节是用户追加授权的第4次真实评估：在产品提交 `2f6a91642d31c5ba27776cfaa3db48b3f28af4f8` 的独立临时副本执行评估入口 `--engines rules,remote,local`，Node 24.22.2 / macOS arm64。最终候选随后仅补充报告、README 和 QA 文件；产品实现与本轮相同。
 - 前三次 v1/v2 实验使用原49条标准，历史数据完整保留在后文。v3 同步了资格问法、事实不扩张诉求和相对时长规则；当前为68条，且G034–G036按人工裁定移除了从事实自动添加诉求的期望。因此不能把两个全量百分比直接当作同一数据集上的提升或下降。
@@ -33,7 +146,7 @@ Skipped cases / engines:
 - 本地使用已安装的 `qwen2.5:7b-instruct`、Ollama OpenAI兼容入口及应用读取到的超时配置，未额外延长超时；产品冒烟先于评估，因此本轮耗时属于模型已有加载的状态。未另跑可选的local/v1对照。
 - 以下失败分类仅依据实际输出差异，不推断模型内部原因；未保留完整模型请求或密钥。扫描所有工作树、进度文档所在目录与临时副本，除获准的原始配置文件外，密钥残留为0。真实模型结果不计入QA放行。
 
-## 六条独立对照的版本结果
+### 六条独立对照的版本结果
 
 | 用例 | remote v1 | remote 最终v2 | remote v3 | local v3 |
 | --- | --- | --- | --- | --- |
@@ -46,7 +159,7 @@ Skipped cases / engines:
 
 远程独立对照严格通过：3/6 → 5/6 → 5/6；local/v3为3/6。v3远程G049这次识别出freelancer，但遗漏tax诉求；v2同例遗漏的是freelancer，两次都不算通过。local G046/G049为结构失败，G047把替换education错误地写成remove。
 
-## 最终 v3 remote：逐条未通过
+### 最终 v3 remote：逐条未通过
 
 | 用例 | 可观察差异 |
 | --- | --- |
@@ -69,7 +182,7 @@ Skipped cases / engines:
 | G055 | 遗漏/不同值或op：["goals",["residence"],"add"] |
 | G060 | 遗漏/不同值或op：["timeline","3to6m","set"]；多出/不同值或op：["timeline","lt3m","set"] |
 
-## 最终 v3 local：逐条未通过
+### 最终 v3 local：逐条未通过
 
 | 用例 | 可观察差异 |
 | --- | --- |
@@ -112,7 +225,7 @@ Skipped cases / engines:
 | G067 | 多出/不同值或op：["timeline","gt12m","set"] |
 | G068 | 遗漏/不同值或op：["goals",["healthcare"],"add"]；unsure ['hasHealthInsurance']，期望[] |
 
-## 本地模型产品路径与README实操
+### 本地模型产品路径与README实操
 
 在同一产品提交的另一个独立副本，按README环境变量启动真实 `npm run dev`，动态端口和独立数据库，不配置远程Key。通过API创建选择local的咨询，再由浏览器核对实际界面。每轮耗时为发送至任务完成的墙钟时间，与解释器评估耗时不同。
 
@@ -124,11 +237,11 @@ Skipped cases / engines:
 
 3轮均完成，但只有2/3满足“由local完成且无回退”。平均3928ms，首轮结构失败未通过重跑隐藏。本地接入与回退链可用，但这次观察不能证明本地模型稳定满足抽取格式或质量要求。浏览器显示“本地模型”、提示词v3、回退说明及修正/不确定档案；新咨询可选择本地模型，未追加第4轮推理。README已补全macOS/Linux与PowerShell配置命令；macOS实际操作，PowerShell仅静态核对。所有自有服务已停止。
 
-## 历史：v1/v2 提示词改进实验（冻结49条标准）
+### 历史：v1/v2 提示词改进实验（冻结49条标准）
 
 以下为前三次实验的原始汇总和逐条结论；其中审核状态、G034–G036期望及“最终v2”均指该历史阶段，不表示当前v3仍使用旧标准。“没有第四次”仅描述当时三次实验，之后的额外授权执行见本文开头。
 
-### 原始 v2 汇总（49条）
+#### 原始 v2 汇总（49条）
 
 Run time: 2026-10-31T11:13:05.063Z
 Dataset SHA-256: 4d23757c66b9737d3f5f442f72625b323799f1dd75159c250089c2a57fd34085
@@ -151,7 +264,7 @@ Skipped cases / engines:
 - rules G048: llm-only case
 - rules G049: llm-only case
 
-### 本轮方法与版本
+#### 本轮方法与版本
 
 - 执行日期：2026-10-31；运行环境：macOS arm64，Node 24.22.2；远程配置模型：`deepseek-chat`。
 - 共执行三次 `--engines rules,remote` 评估，每次远程实际运行49条，未跳过；规则引擎运行43条，按标签跳过6条llm-only对照。没有进行第四次评估。
@@ -167,7 +280,7 @@ Skipped cases / engines:
 | 中间 v2 | `a73b6512d58200b84334e3fb67d78f0d2eda5908` | `v2` |
 | 最终 v2 | `ffe119edbe1e3b756047bba921a395b55222577b` | `v2` |
 
-### 前后指标（远程全部49条）
+#### 前后指标（远程全部49条）
 
 | 运行 | 意图准确率 | 更新精确率 | 更新召回率 | unsure准确率 | 档案语义准确率 | 严格逐项通过 | 平均ms | 运行失败 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -177,7 +290,7 @@ Skipped cases / engines:
 
 严格逐项通过要求意图、专业主题、更新集合（含op）、unsure及合并后的档案全部符合期望。运行失败指超时、不可用或输出结构异常；本轮三次均为0，原因集合均为空。内容不一致仍计入准确率分母，不能因为调用成功而算用例通过。
 
-### 分组比较（防止已有用例掩盖对照表现）
+#### 分组比较（防止已有用例掩盖对照表现）
 
 | 分组/运行 | 意图 | 更新精确率 | 更新召回率 | unsure | 档案语义 | 严格逐项 | 平均ms |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -188,7 +301,7 @@ Skipped cases / engines:
 | 独立6条 / 中间 v2 | 6/6 (100.0%) | 11/11 (100.0%) | 11/11 (100.0%) | 6/6 (100.0%) | 6/6 (100.0%) | 6/6 (100.0%) | 899 |
 | 独立6条 / 最终 v2 | 6/6 (100.0%) | 10/10 (100.0%) | 10/11 (90.9%) | 6/6 (100.0%) | 5/6 (83.3%) | 5/6 (83.3%) | 1022.41 |
 
-### 基线已有用例：逐条不一致及分类
+#### 基线已有用例：逐条不一致及分类
 
 以下按可观察差异归类，不能据此断言模型内部原因。被取值校验丢弃的更新只记录了`Invalid slot value or operation`，不虚构未保存的原始格式。
 
@@ -221,7 +334,7 @@ Skipped cases / engines:
 
 基线已有43条中24条不一致。最终已有集剩7条：G010、G028、G034、G036、G039、G042仍漏相应goals更新；G012仍把相关但含非法目的国的输入判为off_topic。最终没有非法槽位更新被丢弃。
 
-### 六条独立对照：逐条前后结果
+#### 六条独立对照：逐条前后结果
 
 | 用例 | 基线v1 | 中间v2 | 最终v2 | 基线差异/最终观察 |
 | --- | --- | --- | --- | --- |
@@ -234,7 +347,7 @@ Skipped cases / engines:
 
 对照最终5/6，与中间版本6/6不同；未针对G049继续调参。6条样本较少且尚未人工审核，不能据此宣称普遍效果或稳定性。
 
-### 结论与未解决项
+#### 结论与未解决项
 
 - 采用最终v2：已有集档案语义准确率由21/43提升到37/43；独立对照由3/6提升到5/6。全部49条语义准确率由24/49提升到42/49。
 - 规则引擎在其43条适用用例上各指标仍为100%；6条对照依标签明确未执行规则评估。远程最终仍有8条内容不一致（7条已有用例、G049一条对照），未将这些遗漏修补到业务规则或校验逻辑。
