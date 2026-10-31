@@ -3330,5 +3330,564 @@
       "not-professional-question"
     ],
     "reviewed": true
+  },
+  {
+    "id": "G044",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "known",
+            "value": "PT"
+          },
+          "goals": {
+            "status": "known",
+            "value": [
+              "residence"
+            ]
+          },
+          "applicantNationality": {
+            "status": "known",
+            "value": "JP"
+          },
+          "hasPartner": {
+            "status": "known",
+            "value": true
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": [
+          "partnerNationality"
+        ]
+      },
+      "pendingSlots": [
+        "partnerNationality"
+      ],
+      "text": "跟我同一个国籍。"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "partnerNationality",
+          "value": "JP",
+          "op": "set"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "llm-only",
+      "holdout"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G045",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "known",
+            "value": "PT"
+          },
+          "goals": {
+            "status": "known",
+            "value": [
+              "residence"
+            ]
+          },
+          "applicantNationality": {
+            "status": "known",
+            "value": "CN"
+          },
+          "hasPartner": {
+            "status": "known",
+            "value": false
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "known",
+            "value": 0
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "known",
+            "value": "CN"
+          },
+          "residenceStatus": {
+            "status": "known",
+            "value": "citizen"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": [
+          "timeline",
+          "incomeSource"
+        ]
+      },
+      "pendingSlots": [
+        "timeline",
+        "incomeSource"
+      ],
+      "text": "我把现居地说成中国是口误；眼下住的是新加坡，持当地工作签证。"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "currentResidence",
+          "value": "SG",
+          "op": "set"
+        },
+        {
+          "slot": "residenceStatus",
+          "value": "work_or_study_visa",
+          "op": "set"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "llm-only",
+      "holdout"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G046",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "known",
+            "value": "PT"
+          },
+          "goals": {
+            "status": "known",
+            "value": [
+              "residence",
+              "company",
+              "tax"
+            ]
+          },
+          "applicantNationality": {
+            "status": "known",
+            "value": "CN"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": [
+          "hasPartner",
+          "childrenCount"
+        ]
+      },
+      "pendingSlots": [
+        "hasPartner",
+        "childrenCount"
+      ],
+      "text": "把公司那项先划掉吧，其余的照旧。"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "goals",
+          "value": [
+            "company"
+          ],
+          "op": "remove"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "llm-only",
+      "holdout"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G047",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "known",
+            "value": "PT"
+          },
+          "goals": {
+            "status": "known",
+            "value": [
+              "residence",
+              "company",
+              "tax",
+              "healthcare"
+            ]
+          },
+          "applicantNationality": {
+            "status": "known",
+            "value": "CN"
+          },
+          "hasPartner": {
+            "status": "known",
+            "value": true
+          },
+          "partnerNationality": {
+            "status": "known",
+            "value": "CN"
+          },
+          "childrenCount": {
+            "status": "known",
+            "value": 1
+          },
+          "childrenAges": {
+            "status": "known",
+            "value": [
+              8
+            ]
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": [
+          "currentResidence",
+          "residenceStatus"
+        ]
+      },
+      "pendingSlots": [
+        "currentResidence",
+        "residenceStatus"
+      ],
+      "text": "接下来就只管孩子上学这件事，别的先都搁下。"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "goals",
+          "value": [
+            "education"
+          ],
+          "op": "set"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "llm-only",
+      "holdout"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G048",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "known",
+            "value": "PT"
+          },
+          "goals": {
+            "status": "known",
+            "value": [
+              "residence"
+            ]
+          },
+          "applicantNationality": {
+            "status": "known",
+            "value": "CN"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": [
+          "hasPartner",
+          "childrenCount"
+        ]
+      },
+      "pendingSlots": [
+        "hasPartner",
+        "childrenCount"
+      ],
+      "text": "这趟只有我跟两个娃一起去，一个刚满七岁，另一个十岁。出发就定在四个月后。孩子爸爸留在国内，不同行。"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "hasPartner",
+          "value": false,
+          "op": "set"
+        },
+        {
+          "slot": "childrenCount",
+          "value": 2,
+          "op": "set"
+        },
+        {
+          "slot": "childrenAges",
+          "value": [
+            7,
+            10
+          ],
+          "op": "set"
+        },
+        {
+          "slot": "timeline",
+          "value": "3to6m",
+          "op": "set"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "llm-only",
+      "holdout"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G049",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "known",
+            "value": "PT"
+          },
+          "goals": {
+            "status": "known",
+            "value": [
+              "residence"
+            ]
+          },
+          "applicantNationality": {
+            "status": "known",
+            "value": "CN"
+          },
+          "hasPartner": {
+            "status": "known",
+            "value": false
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "known",
+            "value": 0
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "known",
+            "value": "CN"
+          },
+          "residenceStatus": {
+            "status": "known",
+            "value": "citizen"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": [
+          "timeline",
+          "incomeSource"
+        ]
+      },
+      "pendingSlots": [
+        "timeline",
+        "incomeSource"
+      ],
+      "text": "再帮我看看税务这件事吧：像我这样只靠接项目拿报酬的人，到底要缴多少？具体出发时间我这会儿定不下来。"
+    },
+    "expected": {
+      "intent": "ask_professional",
+      "updates": [
+        {
+          "slot": "goals",
+          "value": [
+            "tax"
+          ],
+          "op": "add"
+        },
+        {
+          "slot": "incomeSource",
+          "value": "freelancer",
+          "op": "set"
+        }
+      ],
+      "unsure": [
+        "timeline"
+      ],
+      "professionalTopic": "tax_amount"
+    },
+    "tags": [
+      "llm-only",
+      "holdout"
+    ],
+    "reviewed": false
   }
 ]
