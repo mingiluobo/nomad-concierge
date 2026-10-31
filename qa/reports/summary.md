@@ -658,3 +658,7 @@ README 操作、离线构建隔离及开发证据核对见 `qa/reports/2026-10-3
 失败、受阻、跳过和不稳定均保留。环境 ENV-005 的受阻来源是最终交付包未提供；不作为产品缺陷，也不记为通过。
 
 - ENV-005 / environment：Error: BLOCKED: final submission archive has not been provided
+
+## 免责声明可见性补充回归
+
+原候选 `39c6bd879eb147e568bb92530423d687bd674601`，执行 QA `8899c38cbacee2b6c479960b1b794aa67859ca0d`：E2E-001、007、016 共 3/3 通过，新增 7 处可见性断言，原文字校验保留。覆盖工作台空状态/咨询中/结束后，以及完整计划、提前计划和详情首次载入/重同步后。此次只跑受影响用例，未改产品；本节不改写上面的正式三轮统计，也不声称新断言已参加此前三轮。证据与清理见 `qa/checklists/disclaimer-visibility-39c6bd87.md`；人工及最终包待办保持不变。
