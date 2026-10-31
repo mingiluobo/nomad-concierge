@@ -902,6 +902,9 @@ class InterpreterError extends Error { reason: FailureReason }
 
 ```ts
 interface UserDto { id: string; username: string }
+interface RuntimeLimits { messageChars: number; messagesPerConversation: number }
+// 登录和 /api/me 返回实际运行配置。客户端允许 limits 缺失，并回退到默认值。
+interface SessionResponse { user: UserDto; limits?: RuntimeLimits }
 interface TurnDto {
   id: string; conversationId: string;
   status: TurnStatus; stage: TurnStage;
@@ -950,9 +953,9 @@ interface PlanDto extends PlanSummaryDto { content: PlanContent }
 
 | 方法 | 路径 | 请求 | 成功响应 | 主要错误 |
 | --- | --- | --- | --- | --- |
-| POST | `/api/auth/login` | `{ username }`（去首尾空格后 2～32 个字符） | 200 `{ user }` + Set-Cookie | 422 `VALIDATION_ERROR` |
+| POST | `/api/auth/login` | `{ username }`（去首尾空格后 2～32 个字符） | 200 `{ user, limits }` + Set-Cookie | 422 `VALIDATION_ERROR` |
 | POST | `/api/auth/logout` | — | 204 + 清除 Cookie；删除该令牌，并关闭用它建立的 WebSocket 连接（4401） | — |
-| GET | `/api/me` | — | 200 `{ user }` | 401 |
+| GET | `/api/me` | — | 200 `{ user, limits }` | 401 |
 | GET | `/api/health` | — | 200（沿用模板） | — |
 | GET | `/api/engines` | — | 200 `{ engines: [{ id, available, reason?, model? }] }` | 401 |
 | GET | `/api/conversations?status=collecting\|completed` | — | 200 `{ items: ConversationSummaryDto[], readStates: {conversationId, lastReadSeq}[], activeTurns: TurnDto[] }`，按 `updatedAt` 倒序；`activeTurns` 为该用户所有 queued / running 的任务，用于左栏"回复中…"和重新同步 | 401 |
@@ -1314,6 +1317,8 @@ interface KnowledgeFile { country: string; coverage: 'full' | 'generic'; version
 | `TOKENS_PER_USER` | 10 | — |
 
 `apps/api/.env.example` 列出全部变量（Key 为空）。
+
+**前端使用实际上限**：登录和 `/api/me` 成功响应附带 `limits: { messageChars, messagesPerConversation }`，分别取自 `LIMIT_MESSAGE_CHARS` 和 `LIMIT_MESSAGES_PER_CONVERSATION`。前端使用它们做字数提示、预校验和消息上限提示；收到的 `limits` 缺失时回退到 2000 字符、200 条消息。服务端始终是最终判定方；即使前端预校验通过，也必须正确处理 `MESSAGE_TOO_LONG`、`CONVERSATION_FULL`，保留用户未成功发送的内容并提示，不能只依赖前端预校验。
 
 **`.env` 的加载**：可选的 `apps/api/.env`（git 和 `.dockerignore` 都忽略）由 API 的 `dev` 和 `start` 脚本用 Node 自带的 `--env-file-if-exists=.env` 加载（同时带上第 6.4 节的 `--disable-warning=ExperimentalWarning`）（Node 22.9 起支持；文件不存在时自动跳过，不影响没有 Key 的运行方式）。不引入 dotenv。环境变量优先于 `.env` 中的值。Docker 方式通过 compose 的可选 `env_file` 传入。
 

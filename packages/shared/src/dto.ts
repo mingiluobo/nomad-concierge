@@ -78,7 +78,12 @@ export const readStateSchema = z.object({ conversationId: z.string(), lastReadSe
 export type ReadState = z.infer<typeof readStateSchema>;
 
 export const loginRequestSchema = z.object({ username: z.string().trim().min(2).max(32) });
-export const loginResponseSchema = z.object({ user: userDtoSchema });
+export const runtimeLimitsSchema = z.object({
+  messageChars: z.number().int().positive(),
+  messagesPerConversation: z.number().int().min(2),
+});
+export type RuntimeLimits = z.infer<typeof runtimeLimitsSchema>;
+export const loginResponseSchema = z.object({ user: userDtoSchema, limits: runtimeLimitsSchema.optional() });
 export const meResponseSchema = loginResponseSchema;
 export const enginesResponseSchema = z.object({ engines: z.array(engineStatusSchema) });
 export const conversationListQuerySchema = z.object({ status: conversationStatusSchema.optional() });

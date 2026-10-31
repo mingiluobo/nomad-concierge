@@ -2,10 +2,19 @@ import { describe, expect, it } from 'vitest';
 import {
   countries, countryCodeSchema, createEmptyProfile, interpretationSchema, messageDtoSchema,
   postMessageRequestSchema, profileSchema, slotDefinitions, slotOptions, slots, turnTransitions,
-  serverMessageSchema, loginRequestSchema, messagesQuerySchema,
+  serverMessageSchema, loginRequestSchema, loginResponseSchema, meResponseSchema, messagesQuerySchema,
 } from './index.js';
 
 describe('shared contract', () => {
+  it('accepts server limits and permits absent limits for the client default fallback', () => {
+    const user = { id: 'user-1', username: 'Alice' };
+    for (const schema of [loginResponseSchema, meResponseSchema]) {
+      expect(schema.parse({ user })).toEqual({ user });
+      expect(schema.parse({ user, limits: { messageChars: 5000, messagesPerConversation: 20 } })).toEqual({ user, limits: { messageChars: 5000, messagesPerConversation: 20 } });
+      expect(schema.safeParse({ user, limits: { messageChars: 0, messagesPerConversation: 20 } }).success).toBe(false);
+      expect(schema.safeParse({ user, limits: { messageChars: 5000, messagesPerConversation: 1 } }).success).toBe(false);
+    }
+  });
   it('starts with every slot missing and accepts the complete empty profile', () => {
     const profile = createEmptyProfile();
     expect(profileSchema.parse(profile)).toEqual(profile);
