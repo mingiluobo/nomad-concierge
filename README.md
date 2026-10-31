@@ -102,11 +102,11 @@ npm run eval --workspace @nomad/api -- --engines rules
 npm run eval --workspace @nomad/api -- --engines rules,remote,local
 ```
 
-未配置或不可用的引擎会明确跳过。报告打印到终端并更新 `docs/eval-results.md`，包含各指标分母、模型与提示词版本；关键标准用例的人工审核状态另列，不把未审核当作已审核。
+评估命令与开发、生产启动一样，会加载存在的 `apps/api/.env`；文件不存在时继续运行，进程环境变量优先于文件中的同名配置。未配置或不可用的引擎会明确跳过。报告打印到终端并更新 `docs/eval-results.md`，包含各指标分母、模型与提示词版本；关键标准用例的人工审核状态另列，不把未审核当作已审核。
 
 ## 配置与可选模型
 
-环境变量在启动前设置，优先于 API 可选的 `.env` 文件。完整默认值见 `apps/api/.env.example` 和 `docs/SPEC.md` 第 16 节。
+环境变量在启动或评估前设置，优先于 API 可选的 `apps/api/.env` 文件。`npm run dev`、`npm start` 和 `npm run eval --workspace @nomad/api` 都会加载该文件；文件不存在也能运行。完整默认值见 `apps/api/.env.example` 和 `docs/SPEC.md` 第 16 节。
 
 | 变量 | 默认值 / 用途 |
 | --- | --- |
