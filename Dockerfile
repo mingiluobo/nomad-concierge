@@ -36,4 +36,4 @@ COPY --from=build --chown=node:node /app/apps/web/dist ./apps/web/dist
 COPY --from=build --chown=node:node /app/packages/shared/dist ./packages/shared/dist
 USER node
 EXPOSE 3001
-CMD ["npm", "start"]
+CMD ["node", "--disable-warning=ExperimentalWarning", "apps/api/dist/server.js", "--production"]
