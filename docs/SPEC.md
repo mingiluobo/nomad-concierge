@@ -496,7 +496,7 @@ CREATE TABLE turns (
   error_code TEXT,
   prompt_version TEXT,
   retry_of_turn_id TEXT,
-  attempt INTEGER NOT NULL DEFAULT 1,   -- 被重启恢复的次数 + 1
+  attempt INTEGER NOT NULL DEFAULT 1,   -- 崩溃后启动恢复的次数 + 1；优雅停机不递增
   version INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL,
   started_at TEXT,
@@ -581,10 +581,13 @@ collecting ──生成计划──▶ completed（终态）
 | queued | cancelled | 用户停止 |
 | queued | superseded | 用户补充新消息 |
 | running | completed | 提交结果 |
-| running | failed | 出错或超时（`TURN_TIMEOUT`） |
+| running | failed | 出错、超时（`TURN_TIMEOUT`），或崩溃后启动恢复递增后 `attempt > 3`（`RECOVERY_LIMIT`） |
 | running | cancelled | 用户停止 |
 | running | superseded | 用户补充新消息 |
-| running | queued | 重启恢复、优雅停机（`attempt + 1`） |
+| running | queued | 崩溃后启动恢复（`attempt + 1`，递增后不超过 3） |
+| running | queued | 优雅停机（`attempt` 不变） |
+
+`attempt` 表示“崩溃后启动恢复的次数 + 1”，初始值为 1。只有启动时发现遗留的 running 任务才递增；优雅停机以及随后对 queued 任务的认领都不递增，正常停机不得消耗崩溃恢复次数。
 
 终态：completed、failed、cancelled、superseded。其他转移一律拒绝（接口返回 409 `ILLEGAL_TRANSITION`）。
 
@@ -806,14 +809,14 @@ class InterpreterError extends Error { reason: FailureReason }
 
 ### 9.5 恢复与停机
 
-- **启动恢复**（`recovery.ts`，在执行器启动前运行）：所有 running 任务改回 queued（`attempt + 1`，阶段 `queued`，写事件）。`attempt > 3` 的改为 failed（`error_code = RECOVERY_LIMIT`），防止无限重跑。
+- **启动恢复**（`recovery.ts`，在执行器启动前运行）：对崩溃后遗留的 running 任务先执行 `attempt + 1`；递增后不超过 3 的改回 queued（阶段 `queued`，写事件），超过 3 的改为 failed（`error_code = RECOVERY_LIMIT`，写事件），防止崩溃后反复恢复的死循环。原本已为 queued 的任务不递增 `attempt`。
 - **优雅停机**（`lifecycle/shutdown.ts`，收到 SIGINT / SIGTERM）：
   1. 停止接收新的 HTTP 请求和 WebSocket 连接；
   2. 执行器停止认领新任务；
-  3. 中止所有运行中任务的控制器，并把它们条件更新回 queued（写事件）；
+  3. 中止所有运行中任务的控制器，并把它们条件更新回 queued（`attempt` 不变，写事件）；
   4. 以代码 1012（服务重启）关闭所有 WebSocket，前端会自动重连；
   5. 关闭数据库；超过 10 秒仍未完成就强制退出。
-- 停机和崩溃走同一套恢复路径：下次启动时，queued 任务自动被执行。
+- 优雅停机后的 queued 任务在下次启动时自动被执行，`attempt` 保持不变；崩溃后遗留的 running 任务先按启动恢复规则递增并检查上限。正常停机不得消耗崩溃恢复次数。
 
 ---
 
@@ -912,7 +915,8 @@ interface TurnDto {
   fallbacks: { engine: EngineId; reason: FailureReason }[];
   errorCode: string | null;
   timings: { queuedMs?: number; understandingMs?: number; decidingMs?: number; replyingMs?: number; totalMs?: number };
-  promptVersion: string | null; retryOfTurnId: string | null; attempt: number;
+  promptVersion: string | null; retryOfTurnId: string | null;
+  attempt: number; // 崩溃后启动恢复的次数 + 1；初始为 1，优雅停机及 queued 续跑不递增
   version: number; createdAt: string; startedAt: string | null; finishedAt: string | null;
 }
 interface MessageDto {
@@ -1467,8 +1471,8 @@ interface KnowledgeFile { country: string; coverage: 'full' | 'generic'; version
 | 生成计划规则 | 不满足门槛 422；不完整未确认 409；确认后 201；回复进行中 409；完成后发消息 409；上一轮取消、超时、内部失败后有未处理消息时 409 `UNPROCESSED_MESSAGES`，重试处理后再生成，计划反映了纠正 |
 | 上限 | 超长消息 422；超过会话数 422；会话消息数用很小的上限测试 N−2、N−1、N：最后一条被接受的用户消息一定能得到回复，总数不超过上限；连续补充和重试也遵守 |
 | 超时 | 用极慢的假引擎和很小的 `TURN_TIMEOUT_MS`：任务 failed，错误码 `TURN_TIMEOUT` |
-| 重启续跑 | 在库里放一个 running 任务 → 运行恢复和执行器 → 任务完成；attempt 超过 3 时标记 failed |
-| 停机 | 任务运行中调用停机流程 → 任务回到 queued |
+| 重启续跑 | 在库里放一个崩溃后遗留的 running 任务 → 启动恢复将 attempt 递增 1 → 同一任务完成；递增后 attempt 超过 3 时标记 failed（RECOVERY_LIMIT），不生成回复 |
+| 停机 | 任务运行中调用优雅停机流程 → 任务回到 queued，attempt 不变；同库启动后同一任务续跑、只生成一条回复，attempt 仍不变；attempt 已为 3 时正常停机也不得触发恢复上限 |
 | 回退 | 远程指向假服务（坏 JSON）→ 本轮引擎为 rules，fallbacks 记录 `invalid_output`；连续 3 次后熔断，`/api/engines` 显示 `circuit_open` |
 | 本地模型 | 假服务的 `/models` 不含配置的模型名 → 本地不可用，原因 `model_missing` |
 | WebSocket | Cookie 鉴权成功；无 Cookie 401；错误 Origin 403；resume 补发事件顺序正确；补发期间产生的事件不丢不重；超过 1000 条时 resync_required；`resume(null)` 时 `ready.latestEventId` 等于当前最大事件 id |

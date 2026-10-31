@@ -178,24 +178,27 @@ describe('real application composition', () => {
     expect(close).toHaveBeenCalledTimes(1);
   });
 
-  it('gracefully queues an in-flight real task and completes it after reopening the same file', async () => {
+  it.each([1, 3])('preserves attempt %i through graceful shutdown and same-file continuation', async attempt => {
     const app = await fixture({ DEMO_DELAY_MS: '10000' });
     const created = await app.agent.post('/api/conversations').send({ content: '我想一个人搬到葡萄牙生活，我是中国籍。', clientMessageId: randomUUID(), enginePreference: 'rules' }).expect(201);
     const id = created.body.conversation.id as string;
+    // Include a task whose previous crash recoveries have used the available recovery budget.
+    app.database.prepare('UPDATE turns SET attempt = ? WHERE id = ?').run(attempt, created.body.turn.id);
     await vi.waitFor(async () => {
       const response = await app.agent.get(`/api/conversations/${id}`).expect(200);
-      expect(response.body.activeTurn.status).toBe('running');
+      expect(response.body.activeTurn).toMatchObject({ id: created.body.turn.id, status: 'running', attempt });
     });
     await app.shutdown();
     const database = new AppDatabase(app.databasePath);
-    expect(database.prepare('SELECT status FROM turns WHERE id = ?').get(created.body.turn.id)).toEqual({ status: 'queued' });
+    expect(database.prepare('SELECT status, attempt FROM turns WHERE id = ?').get(created.body.turn.id)).toEqual({ status: 'queued', attempt });
     expect(database.prepare("SELECT COUNT(*) AS count FROM messages WHERE role = 'assistant'").get()).toEqual({ count: 0 });
     database.close();
     const restored = await fixture({}, app.databasePath);
     const detail = await completed(restored.agent, id);
-    expect(detail.latestTurn?.id).toBe(created.body.turn.id);
+    expect(detail.latestTurn).toMatchObject({ id: created.body.turn.id, status: 'completed', attempt });
     expect(detail.conversation.profile.slots.destination.value).toBe('PT');
     const messages = await restored.agent.get(`/api/conversations/${id}/messages`).expect(200);
     expect(messages.body.items).toHaveLength(2);
+    expect(messages.body.items.map((message: { role: string }) => message.role)).toEqual(['user', 'assistant']);
   });
 });
