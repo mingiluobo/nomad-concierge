@@ -2995,7 +2995,7 @@
       "mixed-information",
       "visa-eligibility"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G040",
@@ -3082,7 +3082,7 @@
       "mixed-information",
       "tax-amount"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G041",
@@ -3165,7 +3165,7 @@
       "mixed-information",
       "company-setup"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G042",
@@ -3248,7 +3248,7 @@
       "visa-eligibility",
       "question-variant"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G043",
@@ -3329,6 +3329,6 @@
       "visa-eligibility",
       "not-professional-question"
     ],
-    "reviewed": false
+    "reviewed": true
   }
 ]
