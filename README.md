@@ -1,5 +1,18 @@
 # Nomad Concierge
 
+Nomad Concierge 帮准备出国生活的个人或家庭理清头绪：用户先用一段话描述自己的情况，系统主动追问缺少的关键信息，整理成一份结构化档案，最后生成一份初步行动计划。默认不需要任何大模型 Key；目前只有葡萄牙的详细示例资料，内容仅作演示，不能替代持牌专业人士的意见。
+
+**启动与体验**：按"方式一：Node 直接启动"安装并启动，操作步骤见"逐步验收"。
+
+| 文档 | 内容 |
+| --- | --- |
+| [DISCOVERY.md](DISCOVERY.md) | 澄清问题和收到的答复 |
+| [DECISIONS.md](DECISIONS.md) | 范围、假设、技术选型理由、重要决策、已知限制 |
+| [AI_USAGE.md](AI_USAGE.md) | 怎么用 AI 开发，以及怎么检查 AI 的结果 |
+| [docs/verification.md](docs/verification.md) | 做了哪些验证、发现了什么问题、怎么处理的 |
+| [docs/eval-results.md](docs/eval-results.md) | 规则、DeepSeek、本地模型的效果对比 |
+| [docs/SPEC.md](docs/SPEC.md) | 完整技术方案，包括接口（第 11、12 节）和多 agent 开发的分工与关口（第 25、26 节） |
+
 ## 运行环境与特殊条件
 
 优先使用 Node.js 直接启动；Node 环境有问题时使用下方 Docker 方式。
@@ -217,6 +230,28 @@ DEMO_DELAY_MS=1500 npm run dev
 
 `.github/workflows/ci.yml` 在 push 和 pull request 时运行，环境为 `ubuntu-latest`，Node 矩阵为精确的 `22.13.0` 和 `24`：`npm ci` → `npm run check` → `npm test` → `npm run build`。不运行浏览器端到端测试，不需要真实模型配置。目前未关联远程仓库，未执行在线 CI，因此不展示执行状态徽标。
 
-## 已知限制：HTTPS 部署
+## 技术选型
 
-部署到 HTTPS 需要反向代理。应用不设置 `trust proxy`，不信任代理头；Cookie 的 `Secure` 仅在生产环境且请求本身是 HTTPS 时添加。
+前端沿用参考模板的 React 18 + Vite + TypeScript；服务端沿用 Node.js + Express 5 + TypeScript，用 WebSocket 做实时同步；数据库用 Node 内置的 SQLite（`node:sqlite`），不需要另装数据库或编译工具。大模型只负责从用户的话里提取信息，回复和计划由代码生成，结果可控、可测试。选择理由和考虑过的替代方案见 [DECISIONS.md](DECISIONS.md)。
+
+## 新增依赖与第三方服务
+
+| 名称 | 用途 |
+| --- | --- |
+| `ws` | 服务端 WebSocket，实时推送消息和回复进度 |
+| `cookie-parser` | 读取登录 Cookie |
+| `react-router-dom` | 前端页面路由 |
+| `@playwright/test` | 浏览器端到端测试（只在 `qa/` 中使用） |
+| DeepSeek（可选） | 远程大模型，配置 Key 后才会使用 |
+| Ollama + `qwen2.5:7b-instruct`（可选） | 本地大模型，需要自己安装并显式开启 |
+
+模板里的 `better-sqlite3` 已移除（它在模板指定的 Node 22.13 上会崩溃，安装还需要编译工具）。
+
+## 说明与已知限制
+
+- **没有认证**：用户名免密进入，只用来区分数据，输入同一个用户名就能看到对应的记录，仅用于演示。
+- **规则模式**（不配大模型时）：只认识常见说法和约 45 个国家的名称，可能无法识别复杂句式、错别字和词典外的国家名。
+- **HTTPS**：应用本身不提供 HTTPS，部署时需要在前面放一层反向代理。
+- **安装时的提示**：`npm ci` 会显示 14 个依赖安全提示（实际对应 4 条公告），npm 11 还会提示跳过了部分依赖的安装脚本。已验证环境下安装和启动成功；依赖风险见 [DECISIONS.md](DECISIONS.md)。
+
+完整的已知限制和改进方向见 [DECISIONS.md](DECISIONS.md)。

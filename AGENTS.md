@@ -23,7 +23,7 @@ Use Node 24, or supported Node 22.13+, 24 and 26 versions, with npm 10 or newer.
 - WP5: web application and tests.
 - WP6: Docker, CI, production static serving and README operating instructions.
 - QA exclusively owns `qa/`, except its initial package manifest and dependencies supplied by WP0. Development agents do not read or edit QA tests.
-- Human-owned narrative documents: DISCOVERY, DECISIONS, AI_USAGE, README narrative and docs/api, ai-workflow, verification.
+- Human-owned narrative documents: DISCOVERY, DECISIONS, AI_USAGE, README narrative and docs/verification.md.
 
 Only edit your assigned files. Work on your assigned branch/worktree, do not merge or push. WP0 and integration may work on main. Dependencies and the lockfile are maintained centrally. Shared contract changes must update SPEC and use `contract-change` in the commit message; raise changes affecting multiple packages to the integration owner.
 

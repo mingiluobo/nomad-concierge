@@ -103,8 +103,6 @@ nomad-concierge/
 ├── README.md  DISCOVERY.md  DECISIONS.md  AI_USAGE.md
 ├── docs/
 │   ├── SPEC.md                   # 本文档
-│   ├── api.md                    # 接口文档（由第 11、12 节整理）
-│   ├── ai-workflow.md            # 可复用的 AI 开发工作流
 │   ├── verification.md           # 验证记录（6 节，见第 24.4 节）
 │   └── eval-results.md           # 评估脚本的输出（第 23 节）
 ├── package.json                  # workspaces: apps/*, packages/*, qa
@@ -185,7 +183,7 @@ nomad-concierge/
 | `apps/api/src/{turns,realtime,lifecycle}/**`、`repositories/{turns,events}.ts`、对应测试 | WP4 任务与实时 |
 | `apps/web/**` | WP5 前端 |
 | `Dockerfile`、`docker-compose.yml`、`.github/**`、`README.md` 的操作部分（第 24.4 节）、生产模式静态服务 | WP6 交付 |
-| `README.md` 的叙述部分、`docs/{api,ai-workflow,verification}.md` | 人工。中后阶段由人编写（第 24.4 节）；agent 不写 |
+| `README.md` 的叙述部分、`docs/verification.md` | 人工。中后阶段由人编写（第 24.4 节）；agent 不写 |
 | `qa/**` | QA（独占）。例外：`qa/package.json` 的初始骨架和依赖由 WP0 创建（第 25.4 节），脚本和其余文件归 QA |
 | `DISCOVERY.md`、`DECISIONS.md`、`AI_USAGE.md` | 人工。WP0 只负责按第 24.5 节做第二次提交（`DISCOVERY.md` 用人提供的定稿，另外两份先放模板原文）；之后 agent 不改 |
 
@@ -1545,8 +1543,6 @@ interface KnowledgeFile { country: string; coverage: 'full' | 'generic'; version
 
 **中后阶段（由人编写）**，以下内容是素材和大纲：
 - `README.md` 的**叙述部分**：技术选型和理由、相对参考模板的改动、新增依赖及用途、无认证和示例资料的说明、已知限制，以及到 `docs/` 和 DECISIONS 的链接。
-- `docs/api.md`：第 11、12 节整理成面向读者的接口文档。
-- `docs/ai-workflow.md`：需求澄清 → 写方案和契约 → 多 agent 并行开发 → 开发自测（关键标准用例由人审核）→ QA 独立验收 → 故障注入验证测试有效性 → 人工验收；以及评估脚本的用法；附"审查 AI 代码的检查清单"。
 - `docs/verification.md`（人工验收之后才能补全）：提交清单要求"至少运行并**记录**了一项自动化测试"和"手动验证了一个正常流程和至少两个异常或边缘场景"。这里记录（README 链接到它）：
   1. 自动化测试：开发自测 `npm test`，以及完整 QA 入口（接口、WebSocket、端到端、环境矩阵）的运行时间、环境、次数、结果和对应的被测候选；`npm run test:e2e` 只是浏览器子集，不能代表全部。
   2. **需求追踪矩阵**：需求 → 用例 → 断言内容 → 结果（来自 QA 报告）。
@@ -1591,7 +1587,7 @@ WP6 交付  →  QA 执行验收  →  故障注入验证（独立 agent，临�
 | **WP3 接口与持久化** | 仓储（turns、events 除外）、鉴权（退出和令牌淘汰时调用 `ConnectionRegistry`）、路由、会话 / 消息 / 计划 / 已读服务、错误处理、上限（为回复预留一条）、幂等（含新建咨询）、生成计划前的未处理消息检查 | shared；WP1 的函数签名；WP4 的 `TurnService`、`ConnectionRegistry` 接口 | 第 21.3 节中登录、归属、分页、幂等、上限、生成计划规则的集成测试通过（任务执行可以先用假的执行器） |
 | **WP4 任务与实时** | turns、events 仓储；执行器（含快捷选项不进入理解、迟到返回不写入）、服务（补充 / 停止 / 重试）、恢复、停机；事件发布；WebSocket 服务（含 `ConnectionRegistry`、4401 关闭） | shared；WP1、WP2 的接口 | 第 21.3 节中补充、停止重试、超时、重启续跑、停机、WebSocket 的集成测试通过（理解可以先用假的引擎） |
 | **WP5 前端** | 全部页面、组件、store（摘要和详情分开存放）、实时客户端（`ready` 后再拉快照、按页面重新同步、4401 处理）、已读和标题、打印样式、测试 ID | shared；第 11、12 节接口 | 能对着真实后端走通主流程；前端单元测试通过；所有交互元素都有测试 ID |
-| **WP6 交付** | 生产模式静态服务、Docker、CI 定稿、README 的操作部分（第 24.4 节；叙述部分和 `docs/{api,ai-workflow,verification}.md` 由人在中后阶段编写） | 集成完成 | 全新克隆后按 README 能跑通；按 README 的 Docker 步骤 `docker compose up` 能跑通 |
+| **WP6 交付** | 生产模式静态服务、Docker、CI 定稿、README 的操作部分（第 24.4 节；叙述部分和 `docs/verification.md` 由人在中后阶段编写） | 集成完成 | 全新克隆后按 README 能跑通；按 README 的 Docker 步骤 `docker compose up` 能跑通 |
 | **QA** | 见 `qa/README.md` | 本方案、shared、README | 见 `qa/README.md` |
 
 ### 25.3 并行开发时的接口约定
