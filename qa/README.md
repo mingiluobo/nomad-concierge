@@ -31,6 +31,8 @@ npm run test:e2e
 
 打开报告：`npm run report --workspace qa -- reports/local/<runId>/round-local/html`。查看轨迹：`npx playwright show-trace qa/reports/local/<runId>/round-local/artifacts/<场景目录>/trace.zip`。报告和录屏由本机保留，默认不提交；其中的路径使用仓库相对路径或临时目录描述。
 
+2026-10-31 在仓库外全新克隆验证：Node 24.22.1 / macOS arm64，三条命令分别耗时 3.816、1.059、29.330 秒，六例全部通过，总计 34.205 秒。Chromium 使用已有缓存，首次下载时间取决于网络。来源提交、精确执行范围和证据见 [本地入口验证清单](checklists/local-e2e-verification.md)。
+
 本地结果统一标注 **“本地运行，不计入正式放行”**，`candidate=null`、`countsTowardRelease=false`。它不读取 `prepared.json`，不修改正式摘要或追踪矩阵。正式验收仍须候选交接和 `prepare:candidate`；原浏览器单独验收入口保留为 `npm run test:e2e:candidate --workspace qa`，覆盖正式完整浏览器集合并校验候选。业务轮次和环境矩阵入口保持不变。
 
 ## 准备检查
