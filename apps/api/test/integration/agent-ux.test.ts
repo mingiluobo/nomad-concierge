@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import request from 'supertest';
+import { loopbackOrigin } from '../helpers/http.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { conversationResponseSchema, messagesResponseSchema, planResponseSchema } from '@nomad/shared';
 import { createComposition } from '../../src/composition.js';
@@ -15,7 +16,7 @@ async function application() {
   cleanups.push(() => rmSync(directory, { recursive: true, force: true }));
   const app = createComposition(loadConfig({ PORT: '0', DATABASE_PATH: join(directory, 'app.sqlite'), LLM_API_KEY: '', LOCAL_LLM_MODEL: '' }));
   cleanups.push(app.shutdown); await app.start();
-  const agent = request.agent(app.server);
+  const agent = request.agent(loopbackOrigin(app.server));
   await agent.post('/api/auth/login').send({ username: 'Rule experience user' }).expect(200);
   return agent;
 }
