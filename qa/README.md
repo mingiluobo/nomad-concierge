@@ -16,7 +16,7 @@ npm run list --workspace qa
 
 以上仅安装依赖、准备完整版 Chromium、类型检查、编译和发现用例。`--list` 不创建应用进程。依赖由根锁文件管理；QA 没有新增依赖，也不修改锁文件。
 
-`test-plan.md` 是用例清单，`traceability.md` 是包含具体断言的需求矩阵；`catalog/` 是二者的结构化来源。更新用例后运行 `npm run docs --workspace qa` 重新生成两份文档。`checklists/acceptance.md` 包含人工操作和内部测试证据的移交步骤；`contract-questions.md` 记录尚未裁定的契约问题。
+`test-plan.md` 是用例清单，`traceability.md` 是包含具体断言的需求矩阵；`catalog/` 是二者的结构化来源。更新用例后运行 `npm run docs --workspace qa` 重新生成两份文档。`checklists/acceptance.md` 包含人工操作和内部测试证据的移交步骤；`contract-questions.md` 记录已裁定的契约解释；Q-01～Q-03 均已关闭。
 
 ## 候选交接
 
@@ -81,10 +81,12 @@ npm test --workspace qa
 
 ## 状态与放行
 
-通过、失败、受阻、未执行、跳过、不稳定分别报告；重试通过算不稳定。默认 `retries: 0`，不通过重试掩盖问题。准备报告没有产品通过率。人工检查未签认和契约待裁定均不算通过。完整入口产生自动化结果后，还需登记缺陷和人工结果；不能用零缺陷代替执行证据。
+通过、失败、受阻、未执行、跳过、不稳定分别报告；重试通过算不稳定。默认 `retries: 0`，不通过重试掩盖问题。准备报告没有产品通过率。适用人工检查未签认不算通过。MAN-007 按 Q-02 记为不适用，注明不提供 HTTPS 入口且不信任代理头，排除在通过数及通过率分母之外；Secure 四种组合由开发单元测试覆盖，QA 不另建 HTTPS 环境。完整入口产生自动化结果后，还需登记缺陷和人工结果；不能用零缺陷代替执行证据。
 
 缺陷模板见 `defects/TEMPLATE.md`。记录发现时间、优先级、关联需求/用例、候选、复现、预期、实际、证据、开发自测是否已发现及处理状态。报告摘要受版本控制，录屏、日志、HTML、临时编译产物与本地候选声明均忽略。
 
-人工登记可通过 `QA_MANUAL_RESULTS` 指向 JSON 文件导入，结构为 `{candidateCommit, results:[{id:"MAN-001", result:"通过", executedAt, executedBy, evidence:["证据路径"], notes}]}`。MAN-005 如确认扫描线索是安全占位，另填 `reviewedClues:[{path,line}]`；只认可同候选、逐条对应的复核。缺陷审阅由 `QA_DEFECT_REVIEW` 指向 `{candidateCommit,reviewedBy,reviewedAt,items:[{id,priority,status,evidence}]}`，`status` 为 `closed` 或经负责人确认的 `accepted`（仅 P2/P3）；无缺陷也须显式登记空数组。缺少登记时报告不可放行。
+正式入口固定注入 `QA_READ_OVERFLOW_POLICY=clamp`，API-014 直接断言超界序号返回 200 并夹到 lastSeq，不再提供拒绝分支。
+
+人工登记可通过 `QA_MANUAL_RESULTS` 指向 JSON 文件导入，结构为 `{candidateCommit, results:[{id:"MAN-001", result:"通过", executedAt, executedBy, evidence:["证据路径"], notes}]}`。MAN-005 如确认扫描线索是安全占位，另填 `reviewedClues:[{path,line}]`；只认可同候选、逐条对应的复核。缺陷审阅由 `QA_DEFECT_REVIEW` 指向 `{candidateCommit,reviewedBy,reviewedAt,items:[{id,priority,status,evidence}]}`，`status` 为 `closed` 或经负责人确认的 `accepted`（仅 P2/P3）；无缺陷也须显式登记空数组。适用项缺少登记时报告不可放行。MAN-007 的不适用状态直接来自已裁定目录，无需另行签认，也不允许用未裁定的不适用状态绕过其他检查。
 
 Linux 安装验收容器使用 `--network=none`。Docker 验收保留 README 的 `compose up --build` 命令，通过本轮独立 override 限制构建 RUN 网络、禁止自动拉镜像、使用 internal 网络并清空模型配置；完整缓存必须在准备阶段建立。override 与实际命令属于环境证据，需和未经隔离的人工 README 检查区分。若本机 builder 不能保证基镜像解析也完全离线，应先解决隔离条件并登记受阻，不能把联网构建写作离线验收。

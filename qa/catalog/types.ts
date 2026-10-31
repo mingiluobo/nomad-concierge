@@ -6,4 +6,5 @@ export interface CaseDefinition {
   requirements: string[];
   assertions: string;
   evidence: string;
+  notApplicable?: { reason: string; decision: string };
 }

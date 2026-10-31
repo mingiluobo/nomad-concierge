@@ -280,7 +280,7 @@ test(title('WS-015'), async ({ api, openSocket }) => {
   const payload = JSON.stringify({ type: 'resume', lastEventId: null, extra: 'x'.repeat(4096) });
   expect(Buffer.byteLength(payload)).toBeGreaterThan(4096);
   socket.socket.send(payload);
-  await socket.waitClose();
+  expect((await socket.waitClose()).code).toBe(1009);
   expect(await api.detail(created.conversation.id)).toEqual(before);
 });
 
@@ -324,9 +324,38 @@ test(title('WS-019'), async ({ api, openSocket }) => {
   const created = await api.create('我想去葡萄牙。');
   await api.settle(created.conversation.id);
   const before = await api.detail(created.conversation.id);
+  const beforeMessages = await api.messages(created.conversation.id);
   const socket = await openSocket();
-  socket.socket.send('{broken json');
-  await ready(socket);
-  expect(socket.closed).toBeUndefined();
-  expect(await api.detail(created.conversation.id)).toEqual(before);
+  const baseline = await ready(socket);
+  const invalidFrames: Array<{ label: string; frame: string }> = [
+    { label: 'JSON 语法损坏', frame: '{broken json' },
+    { label: '两个必填字段都缺失', frame: '{}' },
+    { label: '缺少 type', frame: JSON.stringify({ lastEventId: null }) },
+    { label: '缺少 lastEventId', frame: JSON.stringify({ type: 'resume' }) },
+    { label: 'type 取值错误', frame: JSON.stringify({ type: 'ping', lastEventId: null }) },
+    { label: 'type 类型错误', frame: JSON.stringify({ type: 1, lastEventId: null }) },
+    ...[
+      ['字符串游标', '0'], ['负数游标', -1], ['小数游标', 1.5],
+      ['布尔游标', true], ['对象游标', {}], ['数组游标', []],
+    ].map(([label, lastEventId]) => ({ label: String(label), frame: JSON.stringify({ type: 'resume', lastEventId }) })),
+    { label: '顶层 null', frame: 'null' },
+    { label: '顶层数组', frame: '[]' },
+    { label: '顶层字符串', frame: '"resume"' },
+  ];
+  for (const { label, frame } of invalidFrames) {
+    await test.step(label, async () => {
+      const after = socket.messages.length;
+      socket.socket.send(frame);
+      socket.resume(null);
+      // The following valid resume is an observable processing barrier for this invalid frame.
+      const resumed = await socket.waitReady({ after });
+      expect(resumed).toEqual(baseline);
+      expect(socket.closed).toBeUndefined();
+      expect(await api.detail(created.conversation.id)).toEqual(before);
+      expect(await api.messages(created.conversation.id)).toEqual(beforeMessages);
+      expect(socket.messages.slice(after).map(message => message.type)).toEqual(['ready']);
+      expect(socket.messages.slice(after).filter(isEvent)).toEqual([]);
+      expect(socket.invalidMessages).toEqual([]);
+    });
+  }
 });

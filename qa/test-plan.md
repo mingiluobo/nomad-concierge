@@ -1,6 +1,6 @@
 # Nomad Concierge 黑盒测试计划
 
-阶段：准备。所有产品用例均未执行；编译与发现检查不代表产品验证。契约：SPEC v1.3。
+阶段：准备，等待候选交接。所有适用项均未执行；MAN-007 按 Q-02 裁定为不适用。编译与发现检查不代表产品验证。契约：SPEC v1.3 及 2026-10-31 的 Q-01～Q-03 裁定。
 
 用例清单：api: 82；e2e: 20；ws: 19；env: 6；manual: 7。每个编号对应一个 Playwright 测试，manual 对应可登记的人工检查。参数化子断言不重复计数。
 
@@ -11,13 +11,13 @@
 - 每用例使用独占 API 进程、动态端口、临时数据库和本地假模型；浏览器使用完整版 Chromium。所有 E2E 开启 video 和 trace，核心六场景为 E2E-001 至 E2E-006。
 - 完整入口：业务套件三轮，环境矩阵一轮。macOS Node 22.13.0/24、干净 Linux、Docker 串行检查。只按最终 README 转录的命令配方运行；未提供配方或资源记受阻。
 - 真实模型和内部提交钩子不纳入黑盒自动化；内部状态转换全表、忽略中断后的迟到返回及事务回滚移交开发测试证据。
-- 通过、失败、受阻、未执行、跳过、不稳定分别记录；任何未执行项及待裁定项都不算通过。人工项须同候选登记。
+- 通过、失败、受阻、未执行、跳过、不稳定分别记录；不适用项须有明确裁定和原因，单独列出，不计通过率分母或通过数。适用人工项须同候选登记。
 
 ## 用例
 
 | 编号 | 标题 | 优先级 | 类型 | 需求来源 | 断言内容 | 状态 |
 | --- | --- | --- | --- | --- | --- | --- |
-| API-001 | 登录归一化、同名恢复与 Cookie 属性 | P0 | api | SPEC-11.3, SPEC-19 | 去首尾空格和大小写变化恢复同一 user.id；令牌变化；Cookie 具有 HttpOnly、SameSite=Lax、Path=/、Max-Age。 | 未执行 |
+| API-001 | 登录归一化、同名恢复与 Cookie 属性 | P0 | api | SPEC-11.3, SPEC-19 | 去首尾空格和大小写变化恢复同一 user.id；令牌变化；Cookie 具有 HttpOnly、SameSite=Lax、Path=/、Max-Age；HTTP 登录即使伪造 HTTPS 代理头也不设置 Secure。 | 未执行 |
 | API-002 | 用户名边界校验 | P1 | api | SPEC-11.3 | 空白、1 字符、33 字符返回 422 VALIDATION_ERROR；2 和 32 字符成功。 | 未执行 |
 | API-003 | 所有受保护路由拒绝匿名访问 | P0 | api | SPEC-11.1, SPEC-19 | 每个受保护 HTTP 路由无 Cookie 均返回 401 UNAUTHENTICATED。 | 未执行 |
 | API-004 | 退出删除令牌并清除 Cookie | P0 | api | SPEC-11.3 | logout 返回 204、清 Cookie；原令牌访问 me 返回 401。 | 未执行 |
@@ -30,7 +30,7 @@
 | API-011 | 消息、分页、偏好、已读和计划入参校验 | P1 | api | SPEC-11.3, B-01 | 空消息、非法快捷值、非法偏好、负已读、越界分页参数、非法计划参数均 422；无新增消息。 | 未执行 |
 | API-012 | 发送消息并发幂等 | P0 | api | SPEC-9.4, B-05, B-06 | 相同 clientMessageId 并发发送只产生一个消息 id、一个新任务、连续唯一 seq。 | 未执行 |
 | API-013 | 游标分页与并发新增 | P0 | api | SPEC-11.3, F-pagination | 超过 75 条消息按 30 条分页，页内升序、跨页无重漏；翻页时新增消息不改变旧页边界。 | 未执行 |
-| API-014 | 已读单调且不超过最大消息序号 | P1 | api | SPEC-9.4, F-unread | 较小 seq 不回退，高 seq 的夹取或拒绝策略在 Q-01 裁定后验证，列表及详情读状态一致。 | 未执行 |
+| API-014 | 已读单调且不超过最大消息序号 | P1 | api | SPEC-9.4, F-unread | 较小 seq 不回退；seq 大于 lastSeq 时返回 200 并夹到 lastSeq；列表与详情的持久化已读状态同步且不超界。 | 未执行 |
 | API-015 | 会话级引擎偏好与下一轮生效 | P1 | api | SPEC-8.6, SPEC-11.3, F-engine-selector | PATCH 更新 preference 并提高 version，后续任务 engineRequested 正确；其他会话不变。 | 未执行 |
 | API-016 | 提前生成三项硬门槛 | P0 | api | SPEC-9.4, H-08 | 缺国籍时 422 PROFILE_INSUFFICIENT，details.missing 包含国籍，无计划及 completed 状态。 | 未执行 |
 | API-017 | 不完整确认与提前生成幂等 | P0 | api | SPEC-9.4, H-04 | 三门槛已知但未完整时返回 PROFILE_INCOMPLETE；确认后 201 generatedEarly，重放 200 同一计划。 | 未执行 |
@@ -133,11 +133,11 @@
 | WS-012 | 计划与已读事件和 REST 一致 | P1 | ws | SPEC-12.3, SPEC-10.6 | plan.created 对应持久化计划，conversation.upserted 标 completed/planId；read_state.updated 为相同会话和序号，REST 同值。 | 未执行 |
 | WS-013 | 并发发送的实时序号与存储一致 | P0 | ws | SPEC-12.3, SPEC-11.3, B-06 | 两条同时发送的用户消息均存在且 seq 唯一连续，事件 ID/消息 seq 与 REST 一致，无消息丢失或重复。 | 未执行 |
 | WS-014 | 未来游标不补发旧事件但继续接收实时变化 | P1 | ws | SPEC-12.2 | 大于当前最大 ID 的游标收到 ready 且无历史补发，之后公开创建仍收到事件。 | 未执行 |
-| WS-015 | 超过四 KB 的客户端帧被拒绝 | P1 | ws | SPEC-12.1 | 发送超过 4096 字节的客户端消息后连接关闭；会话 REST 状态保持不变。 | 未执行 |
+| WS-015 | 超过四 KB 的客户端帧以 1009 关闭 | P1 | ws | SPEC-12.1 | 发送超过 4096 字节的客户端消息后连接以关闭码 1009 关闭；会话 REST 状态保持不变。 | 未执行 |
 | WS-016 | 服务端 ping 与正常 pong 保活 | P1 | ws | SPEC-12.1 | 接收到连续两次服务端 ping，间隔约 25 秒；自动 pong 的连接保持可接收业务事件。 | 未执行 |
 | WS-017 | 连续未 pong 的连接被关闭 | P1 | ws | SPEC-12.1 | 禁用自动 pong 后接收到至少两次 ping，并在随后心跳检测中关闭连接。 | 未执行 |
 | WS-018 | 显式允许列表与生产同源均能连接 | P1 | ws | SPEC-12.1, SPEC-16 | WEB_ORIGIN 中的两个来源以及服务自身同源均能升级并返回正确 ready.userId。 | 未执行 |
-| WS-019 | 无法解析的客户端 JSON 被忽略 | P1 | ws | SPEC-17 | 发送损坏 JSON 后连接保持打开；同一连接随后处理有效 resume 并返回 ready，已有会话没有发生变化。 | 未执行 |
+| WS-019 | 损坏 JSON 和结构非法的客户端消息被忽略 | P1 | ws | SPEC-17 | 损坏 JSON、缺字段、错误 type、游标类型或范围非法、错误顶层类型均被忽略；每条非法帧之后以合法 resume/ready 确认连接继续工作，未关闭、无异常业务事件，会话与消息快照不变。 | 未执行 |
 | ENV-001 | macOS Node 22.13.0 全新克隆安装与运行 | P0 | env | H-07, H-09, S-01, F-environment, SPEC-24 | 精确 Node 22.13.0；仅按最终 README 安装、初始化、检查、测试、构建、启动；公开 API 完成收集并生成含已知信息、步骤和专业边界的计划。 | 未执行 |
 | ENV-002 | macOS Node 24 全新克隆安装与运行 | P0 | env | H-07, H-09, S-01, F-environment, SPEC-24 | Node 主版本 24；从独立克隆按同版 README 完成安装、初始化、检查、测试、构建、启动和主流程。 | 未执行 |
 | ENV-003 | 无编译工具的干净 Linux Node 环境 | P0 | env | H-07, S-01, F-environment, SPEC-2, SPEC-24 | node:24-bookworm-slim 无 python3/make/g++/gcc；全新克隆按 README 安装、检查、测试、构建、启动及主流程成功；浏览器系统库单独登记。 | 未执行 |
@@ -149,8 +149,8 @@
 | MAN-003 | 计划打印及专业措辞 | P1 | manual | H-04, H-05, H-08, F-plan, SPEC-13.5, SPEC-14.2 | 打印预览无导航按钮，卡片不截断，黑白可读；示例资料明确标示用途，计划无确定签证资格/金额/税率结论，专业步骤提示持牌判断。 | 未执行 |
 | MAN-004 | 正常与至少两个异常的人工验收移交 | P0 | manual | S-04 | 在同一候选完成登录至计划、停止重试、坏输出回退三个流程，并登记实际结果和录屏；自动化结果不代替人工登记。 | 未执行 |
 | MAN-005 | 提交物密钥与个人数据线索复核 | P0 | manual | S-02, SPEC-19 | 逐条复核脱敏扫描线索，确认无有效密钥、令牌、真实个人或客户数据；不在报告复制敏感值。 | 未执行 |
-| MAN-006 | 开发测试与内部故障边界证据移交 | P0 | manual | S-03, B-24, B-25, SPEC-21.2, SPEC-21.3 | 集成方提供同候选自动化执行记录；核对数据库版本超前/资料格式错误拒绝启动、迟到返回和提交前回滚由开发单元或集成测试覆盖，记录测试名与结果；QA 不读取实现或伪造内部接口。 | 未执行 |
-| MAN-007 | HTTPS 场景 Cookie Secure | P1 | manual | F-security, SPEC-11.3 | 使用集成方确认的本地 HTTPS 接入方式，在 production 登录后 nc_token 含 Secure；同时保留 HttpOnly、SameSite=Lax、Path=/ 和十年 Max-Age。 | 未执行 |
+| MAN-006 | 开发测试与内部故障边界证据移交 | P0 | manual | S-03, B-24, B-25, F-security, SPEC-11.3, SPEC-21.2, SPEC-21.3 | 集成方提供同候选自动化执行记录；核对数据库版本超前/资料格式错误拒绝启动、迟到返回和提交前回滚由开发单元或集成测试覆盖；Secure 属性在生产/非生产与 HTTPS/HTTP 四种组合的开发单元测试也须提供同候选证据，记录测试名与结果；QA 不读取实现或伪造内部接口。 | 未执行 |
+| MAN-007 | HTTPS 场景 Cookie Secure | P1 | manual | F-security, SPEC-11.3 | 按 Q-02 裁定不适用：交付不提供 HTTPS 入口且不信任代理头；QA 不另建 HTTPS 环境。Secure 的生产/非生产与 HTTPS/HTTP 四种组合由开发单元测试覆盖，证据纳入 MAN-006。 | 不适用 |
 
 ## 质量边界
 

@@ -15,9 +15,9 @@ export const cases: CaseDefinition[] = [
   { id: 'WS-012', title: '计划与已读事件和 REST 一致', type: 'ws', priority: 'P1', requirements: ['SPEC-12.3', 'SPEC-10.6'], assertions: 'plan.created 对应持久化计划，conversation.upserted 标 completed/planId；read_state.updated 为相同会话和序号，REST 同值。', evidence: '计划和已读事件、REST 对照' },
   { id: 'WS-013', title: '并发发送的实时序号与存储一致', type: 'ws', priority: 'P0', requirements: ['SPEC-12.3', 'SPEC-11.3', 'B-06'], assertions: '两条同时发送的用户消息均存在且 seq 唯一连续，事件 ID/消息 seq 与 REST 一致，无消息丢失或重复。', evidence: '并发 HTTP 结果、事件与消息页' },
   { id: 'WS-014', title: '未来游标不补发旧事件但继续接收实时变化', type: 'ws', priority: 'P1', requirements: ['SPEC-12.2'], assertions: '大于当前最大 ID 的游标收到 ready 且无历史补发，之后公开创建仍收到事件。', evidence: 'ready 及后续 message.created' },
-  { id: 'WS-015', title: '超过四 KB 的客户端帧被拒绝', type: 'ws', priority: 'P1', requirements: ['SPEC-12.1'], assertions: '发送超过 4096 字节的客户端消息后连接关闭；会话 REST 状态保持不变。', evidence: '帧字节数、关闭事件、前后快照' },
+  { id: 'WS-015', title: '超过四 KB 的客户端帧以 1009 关闭', type: 'ws', priority: 'P1', requirements: ['SPEC-12.1'], assertions: '发送超过 4096 字节的客户端消息后连接以关闭码 1009 关闭；会话 REST 状态保持不变。', evidence: '帧字节数、1009 关闭事件、前后快照' },
   { id: 'WS-016', title: '服务端 ping 与正常 pong 保活', type: 'ws', priority: 'P1', requirements: ['SPEC-12.1'], assertions: '接收到连续两次服务端 ping，间隔约 25 秒；自动 pong 的连接保持可接收业务事件。', evidence: 'ping 时间戳与业务事件' },
   { id: 'WS-017', title: '连续未 pong 的连接被关闭', type: 'ws', priority: 'P1', requirements: ['SPEC-12.1'], assertions: '禁用自动 pong 后接收到至少两次 ping，并在随后心跳检测中关闭连接。', evidence: 'ping 时间戳和关闭事件' },
   { id: 'WS-018', title: '显式允许列表与生产同源均能连接', type: 'ws', priority: 'P1', requirements: ['SPEC-12.1', 'SPEC-16'], assertions: 'WEB_ORIGIN 中的两个来源以及服务自身同源均能升级并返回正确 ready.userId。', evidence: '三个来源的 ready 消息' },
-  { id: 'WS-019', title: '无法解析的客户端 JSON 被忽略', type: 'ws', priority: 'P1', requirements: ['SPEC-17'], assertions: '发送损坏 JSON 后连接保持打开；同一连接随后处理有效 resume 并返回 ready，已有会话没有发生变化。', evidence: '坏帧之后的 ready、前后 REST 快照' },
+  { id: 'WS-019', title: '损坏 JSON 和结构非法的客户端消息被忽略', type: 'ws', priority: 'P1', requirements: ['SPEC-17'], assertions: '损坏 JSON、缺字段、错误 type、游标类型或范围非法、错误顶层类型均被忽略；每条非法帧之后以合法 resume/ready 确认连接继续工作，未关闭、无异常业务事件，会话与消息快照不变。', evidence: '15 种非法帧的独立步骤、后续 ready、业务事件列表及前后 REST 快照' },
 ];

@@ -13,6 +13,14 @@ test(title('API-001'), async ({ api }) => {
     expect(meResponseSchema.parse(await next.json()).user.id).toBe(user.id);
     expect(next.headers()['set-cookie']).not.toBe(cookie);
     expect((await parsed(await api.request.get('/api/me'), meResponseSchema)).user.id).toBe(user.id);
+    expect(cookie).not.toMatch(/;\s*Secure(?:;|$)/i);
+    const forwarded = await api.request.post('/api/auth/login', {
+        data: { username },
+        headers: { 'X-Forwarded-Proto': 'https', Forwarded: 'proto=https' },
+    });
+    expect(forwarded.status()).toBe(200);
+    expect(forwarded.headers()['set-cookie'] ?? '').toMatch(/nc_token=/);
+    expect(forwarded.headers()['set-cookie'] ?? '').not.toMatch(/;\s*Secure(?:;|$)/i);
 });
 test(title('API-002'), async ({ api }) => {
     for (const username of ['', '  ', 'a', 'a'.repeat(33)])
@@ -189,17 +197,11 @@ test(title('API-014'), async ({ api }) => {
     const mark = async (seq: number) => parsed(await api.request.post(`/api/conversations/${cid}/read`, { data: { seq } }), readResponseSchema);
     expect((await mark(2)).lastReadSeq).toBe(2);
     expect((await mark(1)).lastReadSeq).toBe(2);
-    expect((await mark(current.conversation.lastSeq)).lastReadSeq).toBe(current.conversation.lastSeq);
+    const overflow = await api.request.post(`/api/conversations/${cid}/read`, { data: { seq: current.conversation.lastSeq + 1 } });
+    expect((await parsed(overflow, readResponseSchema, 200)).lastReadSeq).toBe(current.conversation.lastSeq);
     expect((await detail(api.request, cid)).readState.lastReadSeq).toBe(current.conversation.lastSeq);
     expect((await parsed(await api.request.get('/api/conversations'), conversationListResponseSchema)).readStates.find(s => s.conversationId === cid)!.lastReadSeq).toBe(current.conversation.lastSeq);
-    const policy = process.env.QA_READ_OVERFLOW_POLICY;
-    if (policy !== 'clamp' && policy !== 'reject')
-        throw new Error('BLOCKED: Q-01 read seq 超界策略待裁定');
-    const overflow = await api.request.post(`/api/conversations/${cid}/read`, { data: { seq: current.conversation.lastSeq + 1 } });
-    if (policy === 'clamp')
-        expect((await parsed(overflow, readResponseSchema)).lastReadSeq).toBe(current.conversation.lastSeq);
-    else
-        await error(overflow, 422, 'VALIDATION_ERROR');
+    expect((await mark(1)).lastReadSeq).toBe(current.conversation.lastSeq);
 });
 test(title('API-015'), async ({ api }) => {
     await login(api.request);

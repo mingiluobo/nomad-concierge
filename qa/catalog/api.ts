@@ -6,7 +6,7 @@ const rows: [
     string[],
     string
 ][] = [
-    ['001', '登录归一化、同名恢复与 Cookie 属性', 'P0', ['SPEC-11.3', 'SPEC-19'], '去首尾空格和大小写变化恢复同一 user.id；令牌变化；Cookie 具有 HttpOnly、SameSite=Lax、Path=/、Max-Age。'],
+    ['001', '登录归一化、同名恢复与 Cookie 属性', 'P0', ['SPEC-11.3', 'SPEC-19'], '去首尾空格和大小写变化恢复同一 user.id；令牌变化；Cookie 具有 HttpOnly、SameSite=Lax、Path=/、Max-Age；HTTP 登录即使伪造 HTTPS 代理头也不设置 Secure。'],
     ['002', '用户名边界校验', 'P1', ['SPEC-11.3'], '空白、1 字符、33 字符返回 422 VALIDATION_ERROR；2 和 32 字符成功。'],
     ['003', '所有受保护路由拒绝匿名访问', 'P0', ['SPEC-11.1', 'SPEC-19'], '每个受保护 HTTP 路由无 Cookie 均返回 401 UNAUTHENTICATED。'],
     ['004', '退出删除令牌并清除 Cookie', 'P0', ['SPEC-11.3'], 'logout 返回 204、清 Cookie；原令牌访问 me 返回 401。'],
@@ -19,7 +19,7 @@ const rows: [
     ['011', '消息、分页、偏好、已读和计划入参校验', 'P1', ['SPEC-11.3', 'B-01'], '空消息、非法快捷值、非法偏好、负已读、越界分页参数、非法计划参数均 422；无新增消息。'],
     ['012', '发送消息并发幂等', 'P0', ['SPEC-9.4', 'B-05', 'B-06'], '相同 clientMessageId 并发发送只产生一个消息 id、一个新任务、连续唯一 seq。'],
     ['013', '游标分页与并发新增', 'P0', ['SPEC-11.3', 'F-pagination'], '超过 75 条消息按 30 条分页，页内升序、跨页无重漏；翻页时新增消息不改变旧页边界。'],
-    ['014', '已读单调且不超过最大消息序号', 'P1', ['SPEC-9.4', 'F-unread'], '较小 seq 不回退，高 seq 的夹取或拒绝策略在 Q-01 裁定后验证，列表及详情读状态一致。'],
+    ['014', '已读单调且不超过最大消息序号', 'P1', ['SPEC-9.4', 'F-unread'], '较小 seq 不回退；seq 大于 lastSeq 时返回 200 并夹到 lastSeq；列表与详情的持久化已读状态同步且不超界。'],
     ['015', '会话级引擎偏好与下一轮生效', 'P1', ['SPEC-8.6', 'SPEC-11.3', 'F-engine-selector'], 'PATCH 更新 preference 并提高 version，后续任务 engineRequested 正确；其他会话不变。'],
     ['016', '提前生成三项硬门槛', 'P0', ['SPEC-9.4', 'H-08'], '缺国籍时 422 PROFILE_INSUFFICIENT，details.missing 包含国籍，无计划及 completed 状态。'],
     ['017', '不完整确认与提前生成幂等', 'P0', ['SPEC-9.4', 'H-04'], '三门槛已知但未完整时返回 PROFILE_INCOMPLETE；确认后 201 generatedEarly，重放 200 同一计划。'],

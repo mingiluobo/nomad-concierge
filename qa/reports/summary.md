@@ -1,6 +1,6 @@
 # Nomad Concierge QA 准备报告
 
-阶段：准备。被测候选尚未交接；全部产品用例未执行，不提供产品通过率或放行结论。
+阶段：准备完成，等待候选交接通知。所有适用项未执行；MAN-007 按 Q-02 裁定为不适用，不提供产品通过率或放行结论。
 
 准备日期：2026-10-31（Asia/Shanghai）。QA 分支：qa；准备起点：3527c02e3234ebadbc3630f5ec1e30e73f930de5。最终 QA 提交号由交接时的 git rev-parse HEAD 记录；当前没有被测产品/候选 SHA。
 契约：SPEC v1.3；SPEC SHA-256：a2cd7464838cfa845d2de6ca12267b3d1206bf8fe8c9a8d85340ce79ae7b9ba6。
@@ -23,9 +23,9 @@
 | e2e | 20 | 0 | 未执行 |
 | ws | 19 | 0 | 未执行 |
 | env | 6 | 0 | 未执行 |
-| manual | 7 | 0 | 未执行 |
+| manual | 7 | 0 | 6 项未执行；MAN-007 不适用 |
 
-共 134 项：127 个自动用例和 7 项人工检查。P0：75；P1：59。核心六个浏览器场景 E2E-001～006 已编写，配置 video:on 与 trace:on。
+共 134 项：127 个自动用例和 7 项人工检查；其中 133 项适用，1 项按用户裁定不适用且不计通过。P0：75；P1：59。核心六个浏览器场景 E2E-001～006 已编写，配置 video:on 与 trace:on。
 
 设计追踪 78/78 条：H 9、F 24、X 16、S 4、B 25。每行包含具体断言及预期证据；覆盖表示设计关联，不代表已验证。B-24/B-25 由 MAN-006 移交同候选开发证据，不宣称为黑盒自动覆盖。
 
@@ -34,11 +34,11 @@
 目前只有准备检查与用例发现产物（reports/preparation/discovery.json）；没有产品请求日志、trace、截图或录屏。正式执行后每场景的视频文件名、trace 和 HTTP/WS/进程证据由报告器逐项填入。
 未执行产品，因此不报告零缺陷。没有已确认的产品缺陷；发现问题后按 defects/TEMPLATE.md 登记，并区分 QA 首次发现与开发自测已知问题。
 
-## 契约问题与依赖
+## 已裁定契约与交接依赖
 
-- Q-01：POST read 的 seq 超过 lastSeq 时是 200 夹取还是 422；API-014 此分支裁定前受阻。
-- Q-02：production HTTPS 下 Secure Cookie 的本地接入方式及代理信任契约；MAN-007 待此前置。
-- Q-03：合法 JSON 的非法 resume 结构处理及超大帧关闭码未指定；仅验证已明确的坏 JSON 忽略和超大帧断开。
+- Q-01 已裁定：seq 超过 lastSeq 返回 200 并夹到 lastSeq；API-014 固定检查夹取、持久化及单调性；正式入口 QA_READ_OVERFLOW_POLICY=clamp。
+- Q-02 已裁定：不信任代理头，交付不提供 HTTPS 入口，MAN-007 不适用。Secure 属性四种组合由开发单元测试覆盖，经 MAN-006 移交证据；QA 不另建 HTTPS 环境。API-001 检查 HTTP 上伪造 HTTPS 代理头不设置 Secure。
+- Q-03 已裁定：坏 JSON 与合法 JSON 的非法客户端结构均忽略、不关闭；WS-019 覆盖两类输入并用合法 resume/ready 验证连接仍可用。超过 4 KB 帧以 1009 关闭，WS-015 固定断言该码。
 - 等待集成负责人交接确定候选、WP6 最终 README/compose、环境矩阵及离线缓存条件。不得以准备起点或未知本机服务执行验收。
 
 ## 完整追踪矩阵
@@ -128,7 +128,7 @@
 | S-01 | 全新环境仅按 README 安装和启动 | MAN-001 | manual | 逐项核对已验证系统/版本、支持范围、安装、初始化、启动、测试及无 Key 验收步骤；每个命令能定位到同版 README。 | 勾选清单、候选 SHA、README 哈希及命令配方 | 未执行 |
 | S-02 | 提交内容不含依赖目录、产物、数据库和密钥 | ENV-005 | env | git ls-files 和指定最终交付包不含依赖目录、构建产物、数据库、环境文件；可疑密钥只登记路径/行号并交人工判断，不输出值。 | 候选 SHA、提交文件清单、交付包清单、脱敏线索 | 未执行 |
 | S-02 | 提交内容不含依赖目录、产物、数据库和密钥 | MAN-005 | manual | 逐条复核脱敏扫描线索，确认无有效密钥、令牌、真实个人或客户数据；不在报告复制敏感值。 | 线索路径及复核结论 | 未执行 |
-| S-03 | 至少一项有意义的自动化测试及真实执行记录 | MAN-006 | manual | 集成方提供同候选自动化执行记录；核对数据库版本超前/资料格式错误拒绝启动、迟到返回和提交前回滚由开发单元或集成测试覆盖，记录测试名与结果；QA 不读取实现或伪造内部接口。 | 同候选开发自测日志及移交签认 | 未执行 |
+| S-03 | 至少一项有意义的自动化测试及真实执行记录 | MAN-006 | manual | 集成方提供同候选自动化执行记录；核对数据库版本超前/资料格式错误拒绝启动、迟到返回和提交前回滚由开发单元或集成测试覆盖；Secure 属性在生产/非生产与 HTTPS/HTTP 四种组合的开发单元测试也须提供同候选证据，记录测试名与结果；QA 不读取实现或伪造内部接口。 | 同候选开发自测日志及移交签认 | 未执行 |
 | S-04 | 刷新恢复、正常流程和至少两个异常场景 | MAN-004 | manual | 在同一候选完成登录至计划、停止重试、坏输出回退三个流程，并登记实际结果和录屏；自动化结果不代替人工登记。 | 候选号、人工结果、三份录屏 | 未执行 |
 | B-01 | 空消息 | API-011 | api | 空消息、非法快捷值、非法偏好、负已读、越界分页参数、非法计划参数均 422；无新增消息。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
 | B-01 | 空消息 | API-023 | api | 设置上限 20，20 字符成功，21 字符创建及发送返回 MESSAGE_TOO_LONG，纯空白返回 VALIDATION_ERROR。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
@@ -176,9 +176,9 @@
 | B-21 | 断线补发及整体同步 | WS-008 | ws | 公开操作实际产生一千零一条事件；重连先 resync_required 后 ready，不逐条补发旧事件；REST 恢复完整会话和计划。 | 公开操作计数、协议顺序、REST 快照 | 未执行 |
 | B-22 | 跨用户资源隔离 | API-009 | api | 用户 B 对 A 的会话、消息、任务、已读、计划及真实 clientMessageId 重放均 404；A 消息及档案不变。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
 | B-23 | 跨站 WS Origin | WS-003 | ws | 有效令牌配非法 Origin 或无 Origin 时均为 HTTP 403。 | 两次握手 HTTP 状态 | 未执行 |
-| B-24 | 数据库版本超前拒绝启动（开发证据移交） | MAN-006 | manual | 集成方提供同候选自动化执行记录；核对数据库版本超前/资料格式错误拒绝启动、迟到返回和提交前回滚由开发单元或集成测试覆盖，记录测试名与结果；QA 不读取实现或伪造内部接口。 | 同候选开发自测日志及移交签认 | 未执行 |
-| B-25 | 资料格式错误拒绝启动（开发证据移交） | MAN-006 | manual | 集成方提供同候选自动化执行记录；核对数据库版本超前/资料格式错误拒绝启动、迟到返回和提交前回滚由开发单元或集成测试覆盖，记录测试名与结果；QA 不读取实现或伪造内部接口。 | 同候选开发自测日志及移交签认 | 未执行 |
-| F-auth | 登录、同名恢复、退出及归属 | API-001 | api | 去首尾空格和大小写变化恢复同一 user.id；令牌变化；Cookie 具有 HttpOnly、SameSite=Lax、Path=/、Max-Age。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
+| B-24 | 数据库版本超前拒绝启动（开发证据移交） | MAN-006 | manual | 集成方提供同候选自动化执行记录；核对数据库版本超前/资料格式错误拒绝启动、迟到返回和提交前回滚由开发单元或集成测试覆盖；Secure 属性在生产/非生产与 HTTPS/HTTP 四种组合的开发单元测试也须提供同候选证据，记录测试名与结果；QA 不读取实现或伪造内部接口。 | 同候选开发自测日志及移交签认 | 未执行 |
+| B-25 | 资料格式错误拒绝启动（开发证据移交） | MAN-006 | manual | 集成方提供同候选自动化执行记录；核对数据库版本超前/资料格式错误拒绝启动、迟到返回和提交前回滚由开发单元或集成测试覆盖；Secure 属性在生产/非生产与 HTTPS/HTTP 四种组合的开发单元测试也须提供同候选证据，记录测试名与结果；QA 不读取实现或伪造内部接口。 | 同候选开发自测日志及移交签认 | 未执行 |
+| F-auth | 登录、同名恢复、退出及归属 | API-001 | api | 去首尾空格和大小写变化恢复同一 user.id；令牌变化；Cookie 具有 HttpOnly、SameSite=Lax、Path=/、Max-Age；HTTP 登录即使伪造 HTTPS 代理头也不设置 Secure。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
 | F-auth | 登录、同名恢复、退出及归属 | API-004 | api | logout 返回 204、清 Cookie；原令牌访问 me 返回 401。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
 | F-auth | 登录、同名恢复、退出及归属 | API-009 | api | 用户 B 对 A 的会话、消息、任务、已读、计划及真实 clientMessageId 重放均 404；A 消息及档案不变。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
 | F-auth | 登录、同名恢复、退出及归属 | E2E-011 | e2e | 未登录访问计划页跳转登录；不存在咨询显示明确错误；退出后 /me 返回 401；同名不同大小写重新登录能恢复原咨询。 | trace、路由截图、HTTP 状态 | 未执行 |
@@ -221,7 +221,7 @@
 | F-ws | WS 推送、补发、边界与 resync_required | WS-008 | ws | 公开操作实际产生一千零一条事件；重连先 resync_required 后 ready，不逐条补发旧事件；REST 恢复完整会话和计划。 | 公开操作计数、协议顺序、REST 快照 | 未执行 |
 | F-multi-tab | 多标签消息同步 | E2E-003 | e2e | 同一会话两个页面逐条显示相同消息且每个 seq 仅一次；另一个会话回复后两个标签都有红点；聚焦打开该会话后两边红点均消失，服务端 lastReadSeq 等于 lastAssistantSeq。 | 全程录屏、trace、两标签截图、已读快照 | 未执行 |
 | F-multi-tab | 多标签消息同步 | WS-013 | ws | 两条同时发送的用户消息均存在且 seq 唯一连续，事件 ID/消息 seq 与 REST 一致，无消息丢失或重复。 | 并发 HTTP 结果、事件与消息页 | 未执行 |
-| F-unread | 已读单调与未读红点同步 | API-014 | api | 较小 seq 不回退，高 seq 的夹取或拒绝策略在 Q-01 裁定后验证，列表及详情读状态一致。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
+| F-unread | 已读单调与未读红点同步 | API-014 | api | 较小 seq 不回退；seq 大于 lastSeq 时返回 200 并夹到 lastSeq；列表与详情的持久化已读状态同步且不超界。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
 | F-unread | 已读单调与未读红点同步 | E2E-003 | e2e | 同一会话两个页面逐条显示相同消息且每个 seq 仅一次；另一个会话回复后两个标签都有红点；聚焦打开该会话后两边红点均消失，服务端 lastReadSeq 等于 lastAssistantSeq。 | 全程录屏、trace、两标签截图、已读快照 | 未执行 |
 | F-unread | 已读单调与未读红点同步 | WS-012 | ws | plan.created 对应持久化计划，conversation.upserted 标 completed/planId；read_state.updated 为相同会话和序号，REST 同值。 | 计划和已读事件、REST 对照 | 未执行 |
 | F-attention | 真实焦点下标题和 favicon 提醒 | MAN-002 | manual | 真实后台标签出现 (n) Nomad Concierge 和红点 favicon；聚焦并打开对应会话后未读减少，标题和 favicon 恢复。 | 真实浏览器操作与截图 | 未执行 |
@@ -260,14 +260,15 @@
 | F-errors | HTTP 路由成功路径、主要错误码与结构 | API-068 | api | 取消修正后计划 409 UNPROCESSED_MESSAGES，details.count>0；重试后计划反映修正。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
 | F-errors | HTTP 路由成功路径、主要错误码与结构 | API-069 | api | running 时计划 409 TURN_IN_PROGRESS；会话仍 collecting。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
 | F-errors | HTTP 路由成功路径、主要错误码与结构 | API-070 | api | 已有 active 时返回同一 turn 200；旧取消任务在后续任务完成后重试为 TURN_NOT_RETRYABLE。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
-| F-security | 归属、Cookie 属性、Origin 校验与令牌失效 | API-001 | api | 去首尾空格和大小写变化恢复同一 user.id；令牌变化；Cookie 具有 HttpOnly、SameSite=Lax、Path=/、Max-Age。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
+| F-security | 归属、Cookie 属性、Origin 校验与令牌失效 | API-001 | api | 去首尾空格和大小写变化恢复同一 user.id；令牌变化；Cookie 具有 HttpOnly、SameSite=Lax、Path=/、Max-Age；HTTP 登录即使伪造 HTTPS 代理头也不设置 Secure。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
 | F-security | 归属、Cookie 属性、Origin 校验与令牌失效 | API-009 | api | 用户 B 对 A 的会话、消息、任务、已读、计划及真实 clientMessageId 重放均 404；A 消息及档案不变。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
 | F-security | 归属、Cookie 属性、Origin 校验与令牌失效 | API-081 | api | 超过 64KB 的 JSON 请求返回 4xx；即使 content 很短，也不会创建会话或消息。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
 | F-security | 归属、Cookie 属性、Origin 校验与令牌失效 | WS-001 | ws | 允许的 Origin、无令牌时握手 HTTP 401，不能建立连接。 | 握手 HTTP 状态 | 未执行 |
 | F-security | 归属、Cookie 属性、Origin 校验与令牌失效 | WS-003 | ws | 有效令牌配非法 Origin 或无 Origin 时均为 HTTP 403。 | 两次握手 HTTP 状态 | 未执行 |
 | F-security | 归属、Cookie 属性、Origin 校验与令牌失效 | WS-010 | ws | 同一令牌的两个连接均以 4401 关闭，旧令牌再握手 401；同用户其他令牌仍可获取新事件，旧连接不再收到事件。 | 关闭码、握手状态、连接事件计数 | 未执行 |
 | F-security | 归属、Cookie 属性、Origin 校验与令牌失效 | WS-011 | ws | 上限为 2 时第三次登录关闭第一个令牌连接（4401），第二个仍存活；最早令牌握手 401，新令牌能接收事件。 | 三次登录、关闭码及事件流 | 未执行 |
-| F-security | 归属、Cookie 属性、Origin 校验与令牌失效 | MAN-007 | manual | 使用集成方确认的本地 HTTPS 接入方式，在 production 登录后 nc_token 含 Secure；同时保留 HttpOnly、SameSite=Lax、Path=/ 和十年 Max-Age。 | HTTPS 入口说明、脱敏 Set-Cookie 属性 | 未执行 |
+| F-security | 归属、Cookie 属性、Origin 校验与令牌失效 | MAN-006 | manual | 集成方提供同候选自动化执行记录；核对数据库版本超前/资料格式错误拒绝启动、迟到返回和提交前回滚由开发单元或集成测试覆盖；Secure 属性在生产/非生产与 HTTPS/HTTP 四种组合的开发单元测试也须提供同候选证据，记录测试名与结果；QA 不读取实现或伪造内部接口。 | 同候选开发自测日志及移交签认 | 未执行 |
+| F-security | 归属、Cookie 属性、Origin 校验与令牌失效 | MAN-007 | manual | 按 Q-02 裁定不适用：交付不提供 HTTPS 入口且不信任代理头；QA 不另建 HTTPS 环境。Secure 的生产/非生产与 HTTPS/HTTP 四种组合由开发单元测试覆盖，证据纳入 MAN-006。 | 2026-10-31 用户 Q-02 裁定；MAN-006 开发单元测试证据 | 不适用 |
 | F-persistence | 真实数据库与刷新/进程重启恢复 | API-019 | api | 同数据库重启后消息、profile、已读和计划正文与重启前完全一致。 | Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志 | 未执行 |
 | F-persistence | 真实数据库与刷新/进程重启恢复 | E2E-002 | e2e | 刷新前后每条消息内容、数量、连续序号、档案值和状态、过程记录文本一致；计划入口仍有效，刷新计划页后第一步和服务端完整计划内容完全一致。 | 全程录屏、trace、persisted-snapshot 附件 | 未执行 |
 | F-persistence | 真实数据库与刷新/进程重启恢复 | ENV-004 | env | 确认 3001 空闲；独立 compose 项目及卷按 README 启动；生成计划后重启容器，同用户 GET 的计划与重启前逐字段相同；只清理本轮资源。 | compose 命令、项目名、日志、重启前后计划 | 未执行 |
