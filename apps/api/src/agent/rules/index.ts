@@ -97,7 +97,10 @@ function interpretMessage(text: string, input: InterpretInput, droppedUpdates: I
         const prefix = part.slice(0, hit.index);
         const op = /只想|只要|仅(?:想|要|需|了解)|只(?:了解|开)|改成|替换成/.test(part) ? 'set' : /(?:不|没)(?:开|要|需要|考虑|想|了解|办|再|注册){0,3}$/.test(prefix) ? 'remove' : 'add';
         const professionalRequest = goal === 'residence' && topic === 'visa_eligibility' || goal === 'company' && topic === 'company_setup' || goal === 'tax' && topic === 'tax_amount';
-        if (op === 'add' && isBackgroundFact(goal, part) && !explicitRequest && !professionalRequest) continue;
+        const requestIndex = [...prefix.matchAll(/了解|咨询|建议|方案|帮助|申请|办理|改成|替换成|(?:想|计划|打算|准备|要|需要).{0,8}(?:开|注册|创业|做生意)/g)].at(-1)?.index ?? -1;
+        const requestTargetsEarlierGoal = goalWords.some(([earlierGoal, expression]) => earlierGoal !== goal && [...prefix.matchAll(new RegExp(expression.source, 'g'))].some(match => match.index > requestIndex));
+        // An earlier request about another topic does not turn the following fact into a request.
+        if (op !== 'remove' && isBackgroundFact(goal, part) && !(explicitRequest && !requestTargetsEarlierGoal) && !professionalRequest) continue;
         operations.set(op, [...(operations.get(op) ?? []), goal]);
       }
       for (const [op, value] of operations) add('goals', value, op);
