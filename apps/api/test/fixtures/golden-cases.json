@@ -5596,7 +5596,7 @@
       "pending-question-context",
       "unassigned-number"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G072",
@@ -5679,7 +5679,7 @@
       "pending-question-context",
       "unassigned-short-answer"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G073",
@@ -5762,6 +5762,6 @@
       "pending-question-context",
       "unrelated-question"
     ],
-    "reviewed": false
+    "reviewed": true
   }
 ]
