@@ -36,6 +36,14 @@ async function setup(options: Options = {}) {
 }
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); localStorage.clear(); });
 describe('page interactions against API contracts', () => {
+  it('uses the loaded current engine configuration for the displayed process summary without another status request', async () => {
+    const reply = assistant(); if (reply.role !== 'assistant' || !reply.payload) throw new Error('Invalid fixture');
+    reply.payload.process.fallbacks = [{ engine: 'remote', reason: 'unavailable' }, { engine: 'local', reason: 'unavailable' }];
+    await setup({ path: '/c/c', conversation: conversation(), messages: [reply] });
+    expect(screen.getByTestId('process-info-toggle')).toHaveTextContent('规则 · 20ms');
+    expect(screen.getByTestId('process-info-toggle')).not.toHaveTextContent('已回退');
+    expect(api.engines).toHaveBeenCalledTimes(1);
+  });
   it('offers a session retry after a network error and only asks for login after an actual 401', async () => {
     const me = vi.spyOn(api, 'me').mockRejectedValueOnce(new TypeError('offline')).mockRejectedValueOnce(new ApiError(401, 'UNAUTHENTICATED', 'expired'));
     render(<MemoryRouter><StoreProvider><AppRoutes /></StoreProvider></MemoryRouter>);
