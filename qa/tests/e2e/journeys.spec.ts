@@ -8,6 +8,7 @@ import { planResponseSchema, conversationListResponseSchema } from '../../../pac
 test('E2E-001 登录、示例、快捷回答、修正与完整计划', async ({ page }) => {
   const ui = new WorkspacePage(page);
   await ui.login();
+  await expect(page.getByTestId(TID.disclaimerBar)).toBeVisible();
   await expect(page.getByTestId(TID.disclaimerBar)).toContainText('不能替代持牌专业人士');
   await page.getByTestId(TID.exampleCard(0)).click();
   await expect(page.getByTestId(TID.composerInput)).toHaveValue(FAMILY_EXAMPLE);
@@ -15,6 +16,7 @@ test('E2E-001 登录、示例、快捷回答、修正与完整计划', async ({ 
   expect(emptyList.items).toHaveLength(0);
   const id = await ui.send(FAMILY_EXAMPLE);
   const initial = await ui.settled(id);
+  await expect(page.getByTestId(TID.disclaimerBar)).toBeVisible();
   expect(initial.conversation.profile.slots.applicantNationality.status).toBe('missing');
   expect(initial.conversation.profile.slots.currentResidence.status).toBe('missing');
   expect(initial.conversation.profile.slots.residenceStatus.status).toBe('missing');
@@ -60,6 +62,7 @@ test('E2E-001 登录、示例、快捷回答、修正与完整计划', async ({ 
   expect(result.plan).not.toBeNull();
   await page.goto(`/c/${id}`);
   await ui.live();
+  await expect(page.getByTestId(TID.disclaimerBar)).toBeVisible();
   await expect(page.getByTestId(TID.composerCompletedBanner)).toBeVisible();
   await expect(page.getByTestId(TID.composerInput)).toHaveCount(0);
   await page.goto(`/plans/${result.plan!.id}`);
@@ -76,6 +79,7 @@ test('E2E-001 登录、示例、快捷回答、修正与完整计划', async ({ 
   await expect(page.getByTestId(TID.planUnknown)).toBeVisible();
   await expect(page.getByTestId(TID.planToConfirm)).toBeVisible();
   await expect(page.getByTestId(TID.planBoundary)).toContainText('持牌');
+  await expect(page.getByTestId(TID.planDisclaimer)).toBeVisible();
   await expect(page.getByTestId(TID.planDisclaimer)).toContainText('不能替代持牌专业人士');
   expect(plan.content.sources.length).toBeGreaterThan(0);
   await expect(page.getByText('资料来源', { exact: true }).first()).toBeVisible();
@@ -244,6 +248,7 @@ test('E2E-007 提前生成确认、未知项与通用国家清单', async ({ pag
   expect(plan.content.profileSummary.unknown.map(item => item.slot)).toContain('currentResidence');
   await expect(page.getByTestId(TID.planUnknown)).toContainText('当前居住国');
   await expect(page.getByTestId(TID.planToConfirm)).not.toBeEmpty();
+  await expect(page.getByTestId(TID.planDisclaimer)).toBeVisible();
   await expect(page.getByTestId(TID.planDisclaimer)).toContainText('不能替代持牌专业人士');
   await page.getByTestId(TID.plansNav).click();
   await expect(page.getByTestId(TID.planCard(planId))).toContainText('通用准备清单');
