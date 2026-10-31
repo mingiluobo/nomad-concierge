@@ -13,11 +13,11 @@ export interface AppState {
   readStates: Record<string, number>; messages: Record<string, MessagePage>; pending: Record<string, PendingMessage[]>;
   turns: Record<string, TurnDto>; activeTurnByConversation: Record<string, string | null>;
   latestTurnByConversation: Record<string, string>;
-  planSummaries: Record<string, PlanSummaryDto>; planDetails: Record<string, PlanDto>;
+  planSummaries: Record<string, PlanSummaryDto>; planDetails: Record<string, PlanDto>; plansLoaded: boolean;
   loadedPages: Record<string, boolean>; pageError: string | null;
 }
 export function initialState(): AppState {
-  return { limits: { messageChars: 2000, messagesPerConversation: 200 }, user: null, booting: true, generation: 0, page: '/', connection: 'offline', lastEventId: null, engines: [], conversationSummaries: {}, conversationDetails: {}, readStates: {}, messages: {}, pending: {}, turns: {}, activeTurnByConversation: {}, latestTurnByConversation: {}, planSummaries: {}, planDetails: {}, loadedPages: {}, pageError: null };
+  return { limits: { messageChars: 2000, messagesPerConversation: 200 }, user: null, booting: true, generation: 0, page: '/', connection: 'offline', lastEventId: null, engines: [], conversationSummaries: {}, conversationDetails: {}, readStates: {}, messages: {}, pending: {}, turns: {}, activeTurnByConversation: {}, latestTurnByConversation: {}, planSummaries: {}, planDetails: {}, plansLoaded: false, loadedPages: {}, pageError: null };
 }
 export type Action = (
   | { type: 'user'; user: UserDto | null; limits?: RuntimeLimits }
@@ -38,6 +38,7 @@ export type Action = (
   | { type: 'read'; conversationId: string; seq: number }
   | { type: 'planSummary'; plan: PlanSummaryDto }
   | { type: 'plan'; plan: PlanDto }
+  | { type: 'plansLoaded' }
   | { type: 'loaded'; page: string }
   | { type: 'pageError'; error: string | null }
   | { type: 'event'; event: BusinessEvent }
@@ -100,6 +101,7 @@ export function reducer(state: AppState, action: Action): AppState {
     case 'read': return { ...state, readStates: { ...state.readStates, [action.conversationId]: Math.max(state.readStates[action.conversationId] ?? 0, action.seq) } };
     case 'planSummary': return state.planSummaries[action.plan.id] ? state : { ...state, planSummaries: { ...state.planSummaries, [action.plan.id]: action.plan } };
     case 'plan': return { ...state, planSummaries: { ...state.planSummaries, [action.plan.id]: action.plan }, planDetails: { ...state.planDetails, [action.plan.id]: action.plan } };
+    case 'plansLoaded': return { ...state, plansLoaded: true };
     case 'loaded': return { ...state, loadedPages: { ...state.loadedPages, [action.page]: true }, pageError: null };
     case 'pageError': return { ...state, pageError: action.error };
     case 'event': {

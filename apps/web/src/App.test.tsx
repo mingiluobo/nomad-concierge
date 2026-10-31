@@ -68,12 +68,12 @@ describe('page interactions against API contracts', () => {
     fireEvent.change(screen.getByTestId(TID.composerInput), { target: { value: '想去葡萄牙' } }); fireEvent.click(screen.getByTestId(TID.composerSend));
     act(() => sockets[0]!.frame({ type: 'event', id: 1, eventType: 'conversation.upserted', conversationId: 'c', createdAt: conversation().createdAt, payload: { conversation: conversation() } }));
     expect(screen.getByTestId(TID.messagePending)).toHaveTextContent('想去葡萄牙');
-    expect(screen.getByTestId(TID.chatTitle)).toHaveTextContent('开始你的第一次咨询');
+    expect(screen.getByTestId(TID.chatTitle)).toHaveTextContent('开始新的咨询');
     const clientId = create.mock.calls[0]![1];
     await act(async () => gate.resolve({ conversation: conversation(), message: message(1, clientId), turn: turn() }));
     await waitFor(() => expect(screen.getByTestId(TID.chatTitle)).toHaveTextContent('葡萄牙 · 个人'));
     fireEvent.click(screen.getByTestId(TID.newConversation));
-    await waitFor(() => expect(screen.getByTestId(TID.chatTitle)).toHaveTextContent('开始你的第一次咨询'));
+    await waitFor(() => expect(screen.getByTestId(TID.chatTitle)).toHaveTextContent('开始新的咨询'));
     expect(screen.queryByTestId(TID.messagePending)).not.toBeInTheDocument();
   });
   it('discards a delayed older-message response and cursor after a real resync snapshot', async () => {
@@ -148,6 +148,7 @@ describe('page interactions against API contracts', () => {
     vi.spyOn(api, 'generate').mockRejectedValue(new ApiError(409, 'UNPROCESSED_MESSAGES', 'unprocessed'));
     await setup({ path: '/c/c', conversation: item, latest: turn(2, 'cancelled') });
     fireEvent.click(screen.getByTestId(TID.generatePlan));
+    fireEvent.click(screen.getByTestId(TID.generateConfirm));
     expect(await screen.findByTestId(TID.unprocessedHint)).toHaveTextContent('请先重试');
     expect(screen.getByTestId(TID.turnCancelled)).toHaveClass('highlight');
   });

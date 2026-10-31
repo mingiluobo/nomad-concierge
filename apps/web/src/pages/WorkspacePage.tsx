@@ -18,6 +18,12 @@ const examples = [
 const stageNames: Record<string, string> = { queued: '排队中', understanding: '理解中', deciding: '决定下一步', replying: '回复中', done: '已完成' };
 const errorNames: Record<string, string> = { TURN_TIMEOUT: '处理超时', INTERNAL_ERROR: '暂时无法完成', RECOVERY_LIMIT: '多次恢复未成功' };
 const unavailable: Record<string, string> = { not_configured: '尚未配置', unreachable: '暂时无法连接', model_missing: '未找到指定模型', circuit_open: '暂时熔断，稍后恢复' };
+function savedEngine(userId?: string): EnginePreference {
+  try {
+    const value = userId ? localStorage.getItem(`nc-engine-preference:${userId}`) : null;
+    return value === 'rules' || value === 'remote' || value === 'local' ? value : 'auto';
+  } catch { return 'auto'; }
+}
 export function WorkspacePage() {
   const { conversationId } = useParams();
   const { state, dispatch, scope, isCurrent, getState, handleError, refreshConversation } = useStore();
@@ -25,13 +31,14 @@ export function WorkspacePage() {
   const location = useLocation();
   const [text, setText] = useState('');
   const [inputHint, setInputHint] = useState('');
+  const [answeringSlot, setAnsweringSlot] = useState<SlotKey>();
   const [error, setError] = useState('');
   const [unprocessed, setUnprocessed] = useState(false);
   const [full, setFull] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [turnBusy, setTurnBusy] = useState(false);
   const [engineBusy, setEngineBusy] = useState(false);
-  const [newEngine, setNewEngine] = useState<EnginePreference>('auto');
+  const [newEngine, setNewEngine] = useState<EnginePreference>(() => savedEngine(state.user?.id));
   const composer = useRef<HTMLTextAreaElement>(null);
   const scroll = useRef<HTMLDivElement>(null);
   const pinned = useRef(true);
@@ -47,7 +54,8 @@ export function WorkspacePage() {
   const lastAssistant = [...messages].reverse().find(message => message.role === 'assistant');
   const completed = conversation?.status === 'completed';
   const cannotSend = full || (conversation?.messageCount ?? 0) > state.limits.messagesPerConversation - 2;
-  useEffect(() => { setText(''); setInputHint(''); setError(''); setFull(false); setUnprocessed(false); setGenerating(false); setTurnBusy(false); setEngineBusy(false); pinned.current = true; homeDecision.current = false; }, [conversationId, location.search, state.generation]);
+  useEffect(() => { setText(''); setInputHint(''); setAnsweringSlot(undefined); setError(''); setFull(false); setUnprocessed(false); setGenerating(false); setTurnBusy(false); setEngineBusy(false); pinned.current = true; homeDecision.current = false; }, [conversationId, location.search, state.generation]);
+  useEffect(() => { setNewEngine(savedEngine(state.user?.id)); }, [state.user?.id]);
   useEffect(() => { setFull(false); }, [state.limits.messagesPerConversation]);
   useEffect(() => {
     if (conversationId || location.search.includes('new=1') || !state.loadedPages[state.page] || homeDecision.current) return;
@@ -69,8 +77,8 @@ export function WorkspacePage() {
     const clientMessageId = retry?.clientMessageId ?? crypto.randomUUID();
     const message: PendingMessage = { clientMessageId, content: content.trim(), payload, status: 'sending' };
     dispatch({ type: 'pending', conversationId: bucket, message, scope: token });
-    if (!retry && !payload) setText('');
-    setError(''); setInputHint(''); pinned.current = true;
+    if (!retry && !payload?.answers) setText('');
+    setError(''); setInputHint(''); setAnsweringSlot(undefined); pinned.current = true;
     try {
       if (!conversationId) {
         const result = await api.createConversation(message.content, clientMessageId, newEngine);
@@ -89,7 +97,10 @@ export function WorkspacePage() {
     } catch (caught) {
       if (!isCurrent(token)) return;
       dispatch({ type: 'pending', conversationId: bucket, message: { ...message, status: 'failed', error: handleError(caught) }, scope: token });
-      if (caught instanceof ApiError && caught.code === 'MESSAGE_TOO_LONG' && !payload) setText(message.content);
+      if (caught instanceof ApiError && caught.code === 'MESSAGE_TOO_LONG' && !payload?.answers) {
+        setText(message.content);
+        if (payload?.answeringSlot) { setAnsweringSlot(payload.answeringSlot); setInputHint(`请输入${slots[payload.answeringSlot].label}`); }
+      }
       operationError(caught);
     }
   }
@@ -115,9 +126,13 @@ export function WorkspacePage() {
     finally { if (isCurrent(token)) setGenerating(false); }
   }
   async function changeEngine(preference: EnginePreference) {
-    if (!conversationId) { setNewEngine(preference); return; }
+    function remember() {
+      setNewEngine(preference);
+      try { if (state.user) localStorage.setItem(`nc-engine-preference:${state.user.id}`, preference); } catch { /* Storage is optional. */ }
+    }
+    if (!conversationId) { remember(); return; }
     const token = scope(true); setEngineBusy(true); setError('');
-    try { const result = await api.setEngine(conversationId, preference); dispatch({ type: 'detail', conversation: result.conversation, scope: token }); }
+    try { const result = await api.setEngine(conversationId, preference); dispatch({ type: 'detail', conversation: result.conversation, scope: token }); if (isCurrent(token)) remember(); }
     catch (caught) { if (isCurrent(token)) operationError(caught); }
     finally { if (isCurrent(token)) setEngineBusy(false); }
   }
@@ -136,8 +151,9 @@ export function WorkspacePage() {
     } catch (caught) { if (isCurrent(token)) operationError(caught); }
     finally { dispatch({ type: 'loadingOlder', conversationId, loading: false, scope: token }); }
   }
-  function inputFor(slot: SlotKey) { setInputHint(`请输入${slots[slot].label}`); composer.current?.focus(); }
-  return <PageStatus><div className="workspace"><section className="chat-area"><header className="chat-header"><div><p className="eyebrow">YOUR NEXT CHAPTER</p><h1 data-testid={TID.chatTitle}>{conversation?.title ?? '开始你的第一次咨询'}</h1></div><label className="engine-label">理解方式<select data-testid={TID.engineSelect} value={conversation?.enginePreference ?? newEngine} disabled={completed || engineBusy} onChange={event => void changeEngine(event.target.value as EnginePreference)}>{(['auto', 'remote', 'local', 'rules'] as const).map(engine => { const status = state.engines.find(item => item.id === engine); return <option key={engine} value={engine} disabled={engine !== 'auto' && engine !== 'rules' && !status?.available} title={status?.reason ? unavailable[status.reason] : undefined}>{engineNames[engine]}{status?.reason ? `（${unavailable[status.reason]}）` : ''}</option>; })}</select></label></header>
+  function inputFor(slot: SlotKey) { setAnsweringSlot(slot); setInputHint(`请输入${slots[slot].label}`); composer.current?.focus(); }
+  function sendText() { return send(text, answeringSlot ? { answeringSlot } : undefined); }
+  return <PageStatus><div className="workspace"><section className="chat-area"><header className="chat-header"><div><p className="eyebrow">YOUR NEXT CHAPTER</p><h1 data-testid={TID.chatTitle}>{conversation?.title ?? '开始新的咨询'}</h1></div><label className="engine-label">理解方式<select data-testid={TID.engineSelect} value={conversation?.enginePreference ?? newEngine} disabled={completed || engineBusy} onChange={event => void changeEngine(event.target.value as EnginePreference)}>{(['auto', 'remote', 'local', 'rules'] as const).map(engine => { const status = state.engines.find(item => item.id === engine); return <option key={engine} value={engine} disabled={engine !== 'auto' && engine !== 'rules' && !status?.available} title={status?.reason ? unavailable[status.reason] : undefined}>{engineNames[engine]}{status?.reason ? `（${unavailable[status.reason]}）` : ''}</option>; })}</select></label></header>
     <div className="disclaimer-bar" data-testid={TID.disclaimerBar}>ⓘ 基于演示用示例资料整理，不能替代持牌专业人士的意见</div>
     <div className="message-scroll" ref={scroll} onScroll={() => { if (!scroll.current) return; const node = scroll.current; pinned.current = node.scrollHeight - node.scrollTop - node.clientHeight < 80; if (node.scrollTop < 20 && messagePage?.nextCursor) void loadOlder(); }}>
       {!conversationId && <div className="empty-workspace"><span className="empty-symbol">↗</span><h2>你的想法，下一步就能更清晰。</h2><p>告诉我你想去哪里、和谁一起，以及最关心的事。<br />我们会一步一步，把它整理成可执行的初步计划。</p><div className="example-cards">{examples.map((example, index) => <button key={example.title} data-testid={TID.exampleCard(index)} onClick={() => { setText(example.text); composer.current?.focus(); }}><span>{example.icon}</span><strong>{example.title}</strong><small>{example.text}</small><b>从这个想法开始 ↗</b></button>)}</div></div>}
@@ -147,5 +163,5 @@ export function WorkspacePage() {
       {active && <div className="turn-progress" data-testid={TID.turnProgress}><div className="stage-line">{(active.stage === 'queued' ? ['queued'] : ['understanding', 'deciding', 'replying']).map(stage => <span className={stage === active.stage ? 'current-stage' : ''} data-testid={TID.turnStage(stage)} key={stage}>{stage === active.stage && <span className="spinner" />}{stageNames[stage]}</span>)}</div><button data-testid={TID.turnStop} disabled={turnBusy} onClick={() => void turnAction('cancel')}>停止</button></div>}
       {!active && latest && ['failed', 'cancelled'].includes(latest.status) && <div className={`turn-result ${latest.status} ${unprocessed ? 'highlight' : ''}`} data-testid={latest.status === 'failed' ? TID.turnFailed : TID.turnCancelled}><span>{latest.status === 'cancelled' ? '这一轮回复已中断' : `这一轮回复失败（${errorNames[latest.errorCode ?? ''] ?? '未知原因'}）`}</span><button data-testid={TID.turnRetry} disabled={turnBusy} onClick={() => void turnAction('retry')}>重试</button></div>}
     </div>
-    <footer className="composer-area">{error && <p role="alert" className="error-text" data-testid={unprocessed ? TID.unprocessedHint : 'workspace-error'}>{error}</p>}{completed ? <div className="completed-banner" data-testid={TID.composerCompletedBanner}>✓ 这个咨询已生成计划 · <Link to={`/plans/${conversation.planId}`} data-testid="completed-view-plan">查看计划</Link> · <Link to="/?new=1" data-testid="completed-new-conversation">新建咨询</Link></div> : cannotSend ? <div className="full-banner" data-testid={TID.composerFullBanner}>已达上限，可以生成计划或<Link to="/?new=1" data-testid="full-new-conversation">新建咨询</Link></div> : <><div className="composer-box"><textarea ref={composer} data-testid={TID.composerInput} aria-label="咨询消息" value={text} placeholder={inputHint || (active ? '正在回复，继续输入会补充到这一轮' : '描述你的想法，或者回答上面的问题…')} onChange={event => setText(event.target.value)} onKeyDown={event => { if (event.nativeEvent.isComposing) return; if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); if (text.trim() && text.length <= state.limits.messageChars) void send(text); } if (event.key === 'Escape' && active) { event.preventDefault(); void turnAction('cancel'); } }} /><button className="primary send-button" data-testid={TID.composerSend} disabled={!text.trim() || text.length > state.limits.messageChars || (!conversationId && pending.some(item => item.status === 'sending'))} onClick={() => void send(text)}>发送 ↑</button></div><div className="composer-meta"><span>{inputHint || 'Enter 发送 · Shift + Enter 换行'}</span>{text.length >= state.limits.messageChars * 0.9 && <span className={text.length > state.limits.messageChars ? 'error-text' : ''} data-testid="composer-counter">{text.length} / {state.limits.messageChars}</span>}</div></>}</footer></section>{conversation && <ProfilePanel key={conversation.id} conversation={conversation} onGenerate={early => void generate(early)} busy={generating} activeTurn={Boolean(active)} />}</div></PageStatus>;
+    <footer className="composer-area">{error && <p role="alert" className="error-text" data-testid={unprocessed ? TID.unprocessedHint : 'workspace-error'}>{error}</p>}{completed ? <div className="completed-banner" data-testid={TID.composerCompletedBanner}>✓ 这个咨询已生成计划 · <Link to={`/plans/${conversation.planId}`} data-testid="completed-view-plan">查看计划</Link> · <Link to="/?new=1" data-testid="completed-new-conversation">新建咨询</Link></div> : cannotSend ? <div className="full-banner" data-testid={TID.composerFullBanner}>已达上限，可以生成计划或<Link to="/?new=1" data-testid="full-new-conversation">新建咨询</Link></div> : <><div className="composer-box"><textarea ref={composer} data-testid={TID.composerInput} aria-label="咨询消息" value={text} placeholder={inputHint || (active ? '正在回复，继续输入会补充到这一轮' : '描述你的想法，或者回答上面的问题…')} onChange={event => setText(event.target.value)} onKeyDown={event => { if (event.nativeEvent.isComposing) return; if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); if (text.trim() && text.length <= state.limits.messageChars) void sendText(); } if (event.key === 'Escape' && active) { event.preventDefault(); void turnAction('cancel'); } }} /><button className="primary send-button" data-testid={TID.composerSend} disabled={!text.trim() || text.length > state.limits.messageChars || (!conversationId && pending.some(item => item.status === 'sending'))} onClick={() => void sendText()}>发送 ↑</button></div><div className="composer-meta"><span>{inputHint || 'Enter 发送 · Shift + Enter 换行'}</span>{text.length >= state.limits.messageChars * 0.9 && <span className={text.length > state.limits.messageChars ? 'error-text' : ''} data-testid="composer-counter">{text.length} / {state.limits.messageChars}</span>}</div></>}</footer></section>{conversation && <ProfilePanel key={conversation.id} conversation={conversation} onGenerate={early => void generate(early)} busy={generating} activeTurn={Boolean(active)} />}</div></PageStatus>;
 }

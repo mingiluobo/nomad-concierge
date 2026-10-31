@@ -51,11 +51,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const turnHeads = { ...stateRef.current.latestTurnByConversation };
     dispatch({ type: 'pageError', error: null, scope: token });
     try {
-      const [list, engines] = await Promise.all([api.conversations(), api.engines()]);
+      const [list, engines, plans] = await Promise.all([api.conversations(), api.engines(), api.plans()]);
       for (const conversation of list.items) dispatch({ type: 'summary', conversation, scope: token });
       for (const turn of list.activeTurns) dispatch({ type: 'turn', turn, expectedLatestId: turnHeads[turn.conversationId] ?? null, scope: token });
       for (const read of list.readStates) dispatch({ type: 'read', conversationId: read.conversationId, seq: read.lastReadSeq, scope: token });
       dispatch({ type: 'engines', engines: engines.engines, scope: token });
+      for (const plan of plans.items) dispatch({ type: 'planSummary', plan, scope: token });
+      dispatch({ type: 'plansLoaded', scope: token });
       if (!isCurrent(token)) return;
       if (pathname.startsWith('/c/')) {
         const id = decodeURIComponent(pathname.slice(3));
@@ -67,9 +69,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (result.plan) dispatch({ type: 'planSummary', plan: result.plan, scope: token });
         dispatch({ type: 'read', conversationId: id, seq: result.readState.lastReadSeq, scope: token });
         dispatch({ type: 'messages', conversationId: id, ...messages, scope: token });
-      } else if (pathname === '/plans') {
-        const result = await api.plans();
-        for (const plan of result.items) dispatch({ type: 'planSummary', plan, scope: token });
       } else if (pathname.startsWith('/plans/')) {
         const result = await api.plan(decodeURIComponent(pathname.slice(7)));
         dispatch({ type: 'plan', plan: result.plan, scope: token });

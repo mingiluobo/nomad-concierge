@@ -11,6 +11,7 @@ import { assistant, conversation, message, plan, turn } from './test/fixtures';
 
 let store: ReturnType<typeof useStore>;
 function Probe() { store = useStore(); return null; }
+function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>(yes => { resolve = yes; }); return { promise, resolve }; }
 interface SetupOptions { path?: string; userId?: string; conversation?: ConversationDetailDto; messages?: MessageDto[]; plans?: PlanSummaryDto[]; detail?: PlanDto }
 async function setup(options: SetupOptions = {}) {
   const sockets: FakeSocket[] = [];
@@ -69,6 +70,19 @@ describe('manual answers and generation consent', () => {
     await waitFor(() => expect(send).toHaveBeenCalledTimes(2));
     expect(send.mock.calls[1]![3]).toBeUndefined();
   });
+  it('UX-01 clears the manual-answer hint after leaving a consultation', async () => {
+    const send = vi.spyOn(api, 'send').mockImplementation(async (_id, _content, id) => ({ message: message(3, id), turn: turn() }));
+    await setup({ messages: [countryQuestions()] });
+    fireEvent.click(screen.getByTestId('quick-input-applicantNationality-1'));
+    fireEvent.click(screen.getByTestId(TID.newConversation));
+    await waitFor(() => expect(screen.getByTestId(TID.chatTitle)).toHaveTextContent('开始新的咨询'));
+    fireEvent.click(screen.getByTestId(TID.convItem('c')));
+    await waitFor(() => expect(screen.getByTestId(TID.chatTitle)).toHaveTextContent('葡萄牙 · 个人'));
+    fireEvent.change(screen.getByTestId(TID.composerInput), { target: { value: '下个月出发' } });
+    fireEvent.keyDown(screen.getByTestId(TID.composerInput), { key: 'Enter' });
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+    expect(send.mock.calls[0]![3]).toBeUndefined();
+  });
   it('UX-06 confirms that a complete consultation will end, and cancellation does not generate', async () => {
     const item = conversation(); item.progress = { ...item.progress, isComplete: true, canGenerateEarly: true, missing: [], answered: 8 };
     const generate = vi.spyOn(api, 'generate').mockResolvedValue({ plan: plan() });
@@ -100,6 +114,32 @@ describe('plans across pages', () => {
     await act(async () => { resolve({ items: [plan(), { ...plan(), id: 'p2' }] }); await refreshing; });
     expect(screen.getByTestId(TID.plansNav)).toHaveTextContent('我的计划 3');
   });
+  it('UX-07 shows an unknown count during resync and reloads it on the conversation page', async () => {
+    const sockets = await setup();
+    const gate = deferred<Awaited<ReturnType<typeof api.plans>>>();
+    vi.mocked(api.plans).mockReturnValueOnce(gate.promise);
+    act(() => sockets[0]!.frame({ type: 'resync_required' }));
+    expect(screen.getByTestId(TID.plansNav)).toHaveTextContent('我的计划 …');
+    await act(async () => sockets[0]!.frame({ type: 'ready', userId: 'u', latestEventId: 5 }));
+    expect(screen.getByTestId(TID.plansNav)).toHaveTextContent('我的计划 …');
+    await act(async () => gate.resolve({ items: [plan(), { ...plan(), id: 'p2' }, { ...plan(), id: 'p3' }] }));
+    await waitFor(() => expect(screen.getByTestId(TID.plansNav)).toHaveTextContent('我的计划 3'));
+  });
+  it('UX-07 ignores an old user plan list and loaded marker after identity changes', async () => {
+    const sockets = await setup();
+    const gate = deferred<Awaited<ReturnType<typeof api.plans>>>();
+    vi.mocked(api.plans).mockReturnValueOnce(gate.promise).mockResolvedValue({ items: [] });
+    let refreshing!: Promise<void>;
+    act(() => { refreshing = store.loadPage(); });
+    act(() => store.dispatch({ type: 'user', user: { id: 'other', username: 'Other' } }));
+    expect(screen.getByTestId(TID.plansNav)).toHaveTextContent('我的计划 …');
+    await act(async () => { gate.resolve({ items: [plan(), { ...plan(), id: 'private-old-plan' }] }); await refreshing; });
+    expect(store.state.planSummaries).toEqual({});
+    expect(screen.getByTestId(TID.plansNav)).toHaveTextContent('我的计划 …');
+    await waitFor(() => expect(sockets).toHaveLength(2));
+    await act(async () => { sockets[1]!.open(); sockets[1]!.frame({ type: 'ready', userId: 'other', latestEventId: 0 }); });
+    await waitFor(() => expect(screen.getByTestId(TID.plansNav)).toHaveTextContent('我的计划 0'));
+  });
   it('UX-09 distinguishes early plans using existing information counts and exact generation times', async () => {
     const early = { ...plan(), generatedEarly: true, knownCount: 5, unknownCount: 4 };
     const full = { ...plan(), id: 'p2', generatedEarly: false, knownCount: 9, unknownCount: 0, createdAt: '2026-10-31T09:00:00.000Z' };
@@ -115,6 +155,13 @@ describe('plans across pages', () => {
     await setup({ path: '/plans/p', detail: item });
     const section = screen.getByRole('heading', { name: '抵达后' }).parentElement!;
     expect(within(section).getByText('该阶段暂无事项')).toBeInTheDocument();
+  });
+  it('UX-09 does not invent metadata for a summary without the optional fields', async () => {
+    await setup({ path: '/plans', plans: [plan()] });
+    const card = screen.getByTestId(TID.planCard('p'));
+    expect(card).not.toHaveTextContent('信息不全时生成'); expect(card).not.toHaveTextContent('信息完整时生成');
+    expect(card).not.toHaveTextContent('已知 0 项'); expect(card).not.toHaveTextContent('待了解 0 项');
+    expect(api.plan).not.toHaveBeenCalled();
   });
 });
 
@@ -138,5 +185,29 @@ describe('new consultation defaults', () => {
     cleanup(); vi.restoreAllMocks();
     await setup({ path: '/?new=1', userId: 'other-user' });
     expect(screen.getByTestId(TID.engineSelect)).toHaveValue('auto');
+  });
+  it('UX-14 persists a successful explicit change in an existing consultation', async () => {
+    const updated = { ...conversation(2), enginePreference: 'auto' as const };
+    const setEngine = vi.spyOn(api, 'setEngine').mockResolvedValue({ conversation: updated });
+    await setup();
+    fireEvent.change(screen.getByTestId(TID.engineSelect), { target: { value: 'auto' } });
+    await waitFor(() => expect(setEngine).toHaveBeenCalledWith('c', 'auto'));
+    fireEvent.click(screen.getByTestId(TID.newConversation));
+    await waitFor(() => expect(screen.getByTestId(TID.engineSelect)).toHaveValue('auto'));
+    expect(localStorage.getItem('nc-engine-preference:u')).toBe('auto');
+  });
+  it('UX-14 ignores invalid saved values and never writes a late old-user engine response', async () => {
+    localStorage.setItem('nc-engine-preference:u', 'invalid-engine');
+    const gate = deferred<Awaited<ReturnType<typeof api.setEngine>>>();
+    vi.spyOn(api, 'setEngine').mockReturnValueOnce(gate.promise);
+    await setup({ path: '/?new=1' });
+    expect(screen.getByTestId(TID.engineSelect)).toHaveValue('auto');
+    fireEvent.click(screen.getByTestId(TID.convItem('c')));
+    await waitFor(() => expect(screen.getByTestId(TID.engineSelect)).toHaveValue('rules'));
+    fireEvent.change(screen.getByTestId(TID.engineSelect), { target: { value: 'auto' } });
+    act(() => store.dispatch({ type: 'user', user: { id: 'other', username: 'Other' } }));
+    await act(async () => gate.resolve({ conversation: { ...conversation(2), enginePreference: 'auto' } }));
+    expect(localStorage.getItem('nc-engine-preference:u')).toBe('invalid-engine');
+    expect(localStorage.getItem('nc-engine-preference:other')).toBeNull();
   });
 });

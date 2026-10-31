@@ -44,7 +44,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </Link>)}
         {!conversations.length && <p className="sidebar-empty">{tab === 'collecting' ? '你的下一程，从这里开始。' : '已完成的咨询会出现在这里。'}</p>}
       </nav>
-      <div className="sidebar-bottom"><Link data-testid={TID.plansNav} to="/plans" className={`plans-link ${location.pathname.startsWith('/plans') ? 'selected' : ''}`}>我的计划 <span>{Object.keys(state.planSummaries).length}</span></Link><div className={`connection connection-${state.connection}`} data-testid={TID.connectionStatus} role="status"><span />{connectionLabels[state.connection]}</div></div>
+      <div className="sidebar-bottom"><Link data-testid={TID.plansNav} to="/plans" className={`plans-link ${location.pathname.startsWith('/plans') ? 'selected' : ''}`}>我的计划 <span>{state.plansLoaded ? Object.keys(state.planSummaries).length : '…'}</span></Link><div className={`connection connection-${state.connection}`} data-testid={TID.connectionStatus} role="status"><span />{connectionLabels[state.connection]}</div></div>
     </aside>
     <main className="main-area">{children}</main>
   </div>;
