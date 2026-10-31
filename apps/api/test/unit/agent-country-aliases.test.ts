@@ -13,7 +13,7 @@ describe('country aliases in rule interpretation', () => {
     ['美利坚', 'US'], ['美利坚合众国', 'US'], ['大不列颠', 'GB'],
     ['德意志', 'DE'], ['德意志联邦共和国', 'DE'], ['法兰西', 'FR'], ['法兰西共和国', 'FR'],
     ['中华人民共和国', 'CN'], ['大韩民国', 'KR'], ['泰王国', 'TH'],
-    ['阿拉伯联合酋长国', 'AE'], ['纽西兰', 'NZ'],
+    ['阿拉伯联合酋长国', 'AE'], ['纽西兰', 'NZ'], ['尼德兰王国', 'NL'], ['狮城', 'SG'],
   ])('interprets %s as %s when answering the pending country question', async (alias, code) => {
     expect((await interpret(alias, ['destination'])).interpretation).toEqual({
       intent: 'provide_info', updates: [{ slot: 'destination', value: code }], unsure: [],
