@@ -36,9 +36,9 @@ export default class EvidenceReporter implements Reporter {
     }
   }
   async onEnd(result: FullResult) {
-    if (process.env.QA_EXECUTION_AUTHORIZED !== 'candidate' || !process.env.QA_RUN_DIR) return;
+    if ((process.env.QA_EXECUTION_AUTHORIZED !== 'candidate' && process.env.QA_REPORT_MODE !== 'tooling-self-check') || !process.env.QA_RUN_DIR) return;
     const destination = resolve(process.env.QA_RUN_DIR, `round-${process.env.QA_ROUND}`, 'results.json');
     await mkdir(resolve(destination, '..'), { recursive: true });
-    await writeFile(destination, JSON.stringify({ status: result.status, rows: [...this.rows.values()] }, null, 2));
+    await writeFile(destination, JSON.stringify({ purpose: process.env.QA_REPORT_MODE === 'tooling-self-check' ? 'tooling-self-check' : 'candidate-acceptance', status: result.status, rows: [...this.rows.values()] }, null, 2));
   }
 }

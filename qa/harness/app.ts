@@ -35,10 +35,12 @@ export class AppInstance {
   private exited?: Promise<void>;
   private history: { pid?: number; args: string[]; node: string; at: string }[] = [];
   get pid(): number | undefined { return this.child?.pid; }
-  constructor(readonly root: string, readonly overrides: Record<string, string> = {}) {}
+  constructor(readonly root: string, readonly overrides: Record<string, string> = {}, readonly selfCheck?: { sourceCommit: string }) {}
 
   async initialize(): Promise<void> {
-    if (process.env.QA_EXECUTION_AUTHORIZED !== 'candidate') throw new Error('QA preparation only: a declared candidate is required before execution');
+    if (this.selfCheck) {
+      if (await command('git', ['rev-parse', 'HEAD'], this.root) !== this.selfCheck.sourceCommit) throw new Error('Tooling self-check snapshot mismatch');
+    } else if (process.env.QA_EXECUTION_AUTHORIZED !== 'candidate') throw new Error('QA preparation only: a declared candidate is required before execution');
     await assertNoEnv(this.root);
     this.directory = await mkdtemp(join(tmpdir(), 'nc-qa-instance-'));
     this.databasePath = join(this.directory, 'qa.sqlite');
@@ -102,7 +104,7 @@ export class AppInstance {
       await writeFile(join(evidenceDirectory, 'api-process.log'), this.processOutput);
       await writeFile(join(evidenceDirectory, 'fake-requests.json'), JSON.stringify({ remote: this.fakeRemote.requests, local: this.fakeLocal.requests }, null, 2));
       const config = Object.fromEntries(Object.entries(this.env).filter(([name]) => /^(PORT|DATABASE_PATH|WEB_ORIGIN|SERVE_WEB_DIST|DEMO_|TURN_|LLM_|LOCAL_LLM_|BREAKER_|LIMIT_|TOKENS_)/.test(name) && name !== 'LLM_API_KEY'));
-      await writeFile(join(evidenceDirectory, 'instance.json'), JSON.stringify({ baseURL: this.baseURL, processes: this.history, config, candidate: process.env.QA_CANDIDATE_COMMIT }, null, 2));
+      await writeFile(join(evidenceDirectory, 'instance.json'), JSON.stringify({ baseURL: this.baseURL, processes: this.history, config, purpose: this.selfCheck ? 'tooling-self-check' : 'candidate-acceptance', sourceCommit: this.selfCheck?.sourceCommit, candidate: this.selfCheck ? null : process.env.QA_CANDIDATE_COMMIT }, null, 2));
     } catch (error) { errors.push(error); }
     const cleanup = await Promise.allSettled([this.fakeRemote.close(), this.fakeLocal.close(), ...(this.directory ? [rm(this.directory, { recursive: true, force: true })] : [])]);
     for (const result of cleanup) if (result.status === 'rejected') errors.push(result.reason);

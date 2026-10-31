@@ -7,13 +7,14 @@ import type { CaseResult } from './reporter.js';
 import { manualResults } from './manual.js';
 
 export async function writeSummary(reportRoot: string, runDirectory: string, info: Candidate, mode: string, operationalError?: string): Promise<boolean> {
+  const tooling = mode === 'tooling-self-check';
   const rows: (CaseResult & { round: string })[] = [];
   const runnerErrors: string[] = operationalError ? [operationalError] : [];
   for (const directory of await readdir(runDirectory)) {
     if (!directory.startsWith('round-')) continue;
     try { const parsed = JSON.parse(await readFile(join(runDirectory, directory, 'results.json'), 'utf8')) as { status: string; rows: CaseResult[] }; rows.push(...parsed.rows.map(row => ({ ...row, round: directory }))); if (parsed.status !== 'passed') runnerErrors.push(`${directory}: runner status ${parsed.status}`); } catch { /* Missing result means not executed, never success. */ }
   }
-  for (const row of await manualResults(info.candidateCommit)) rows.push({ ...row, title: row.id, round: '人工登记', duration: 0, errors: [] });
+  for (const row of tooling ? [] : await manualResults(info.candidateCommit)) rows.push({ ...row, title: row.id, round: '人工登记', duration: 0, errors: [] });
   const result = (id: string): string => {
     const found = rows.filter(row => row.id === id);
     const definition = cases.find(row => row.id === id)!;
@@ -25,15 +26,15 @@ export async function writeSummary(reportRoot: string, runDirectory: string, inf
   };
   let defectsReviewed = false;
   let defectDescription = '尚未登记同候选缺陷审阅；不据此宣称零缺陷。';
-  if (process.env.QA_DEFECT_REVIEW) {
+  if (!tooling && process.env.QA_DEFECT_REVIEW) {
     const review = JSON.parse(await readFile(process.env.QA_DEFECT_REVIEW, 'utf8')) as { candidateCommit: string; reviewedBy: string; reviewedAt: string; items: { id: string; priority: string; status: string; evidence: string }[] };
     if (review.candidateCommit !== info.candidateCommit || !review.reviewedBy || !Number.isFinite(Date.parse(review.reviewedAt))) throw new Error('Invalid candidate defect review');
     defectsReviewed = review.items.every(item => Boolean(item.evidence) && (item.status === 'closed' || (['P2', 'P3'].includes(item.priority) && item.status === 'accepted')));
     defectDescription = `缺陷审阅：${review.reviewedBy}，${review.reviewedAt}；${review.items.map(item => `${item.id} ${item.priority} ${item.status} ${item.evidence}`).join('; ') || '已登记无缺陷'}。`;
   }
   const pass = cases.every(row => row.notApplicable || result(row.id) === '通过') && !runnerErrors.length && mode === 'full' && defectsReviewed;
-  const lines = ['# Nomad Concierge QA 执行报告', '', `时间：${new Date().toISOString()}；运行目录：${runDirectory}；模式：${mode}。`, '',
-    `候选：${info.candidateCommit}；产品：${info.productCommit}；QA：${info.qaCommit}；契约：${info.specVersion}。`,
+  const lines = [tooling ? '# 测试工具报告生成自检（不代表产品验收）' : '# Nomad Concierge QA 执行报告', '', `时间：${new Date().toISOString()}；运行目录：${runDirectory}；模式：${mode}。`, '',
+    tooling ? `仅工具自检：main 快照 ${info.productCommit}；QA：${info.qaCommit}。正式候选未交接，产品用例未执行。` : `候选：${info.candidateCommit}；产品：${info.productCommit}；QA：${info.qaCommit}；契约：${info.specVersion}。`,
     `README SHA-256：${info.readmeSha256}；锁文件 SHA-256：${info.lockSha256}。环境、构建方式和实际进程见 metadata.json、build.log 及每例 instance.json。`, '',
     `结论：${pass ? '同候选的用例、轮次、人工登记与缺陷处置符合进入下一环节的要求。' : '不可放行：有未通过、未执行、未登记的必测项或缺陷处置。'}`, '',
     runnerErrors.length ? `运行错误：${runnerErrors.join('; ')}` : '',

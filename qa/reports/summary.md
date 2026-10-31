@@ -31,7 +31,7 @@
 
 ## 证据与缺陷状态
 
-目前只有准备检查与用例发现产物（reports/preparation/discovery.json）；没有产品请求日志、trace、截图或录屏。正式执行后每场景的视频文件名、trace 和 HTTP/WS/进程证据由报告器逐项填入。
+准备产物包括用例发现（reports/preparation/discovery.json）和单独授权的工具自检（checklists/preparation-status.md）：main 独立副本的启动、端口、临时数据库、重启、假服务和报告生成均已检查；Node 22.13.0/24 与 Docker 基础镜像已准备。工具自检只访问健康检查接口，未执行产品用例；没有产品验收的 trace、截图或录屏。正式执行后每场景的视频文件名、trace 和 HTTP/WS/进程证据由报告器逐项填入。
 未执行产品，因此不报告零缺陷。没有已确认的产品缺陷；发现问题后按 defects/TEMPLATE.md 登记，并区分 QA 首次发现与开发自测已知问题。
 
 ## 已裁定契约与交接依赖

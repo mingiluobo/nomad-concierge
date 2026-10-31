@@ -18,6 +18,14 @@ npm run list --workspace qa
 
 `test-plan.md` 是用例清单，`traceability.md` 是包含具体断言的需求矩阵；`catalog/` 是二者的结构化来源。更新用例后运行 `npm run docs --workspace qa` 重新生成两份文档。`checklists/acceptance.md` 包含人工操作和内部测试证据的移交步骤；`contract-questions.md` 记录已裁定的契约解释；Q-01～Q-03 均已关闭。
 
+## 单独授权的测试工具自检
+
+收到工具自检授权后，可运行 `npm run self-check --workspace qa`。该入口固定取当时的本地 `main` 提交，克隆到独立临时目录，检查没有环境文件，安装、构建后仅访问 `/api/health`，验证动态端口、临时 SQLite、SIGTERM/SIGKILL 后重启和清理。假模型响应由 QA 直接调用验证，不创建咨询、不发送业务消息、不生成产品计划。
+
+报告自检使用独立配置 `self-check/playwright.config.ts`，仅运行 `TOOLING-REPORT-001`；HTML、JSON、Markdown 及附件写到 `reports/preparation/<runId>/report-preview/`。自检记录 `purpose=tooling-self-check`、`candidate=null`，产品矩阵保持未执行，不覆盖正式摘要或形成放行结论。产品正式入口的候选交接条件保持不变。
+
+`node qa/harness/prepare-node.mjs` 准备 Node 22.13.0/24：优先复用已有版本；缺少最低版本时下载官方发行包并核对 SHA256，文件放在 `qa/reports/toolchains/`，不修改默认 Node 或 shell 配置。环境路径及版本见 `reports/preparation/node-environments.json`，Docker 证据见 `reports/preparation/docker-environment.json`，本次结果见 `checklists/preparation-status.md`。这些准备结果不能代替最终候选的环境矩阵验收。
+
 ## 候选交接
 
 1. 集成负责人组装产品提交与 QA 提交，提供候选完整 SHA、两者的 SHA、WP6 完成声明、声明人以及 SPEC 版本。
