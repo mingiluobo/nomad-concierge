@@ -69,11 +69,11 @@ export async function smoke(baseURL: string) {
 async function waitHealth(baseURL: string) { await poll(async () => (await fetch(`${baseURL}/api/health`, { signal: AbortSignal.timeout(700) })).status, value => value === 200, 30_000); }
 async function browserSmoke(browser: Browser, baseURL: string, evidence: string): Promise<void> {
   const context = await browser.newContext({ baseURL, recordVideo: { dir: join(evidence, 'videos') } });
-  await context.route('**/*', route => new URL(route.request().url()).origin === baseURL ? route.continue() : route.abort('blockedbyclient'));
-  await context.routeWebSocket(/.*/, socket => new URL(socket.url()).host === new URL(baseURL).host ? socket.connectToServer() : socket.close({ code: 1008 }));
-  await context.tracing.start({ screenshots: true, snapshots: true, sources: false });
-  const page = await context.newPage();
   try {
+    // Playwright's trace:on already owns tracing for contexts created by this browser.
+    await context.route('**/*', route => new URL(route.request().url()).origin === baseURL ? route.continue() : route.abort('blockedbyclient'));
+    await context.routeWebSocket(/.*/, socket => new URL(socket.url()).host === new URL(baseURL).host ? socket.connectToServer() : socket.close({ code: 1008 }));
+    const page = await context.newPage();
     const ui = new WorkspacePage(page);
     await ui.login(`qa-env-ui-${Date.now()}`);
     const id = await ui.send('我是中国人，想搬到葡萄牙生活。');
@@ -91,10 +91,7 @@ async function browserSmoke(browser: Browser, baseURL: string, evidence: string)
     await expect(page.getByTestId(TID.planFirstStep)).not.toBeEmpty();
     await expect(page.getByTestId(TID.planDisclaimer)).toContainText('不能替代持牌');
     await page.screenshot({ path: join(evidence, 'browser-plan.png'), fullPage: true });
-  } finally {
-    try { await context.tracing.stop({ path: join(evidence, 'browser.trace.zip') }); }
-    finally { await context.close(); }
-  }
+  } finally { await context.close(); }
 }
 async function stopOwned(child?: ChildProcess): Promise<void> {
   if (!child || child.exitCode !== null || child.signalCode !== null) return;
@@ -140,10 +137,29 @@ export async function dockerEnvironment(evidence: string, browser: Browser): Pro
     await command('docker', ['info'], root, log, env);
     // Images and caches must already exist; external network belongs to preparation.
     await command('docker', ['image', 'inspect', 'node:24-bookworm-slim'], root, log, env);
-    const config = JSON.parse(await command('docker', ['compose', 'config', '--format', 'json'], root, undefined, env)) as { services: Record<string, { build?: unknown }>; networks?: Record<string, unknown> };
+    const offlineBuilder = process.env.QA_DOCKER_BUILDER;
+    const baseContext = process.env.QA_DOCKER_BASE_CONTEXT;
+    if (baseContext && !offlineBuilder) throw new Error('BLOCKED: local base context requires the verified offline builder');
+    if (offlineBuilder) {
+      if (!/^ncqa-offline-[a-f0-9]{8}$/.test(offlineBuilder)) throw new Error('BLOCKED: offline builder must be created by QA preparation');
+      const container = await command('docker', ['ps', '-q', '--filter', `name=buildx_buildkit_${offlineBuilder}`], root, log, env);
+      if (!/^[a-f0-9]{12,64}$/.test(container)) throw new Error('BLOCKED: expected one running owned BuildKit container');
+      const networks = JSON.parse(await command('docker', ['inspect', '--format', '{{json .NetworkSettings.Networks}}', container], root, log, env)) as Record<string, unknown>;
+      if (Object.keys(networks).length) throw new Error('BLOCKED: prepared BuildKit container still has a network attachment');
+      if (await command('docker', ['inspect', '--format', '{{.HostConfig.NetworkMode}}', container], root, log, env) === 'host') throw new Error('BLOCKED: host-network builder is not isolated');
+      if (baseContext) {
+        const match = /^oci-layout:\/\/(\/.+)@(sha256:[a-f0-9]{64})$/.exec(baseContext);
+        if (!match) throw new Error('BLOCKED: base context must be a local OCI layout pinned by digest');
+        const digest = await command('docker', ['image', 'inspect', 'node:24-bookworm-slim', '--format', '{{.Id}}'], root, log, env);
+        if (digest !== match[2] || `sha256:${sha256(await readFile(join(match[1]!, 'blobs/sha256', digest.slice(7))))}` !== digest) throw new Error('BLOCKED: local OCI base differs from the prepared Node image');
+      }
+      env.BUILDX_BUILDER = offlineBuilder;
+      await writeFile(join(evidence, 'builder-isolation.json'), JSON.stringify({ builder: offlineBuilder, container, networks, baseContext, verifiedAt: new Date().toISOString() }, null, 2));
+    }
+    const config = JSON.parse(await command('docker', ['compose', 'config', '--format', 'json'], root, undefined, env)) as { services: Record<string, { build?: unknown }> };
     const override = {
-      services: Object.fromEntries(Object.entries(config.services).map(([name, service]) => [name, { ...(service.build ? { build: { network: 'none', pull: false } } : {}), pull_policy: 'never', environment: { LLM_API_KEY: '', LOCAL_LLM_MODEL: '', LLM_BASE_URL: 'http://127.0.0.1:1/v1', LOCAL_LLM_BASE_URL: 'http://127.0.0.1:1/v1' } }])),
-      networks: Object.fromEntries(Object.keys(config.networks ?? { default: {} }).map(name => [name, { internal: true }])),
+      // A disconnected dedicated builder preserves the README cache key while preventing egress.
+      services: Object.fromEntries(Object.entries(config.services).map(([name, service]) => [name, { ...(service.build ? { build: { ...(offlineBuilder ? {} : { network: 'none' }), ...(baseContext ? { additional_contexts: { 'node:24-bookworm-slim': baseContext } } : {}), pull: false } } : {}), pull_policy: 'never', environment: { LLM_API_KEY: '', LOCAL_LLM_MODEL: '', LLM_BASE_URL: 'http://127.0.0.1:1/v1', LOCAL_LLM_BASE_URL: 'http://127.0.0.1:1/v1' } }])),
     };
     const overridePath = join(directory, 'qa-network-override.json');
     await writeFile(overridePath, JSON.stringify(override));
