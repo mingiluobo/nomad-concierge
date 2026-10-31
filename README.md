@@ -1,31 +1,68 @@
-# Nomad Concierge Starter
+# Nomad Concierge
 
-这是全栈开发测试的可选参考模板。它只包含可运行的前后端工程、SQLite 连接和健康检查，不包含考试业务实现。
+## 运行环境与特殊条件
 
-使用本模板不是考试要求，也不会获得额外分数。你可以使用自己熟悉的任意语言、框架和数据库，只需满足 `ASSIGNMENT.md` 的技术中立交付要求。
+优先使用 Node.js 直接启动；Node 环境有问题时使用下方 Docker 方式。
 
-## 环境要求
+- 推荐 Node.js 24；支持 Node 22（至少 22.13.0）、24、26。npm 至少 10。
+- 数据库使用 Node 内置 SQLite，不需要另装数据库、Python、make 或 C++ 编译器。Node 方式不需要管理员权限。
+- 默认没有大模型配置也能完整运行，理解方式选择“规则”即可。基础操作不需要创建 `.env`。
+- 浏览器建议桌面窗口至少 1024px 宽。开发使用 5173（页面）和 3001（API）；生产和 Docker 使用 3001。
+- 端到端测试需要先下载 Chromium（约 150 MB）；默认 `npm test` 不需要浏览器。
+- Docker 方式需要已安装并运行的 Docker Desktop 或 Docker Engine，以及支持可选 `env_file` 的 Compose 插件。安装 Docker Desktop 本身可能需要管理员权限。
+- 可选本地模型需要另外安装 Ollama，并下载约 4.7 GB 的 `qwen2.5:7b-instruct`，预留约 5 GB 模型空间；它不是默认启动条件。
 
-- Node.js 22.13 或更高版本
-- npm 10 或更高版本
+运行验证状态：当前工作包正在验证 macOS 的 Node 22.13.0/24、Linux 容器中的 Node 方式与 Docker Compose；最终结果在完成验证后更新。Windows 预期兼容，未实测。真实大模型不属于自动测试。
 
-项目使用嵌入式 SQLite，无需另外安装或启动数据库服务。
+## 方式一：Node 直接启动
 
-## 启动
+在全新克隆的仓库根目录执行。默认无需复制环境配置文件，也无需 Key。
 
 ```bash
+node --version
+npm --version
 npm install
 npm run dev
 ```
 
-启动后访问：
+打开 <http://localhost:5173>。健康检查地址为 <http://localhost:3001/api/health>。Vite 将 `/api` 和 `/ws` 转发给 API；用终端的 Ctrl+C 停止开发服务。
 
-- Web：`http://localhost:5173`
-- API 健康检查：`http://localhost:3001/api/health`
+安装时可能出现依赖审计提示：本次锁文件有 14 个受影响依赖节点（13 moderate、1 high），已执行一次不带 `--force` 的 `npm audit fix`；剩余修复涉及主版本升级，尚未进行。此数字不是已确认的业务漏洞数量。
 
-Vite 开发服务器会将 `/api` 请求代理到后端。
+生产模式先停止开发服务，再执行：
 
-## 常用命令
+```bash
+npm run build
+npm start
+```
+
+打开 <http://localhost:3001>。API 同时提供页面、静态资源和 WebSocket；直接打开或刷新 `/c/...`、`/plans/...` 路径也能恢复页面。用 Ctrl+C 停止服务。
+
+启动时自动创建数据目录和 SQLite 文件并执行版本化迁移，不需要额外初始化命令。默认数据库位于 `apps/api/data/nomad.sqlite`（相对 API 工作区）；停止再启动会保留咨询、消息和计划。已有数据库版本高于代码支持版本时拒绝启动。需要隔离数据时，通过 `DATABASE_PATH` 指定另一个文件，不要删除已有数据来排查普通启动问题。
+
+## 方式二：Docker 启动
+
+只需要 Docker，不需要主机安装 Node。先确认 3001 没有被其他服务占用，然后在仓库根目录执行：
+
+```bash
+docker compose up --build
+```
+
+打开 <http://localhost:3001>。首次构建需要联网下载基础镜像及 npm 依赖。容器使用 Node 24，以 `node` 用户运行；数据库存放在命名卷的 `/data/nomad.sqlite`。
+
+Ctrl+C 停止前台服务；移除容器但保留数据：
+
+```bash
+docker compose down
+```
+
+再次 `docker compose up` 会使用原有数据。只有明确要清空本项目数据库时，才使用 `docker compose down --volumes`。
+
+Compose 支持可选的 `apps/api/.env` 配置文件，不存在也能启动。访问宿主机 Ollama 时，使用 `LOCAL_LLM_BASE_URL=http://host.docker.internal:11434/v1`；配置已含 Linux 需要的 `extra_hosts: host.docker.internal:host-gateway`，Ollama 仍需允许容器访问其监听地址。
+
+## 检查、测试与评估
+
+在仓库根目录执行：
 
 ```bash
 npm run check
@@ -33,34 +70,73 @@ npm test
 npm run build
 ```
 
-单独启动某个应用：
+`check` 包括 ESLint 和 TypeScript；`test` 仅运行 shared、API、Web 单元和集成测试，使用临时数据库、随机端口和假的模型服务。
+
+浏览器端到端测试：
 
 ```bash
-npm run dev --workspace @nomad/api
-npm run dev --workspace @nomad/web
+npx playwright install chromium
+npm run test:e2e
 ```
 
-## 目录
+六个覆盖场景：主流程、刷新恢复、多标签同步、停止与补充、专业/无关意图、假远程服务失败后的规则回退。浏览器测试保存录屏和执行轨迹；操作说明及完整业务/环境验收入口见 `qa/README.md`。`test:e2e` 只代表浏览器子集，不能代替完整 QA。
 
-```text
-apps/
-  api/   Express、TypeScript、SQLite
-  web/   React、TypeScript、Vite
+评估规则方案，不调用模型：
+
+```bash
+npm run eval --workspace @nomad/api -- --engines rules
 ```
 
-## 配置
+比较已配置的引擎：
 
-后端默认配置见 `apps/api/.env.example`。开发环境不复制该文件也能启动。
+```bash
+npm run eval --workspace @nomad/api -- --engines rules,remote,local
+```
 
-可用环境变量：
+未配置或不可用的引擎会明确跳过。报告打印到终端并更新 `docs/eval-results.md`，包含各指标分母、模型与提示词版本；关键标准用例的人工审核状态另列，不把未审核当作已审核。
 
-- `PORT`：API 端口，默认 `3001`
-- `DATABASE_PATH`：SQLite 文件路径，默认 `./data/nomad.sqlite`
-- `WEB_ORIGIN`：允许访问 API 的 Web 地址，默认 `http://localhost:5173`
+## 配置与可选模型
 
-## 如果选择本模板
+环境变量在启动前设置，优先于 API 可选的 `.env` 文件。完整默认值见 `apps/api/.env.example` 和 `docs/SPEC.md` 第 16 节。
 
-请根据题面和需求澄清结果，自行设计业务表、API、Agent 逻辑和页面。你可以调整当前结构或替换辅助库，但需在 `DECISIONS.md` 中说明理由，并保持本地运行步骤清楚可靠。
+| 变量 | 默认值 / 用途 |
+| --- | --- |
+| `PORT` | API 端口，默认 `3001` |
+| `VITE_PORT`、`API_URL` | 开发页面端口与代理目标，默认 `5173`、`http://localhost:3001` |
+| `WEB_ORIGIN` | 允许的页面来源，默认 `http://localhost:5173`，多个用逗号分隔 |
+| `DATABASE_PATH` | API 工作区下的 `./data/nomad.sqlite`；Docker 为 `/data/nomad.sqlite` |
+| `SERVE_WEB_DIST` | 生产模式默认 `true` |
+| `DEMO_DELAY_MS` | 默认 `0`，最大 `10000`；给任务阶段加入演示延迟，便于操作停止、补充和重启续跑 |
+| `LLM_BASE_URL`、`LLM_MODEL`、`LLM_API_KEY` | 远程默认地址 `https://api.deepseek.com`、模型 `deepseek-chat`；Key 为空时不可用 |
+| `LOCAL_LLM_BASE_URL`、`LOCAL_LLM_MODEL` | 默认地址 `http://localhost:11434/v1`；模型名为空时不启用 |
+
+远程模型由使用者在自己的环境中设置有效 `LLM_API_KEY` 后启动，页面选择“DeepSeek”或“自动”。开发和自动验收只使用假服务，不需要真实 Key。
+
+可选本地模型由使用者先启动 Ollama 并准备 `qwen2.5:7b-instruct`，再设置 `LOCAL_LLM_MODEL=qwen2.5:7b-instruct` 后启动应用。模型探测异步进行，不阻塞应用启动；未安装模型或服务不可达时，页面显示不可用原因。
+
+例如在 Bash/zsh 的当前命令启用演示延迟（PowerShell 可用 `$env:DEMO_DELAY_MS = '1500'` 后运行 npm）：
+
+```bash
+DEMO_DELAY_MS=1500 npm run dev
+```
+
+## 逐步验收
+
+先按 Node 或 Docker 方式启动，打开对应页面；以下步骤无需大模型。
+
+1. 输入一个 2～32 字符的用户名进入，理解方式选择“规则”。点击“全家移居葡萄牙”示例，再点击发送。
+2. 等待回复和追问，通过快捷选项回答本人国籍“中国”、配偶国籍“中国”。不要在未设置旧值时验证修正。
+3. 输入“不对，配偶是葡萄牙籍。”，等待右栏更新为葡萄牙，并看到“中国 → 葡萄牙”的修正信息。刷新页面，确认消息、档案和过程记录仍在。
+4. 另开标签页访问同一咨询，在一边补充消息，确认另一边同步。打开过程摘要可查看阶段耗时。
+5. 点击“信息不全也可以先生成”，检查缺少项和结束咨询的提示，再点击“仍然生成”。检查第一步、未知项、专业确认边界和资料来源。刷新计划，再回原咨询，输入框应变成已完成提示。
+6. 异常场景一：新建咨询后输入“我能申请哪个签证”，应看到局限说明与影响判断的条件；输入“今天午饭吃什么”，应得到回到咨询主题的引导。
+7. 异常场景二：停止应用，以 `DEMO_DELAY_MS=1500` 重新启动。在新的咨询发送需求，过程线出现时点击“停止”，应显示已中断和“重试”；点击重试后应恢复并完成回复。再次发送消息，回复中继续补充，观察旧任务被新一轮替代且消息都保留。
+8. 可选恢复检查：启用延迟后在回复过程中 Ctrl+C 停止，再使用同一数据库启动；刷新后应自动续跑。新建“暂未覆盖的国家”示例，补齐生成门槛后应得到通用准备清单。
+
+## CI
+
+`.github/workflows/ci.yml` 在 push 和 pull request 时运行，环境为 `ubuntu-latest`，Node 矩阵为精确的 `22.13.0` 和 `24`：`npm ci` → `npm run check` → `npm test` → `npm run build`。不运行浏览器端到端测试，不需要真实模型配置。目前未关联远程仓库，未执行在线 CI，因此不展示执行状态徽标。
+
 ## 已知限制：HTTPS 部署
 
 部署到 HTTPS 需要反向代理。应用不设置 `trust proxy`，不信任代理头；Cookie 的 `Secure` 仅在生产环境且请求本身是 HTTPS 时添加。

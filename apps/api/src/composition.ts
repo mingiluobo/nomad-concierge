@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { fileURLToPath, URL } from 'node:url';
 import { errorCodeSchema } from '@nomad/shared';
 import type { AssistantPayload, EngineId, EnginePreference, EngineStatus, EventPayloadMap, EventType, FailureReason, Interpretation, PlanContent, Profile, Progress, SlotKey, TurnDto } from '@nomad/shared';
 import { createApp } from './app.js';
@@ -83,7 +84,8 @@ export function createComposition(config: AppConfig) {
     }, config);
     const conversations = new ConversationService(database, domain, turnService, publisher, turns, config);
     const router = createApiRouter({ auth, conversations, engines, config });
-    const app = createApp({ database, webOrigins: config.webOrigins, router, errorHandler });
+    const app = createApp({ database, webOrigins: config.webOrigins, router, errorHandler,
+      webDistPath: config.serveWebDist ? fileURLToPath(new URL('../../web/dist/', import.meta.url)) : undefined });
     const server = createServer(app);
     const realtime = new RealtimeServer(server, publisher, {
       webOrigins: config.webOrigins,
