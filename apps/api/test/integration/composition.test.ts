@@ -15,6 +15,7 @@ import { createComposition } from '../../src/composition.js';
 import { loadConfig } from '../../src/config.js';
 import { AppDatabase } from '../../src/db/database.js';
 import * as knowledgeLoader from '../../src/knowledge/loader.js';
+import { RulesInterpreter } from '../../src/agent/rules/index.js';
 
 const cleanup: (() => void | Promise<void>)[] = [];
 afterEach(async () => {
@@ -65,6 +66,7 @@ async function localServer(handler: RequestListener) {
 
 describe('real application composition', () => {
   it('records nationality from a hinted text answer without filling the earlier destination question', async () => {
+    const interpretations = vi.spyOn(RulesInterpreter.prototype, 'interpret');
     const app = await fixture();
     const created = await app.agent.post('/api/conversations').send({ content: '我想了解税务。', clientMessageId: randomUUID(), enginePreference: 'rules' }).expect(201);
     const id = created.body.conversation.id as string;
@@ -74,6 +76,7 @@ describe('real application composition', () => {
     const posted = await app.agent.post(`/api/conversations/${id}/messages`).send({ content: '日本', clientMessageId: randomUUID(), payload }).expect(202);
     expect(posted.body.message.payload).toEqual(payload);
     const answered = await completed(app.agent, id);
+    expect(interpretations.mock.calls[1]![0].pendingSlots).toEqual(['applicantNationality']);
     expect(answered.conversation.profile.slots.applicantNationality).toMatchObject({ status: 'known', value: 'JP' });
     expect(answered.conversation.profile.slots.destination).toEqual({ status: 'missing' });
     const messages = messagesResponseSchema.parse((await app.agent.get(`/api/conversations/${id}/messages`).expect(200)).body);

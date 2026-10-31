@@ -15,8 +15,8 @@ function segments(messages: MessageDto[]): MessageDto[][] {
   const result: MessageDto[][] = [];
   for (const message of messages) {
     const last = result.at(-1);
-    if (message.role === 'user' && message.payload?.answers) result.push([message]);
-    else if (last?.[0]?.role === 'user' && !last[0].payload?.answers) last.push(message);
+    if (message.role === 'user' && (message.payload?.answers || message.payload?.answeringSlot)) result.push([message]);
+    else if (last?.[0]?.role === 'user' && !last[0].payload?.answers && !last[0].payload?.answeringSlot) last.push(message);
     else result.push([message]);
   }
   return result;
@@ -127,8 +127,10 @@ export class TurnRunner {
           }
         } else {
           interpreter ??= this.interpreters.forPreference(turn.engineRequested);
+          const pendingSlots = first.role === 'user' && first.payload?.answeringSlot
+            ? [first.payload.answeringSlot] : merged.profile.pendingSlots;
           const result = await interpreter.interpret({ newMessages: segment.map(message => ({ id: message.id, content: message.content })),
-            profile: merged.profile, pendingSlots: merged.profile.pendingSlots, recentMessages }, controller.signal);
+            profile: merged.profile, pendingSlots, recentMessages }, controller.signal);
           current = result.interpretation;
           interpretation = current;
           engineUsed = result.engineUsed;

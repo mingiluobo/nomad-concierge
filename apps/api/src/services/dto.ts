@@ -23,7 +23,9 @@ export function planDto(row: PlanRow, conversation: ConversationRow): PlanDto {
   const content = planContentSchema.parse(JSON.parse(row.content_json));
   const profile = profileSchema.parse(JSON.parse(conversation.profile_json));
   return { id: row.id, conversationId: row.conversation_id, title: content.title, destination: content.destination, coverage: content.coverage,
-    householdSummary: householdSummary(profile), goals: profile.slots.goals.value as Goal[], toConfirmCount: content.profileSummary.toConfirm.length, createdAt: row.created_at, content };
+    householdSummary: householdSummary(profile), goals: profile.slots.goals.value as Goal[], toConfirmCount: content.profileSummary.toConfirm.length,
+    generatedEarly: content.generatedEarly, knownCount: content.profileSummary.known.length, unknownCount: content.profileSummary.unknown.length,
+    createdAt: row.created_at, content };
 }
 export function planSummary(plan: PlanDto): PlanSummaryDto {
   const { content: _content, ...summary } = plan;
