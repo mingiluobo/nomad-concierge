@@ -12,6 +12,7 @@ export interface SocketClose { code: number; reason: string }
 
 /** Captures only protocol data; caller owns the lifetime of every connection. */
 export class SocketProbe {
+  readonly rawFrames: string[] = [];
   readonly messages: ServerMessage[] = [];
   readonly invalidMessages: string[] = [];
   readonly errors: string[] = [];
@@ -21,8 +22,10 @@ export class SocketProbe {
 
   private constructor(readonly socket: WebSocket) {
     socket.on('message', data => {
+      const frame = data.toString();
+      this.rawFrames.push(frame);
       try {
-        this.messages.push(serverMessageSchema.parse(JSON.parse(data.toString())));
+        this.messages.push(serverMessageSchema.parse(JSON.parse(frame)));
       } catch (error) {
         this.invalidMessages.push(String(error));
       }

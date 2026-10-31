@@ -1,10 +1,14 @@
 import { request as playwrightRequest } from '@playwright/test';
-import type { APIRequestContext } from '@playwright/test';
+import type { APIRequestContext, APIResponse } from '@playwright/test';
+import { z } from 'zod';
 import { test as base, expect } from '../../fixtures/test.js';
 import { SocketProbe, cookieHeader, handshakeStatus, type SocketOptions } from '../../harness/socket.js';
 import { cases } from '../../catalog/ws.js';
 import type { BusinessEvent, ServerMessage } from '../../../packages/shared/src/events.js';
-import { planSummaryDtoSchema } from '../../../packages/shared/src/dto.js';
+import { messageDtoSchema, planSummaryDtoSchema, turnDtoSchema } from '../../../packages/shared/src/dto.js';
+import { planContentSchema } from '../../../packages/shared/src/plan.js';
+import { slotKeySchema } from '../../../packages/shared/src/profile.js';
+import { earlyAnswers, fullAnswers } from '../api/support.js';
 
 const title = (id: string) => `${id} ${cases.find(item => item.id === id)!.title}`;
 const isEvent = (message: ServerMessage): message is BusinessEvent => message.type === 'event';
@@ -20,7 +24,7 @@ const test = base.extend<{ openSocket: (options?: SocketOptions) => Promise<Sock
       return probe;
     });
     for (const [index, probe] of probes.entries()) {
-      await testInfo.attach(`socket-${index + 1}.json`, { body: JSON.stringify({ messages: probe.messages, invalidMessages: probe.invalidMessages, errors: probe.errors, pingTimes: probe.pingTimes, closed: probe.closed }, null, 2), contentType: 'application/json' });
+      await testInfo.attach(`socket-${index + 1}.json`, { body: JSON.stringify({ rawFrames: probe.rawFrames, messages: probe.messages, invalidMessages: probe.invalidMessages, errors: probe.errors, pingTimes: probe.pingTimes, closed: probe.closed }, null, 2), contentType: 'application/json' });
       await probe.close();
       expect(probe.invalidMessages, '每条服务端消息必须满足共享协议 schema').toEqual([]);
     }
@@ -359,3 +363,121 @@ test(title('WS-019'), async ({ api, openSocket }) => {
     });
   }
 });
+
+// These QA-local extensions reflect SPEC 5.4/11.2 at the declared snapshot.
+// Raw HTTP bodies and WS frames retain new fields even when the preparation
+// checkout's shared DTO types predate them. Execution still validates every WS
+// frame with the candidate's matching shared schema; that validation is unchanged.
+const hintedUserMessageSchema = messageDtoSchema.options[0].extend({
+  payload: z.object({ answeringSlot: slotKeySchema }).strict(),
+});
+const newPlanMetadataSchema = z.object({
+  generatedEarly: z.boolean(), knownCount: z.number().int().nonnegative(), unknownCount: z.number().int().nonnegative(),
+});
+// Optional metadata supports old summaries, but newly generated plans must
+// receive these fields from their saved content under SPEC 11.2.
+const newPlanSummarySchema = planSummaryDtoSchema.extend(newPlanMetadataSchema.shape);
+const newPlanSchema = newPlanSummarySchema.extend({ content: planContentSchema });
+
+async function observedJson(response: APIResponse, expectedStatus = 200): Promise<unknown> {
+  const body: unknown = await response.json();
+  await test.info().attach(`raw HTTP ${response.status()} ${new URL(response.url()).pathname}`, {
+    body: JSON.stringify(body, null, 2), contentType: 'application/json',
+  });
+  expect(response.status()).toBe(expectedStatus);
+  return body;
+}
+
+function originalEvent(probe: SocketProbe, eventId: number): unknown {
+  const matching = probe.rawFrames.map(frame => JSON.parse(frame) as unknown).filter(frame =>
+    typeof frame === 'object' && frame !== null && 'type' in frame && frame.type === 'event' && 'id' in frame && frame.id === eventId);
+  expect(matching, `原始帧中的事件 ${eventId} 必须恰好出现一次`).toHaveLength(1);
+  return matching[0];
+}
+
+test(title('WS-020'), async ({ api, openSocket }) => {
+  await api.login();
+  const created = await api.create('我想去葡萄牙生活，我是中国籍。');
+  expect((await api.settle(created.conversation.id)).latestTurn?.status).toBe('completed');
+  const live = await openSocket();
+  const cursor = (await ready(live)).latestEventId;
+  const posted = z.object({ message: hintedUserMessageSchema, turn: turnDtoSchema.nullable() }).parse(await observedJson(
+    await api.request.post(`/api/conversations/${created.conversation.id}/messages`, {
+      data: { content: '中国', clientMessageId: api.id(), payload: { answeringSlot: 'currentResidence' } },
+    }), 202));
+  expect(posted.message.payload.answeringSlot).toBe('currentResidence');
+  expect((await api.settle(created.conversation.id)).latestTurn?.status).toBe('completed');
+  const event = await live.waitFor(message => isEvent(message) && message.eventType === 'message.created' && message.payload.message.id === posted.message.id);
+  if (!isEvent(event)) throw new Error('Expected a business event');
+  const eventSchema = z.object({
+    type: z.literal('event'), id: z.number().int().positive(), eventType: z.literal('message.created'),
+    conversationId: z.string().optional(), createdAt: z.string(), payload: z.object({ message: hintedUserMessageSchema }),
+  });
+  const liveFrame = eventSchema.parse(originalEvent(live, event.id));
+  expect(liveFrame.payload.message).toEqual(posted.message);
+  const persisted = z.object({ items: z.array(z.object({ id: z.string() }).passthrough()) }).parse(await observedJson(
+    await api.request.get(`/api/conversations/${created.conversation.id}/messages`)));
+  const stored = hintedUserMessageSchema.parse(persisted.items.find(message => message.id === posted.message.id));
+  expect(stored).toEqual(posted.message);
+  const replay = await openSocket();
+  const resumed = await ready(replay, cursor);
+  expect(resumed.latestEventId).toBeGreaterThanOrEqual(event.id);
+  // ready is the replay-completion barrier; compare the complete persisted event.
+  const replayFrame = eventSchema.parse(originalEvent(replay, event.id));
+  expect(replayFrame).toEqual(liveFrame);
+  expect(replayFrame.payload.message).toEqual(stored);
+});
+
+for (const generatedEarly of [true, false]) {
+  test(title(generatedEarly ? 'WS-021' : 'WS-022'), async ({ api, openSocket }) => {
+    await api.login();
+    const created = await api.create('我想去葡萄牙生活。');
+    expect((await api.settle(created.conversation.id)).latestTurn?.status).toBe('completed');
+    await api.send(created.conversation.id, '已选择', generatedEarly ? earlyAnswers : fullAnswers);
+    const settled = await api.settle(created.conversation.id);
+    expect(settled.latestTurn?.status).toBe('completed');
+    expect(settled.conversation.progress.canGenerateEarly).toBe(true);
+    expect(settled.conversation.progress.isComplete).toBe(!generatedEarly);
+    const live = await openSocket();
+    await ready(live);
+    const posted = z.object({ plan: newPlanSchema }).parse(await observedJson(
+      await api.request.post(`/api/conversations/${created.conversation.id}/plan`, { data: { allowIncomplete: generatedEarly } }), 201));
+    const event = await live.waitFor(message => isEvent(message) && message.eventType === 'plan.created' && message.payload.plan.id === posted.plan.id);
+    if (!isEvent(event)) throw new Error('Expected a business event');
+    const eventPlan = z.object({
+      type: z.literal('event'), id: z.number().int().positive(), eventType: z.literal('plan.created'),
+      payload: z.object({ plan: newPlanSummarySchema }),
+    }).parse(originalEvent(live, event.id)).payload.plan;
+    const saved = z.object({ plan: newPlanSchema }).parse(await observedJson(
+      await api.request.get(`/api/plans/${posted.plan.id}`))).plan;
+    const listed = z.object({ items: z.array(newPlanSummarySchema) }).parse(await observedJson(
+      await api.request.get('/api/plans')));
+    const conversation = z.object({ plan: newPlanSummarySchema }).parse(await observedJson(
+      await api.request.get(`/api/conversations/${created.conversation.id}`)));
+    expect(saved).toEqual(posted.plan);
+    expect(saved.content.generatedEarly).toBe(generatedEarly);
+    expect(saved.content.profileSummary.known.length).toBeGreaterThan(0);
+    if (generatedEarly) expect(saved.content.profileSummary.unknown.length).toBeGreaterThan(0);
+    const derived = {
+      generatedEarly: saved.content.generatedEarly,
+      knownCount: saved.content.profileSummary.known.length,
+      unknownCount: saved.content.profileSummary.unknown.length,
+    };
+    const summary = newPlanSummarySchema.parse(saved);
+    expect(listed.items).toHaveLength(1);
+    for (const [surface, value] of Object.entries({ post: posted.plan, detail: saved, list: listed.items[0], conversation: conversation.plan, event: eventPlan })) {
+      await test.step(`${surface} 摘要来自已保存 PlanContent`, async () => {
+        expect(newPlanMetadataSchema.parse(value)).toEqual(derived);
+        expect(newPlanSummarySchema.parse(value)).toEqual(summary);
+      });
+    }
+    // Re-reading after all surfaces were observed confirms stable stored content.
+    const unchanged = z.object({ plan: newPlanSchema }).parse(await observedJson(
+      await api.request.get(`/api/plans/${saved.id}`)));
+    expect(unchanged.plan).toEqual(saved);
+    await test.info().attach('saved-plan-metadata-comparison', {
+      body: JSON.stringify({ savedContent: saved.content, expectedMetadata: derived, post: posted.plan, detail: saved, list: listed.items[0], conversation: conversation.plan, event: eventPlan }, null, 2),
+      contentType: 'application/json',
+    });
+  });
+}

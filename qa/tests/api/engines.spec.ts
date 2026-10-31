@@ -3,6 +3,7 @@ import { test, expect } from '../../fixtures/test.js';
 import { enginesResponseSchema } from '../../../packages/shared/src/dto.js';
 import type { FakeLlmServer } from '../../fakes/llm-server.js';
 import { title, login, create, send, settle, reply, parsed, answer, waitRunning } from './support.js';
+import { expectPendingQuestions, type PromptContext } from './context-support.js';
 const valid = { intent: 'provide_info', updates: [{ slot: 'destination', value: 'PT' }, { slot: 'goals', value: ['residence'] }], unsure: [] };
 const calls = (fake: FakeLlmServer) => fake.requests.filter(r => r.method === 'POST' && r.path.endsWith('/chat/completions'));
 async function localReady(api: {
@@ -20,7 +21,7 @@ test.describe('remote controlled responses', () => {
         expect(calls(app.fakeRemote)).toHaveLength(1);
         expect(state.conversation.profile.slots.destination.value).toBe('PT');
         expect(state.latestTurn!.engineUsed).toBe('remote');
-        expect(state.latestTurn!.promptVersion).toBe('v1');
+        expect(state.latestTurn!.promptVersion).toBe('v3');
         const process = (await reply(api.request, made.conversation.id)).payload.process;
         expect(process.engineUsed).toBe('remote');
         expect(process.timings.totalMs).toBeGreaterThanOrEqual(0);
@@ -93,8 +94,11 @@ test.describe('remote controlled responses', () => {
         await login(api.request);
         const made = await create(api.request, '我想搬到葡萄牙生活', 'remote');
         await settle(api.request, made.conversation.id);
+        const before = (await reply(api.request, made.conversation.id)).payload;
         await send(api.request, made.conversation.id, '我是中国籍');
-        await settle(api.request, made.conversation.id);
+        const state = await settle(api.request, made.conversation.id);
+        expect(state.latestTurn!.promptVersion).toBe('v3');
+        expect((await reply(api.request, made.conversation.id)).payload.process.promptVersion).toBe('v3');
         const request = calls(app.fakeRemote).at(-1)!;
         expect(request.headers.authorization).toBe('Bearer qa-fake-key');
         expect(request.headers['content-type']).toContain('application/json');
@@ -111,16 +115,10 @@ test.describe('remote controlled responses', () => {
         expect(body).toMatchObject({ model: 'qa-model', temperature: 0, max_tokens: 800, response_format: { type: 'json_object' } });
         const user = body.messages.find(m => m.role === 'user');
         expect(user).toBeDefined();
-        const context = JSON.parse(user!.content) as {
-            newMessages: {
-                content: string;
-            }[];
-            pendingSlots: string[];
-            profile: unknown;
-            recentMessages: unknown[];
-        };
+        const context = JSON.parse(user!.content) as PromptContext;
         expect(context.newMessages.map(m => m.content)).toEqual(['我是中国籍']);
         expect(context.pendingSlots).toContain('applicantNationality');
+        expectPendingQuestions(context, before.questions.map(question => question.slot));
         expect(context.profile).toBeDefined();
         expect(context.recentMessages.length).toBeLessThanOrEqual(6);
     });

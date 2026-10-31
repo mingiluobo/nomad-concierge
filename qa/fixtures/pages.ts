@@ -78,9 +78,9 @@ export class WorkspacePage {
     return assistant;
   }
 
-  async create(content = EARLY_PROFILE) {
+  async create(content = EARLY_PROFILE, enginePreference: 'auto' | 'remote' | 'local' | 'rules' = 'rules') {
     const result = createConversationResponseSchema.parse(await successful(await this.page.request.post('/api/conversations', {
-      data: { content, clientMessageId: randomUUID(), enginePreference: 'rules' },
+      data: { content, clientMessageId: randomUUID(), enginePreference },
     })));
     await this.settled(result.conversation.id);
     return result.conversation.id;

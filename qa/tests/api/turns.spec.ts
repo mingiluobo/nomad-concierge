@@ -135,6 +135,7 @@ test.describe('observable delayed tasks', () => {
             const closure = await socket.waitClose();
             expect(closure.code).toBe(1012);
             await test.info().attach('graceful-shutdown-events', { body: JSON.stringify(socket.messages, null, 2), contentType: 'application/json' });
+            expect(queued.type === 'event' && queued.eventType === 'turn.upserted' ? queued.payload.turn.attempt : undefined).toBe(before.activeTurn!.attempt);
             await app.start();
             const state = await settle(api.request, made.conversation.id);
             const history = await messages(api.request, made.conversation.id);
@@ -151,7 +152,7 @@ test.describe('observable delayed tasks', () => {
                 contentType: 'application/json',
             });
             expect(state.latestTurn!.id).toBe(made.turn.id);
-            expect(state.latestTurn!.attempt).toBe(before.activeTurn!.attempt + 1);
+            expect(state.latestTurn!.attempt).toBe(before.activeTurn!.attempt);
             expect(history.items.filter(message => message.role === 'assistant')).toHaveLength(1);
         }
         finally {
@@ -189,6 +190,45 @@ test.describe('recovery cap', () => {
         expect(state.latestTurn!.id).toBe(made.turn.id);
         expect(state.latestTurn!.errorCode).toBe('RECOVERY_LIMIT');
         expect((await messages(api.request, made.conversation.id)).items.filter(m => m.role === 'assistant')).toHaveLength(0);
+    });
+    test(title('API-103'), async ({ api, app }) => {
+        test.setTimeout(120000);
+        await login(api.request);
+        const made = await create(api.request);
+        const attempts = [];
+        for (let attempt = 1; attempt <= 2; attempt++) {
+            const state = await waitRunning(api.request, made.conversation.id);
+            expect(state.activeTurn).toMatchObject({ id: made.turn.id, attempt });
+            attempts.push(state.activeTurn);
+            await app.stop('SIGKILL');
+            await app.start();
+        }
+        const socket = await SocketProbe.connect(app.baseURL, { cookie: await cookieHeader(api.request) });
+        try {
+            socket.resume(null);
+            await socket.waitReady();
+            const before = await waitRunning(api.request, made.conversation.id);
+            expect(before.activeTurn).toMatchObject({ id: made.turn.id, attempt: 3 });
+            const after = socket.messages.length;
+            await app.stop('SIGTERM');
+            const queued = await socket.waitFor(event => event.type === 'event' && event.eventType === 'turn.upserted' && event.payload.turn.id === made.turn.id && event.payload.turn.status === 'queued', { after });
+            expect(queued.type === 'event' && queued.eventType === 'turn.upserted' ? queued.payload.turn.attempt : undefined).toBe(3);
+            const closure = await socket.waitClose();
+            expect(closure.code).toBe(1012);
+            await app.start();
+            const state = await settle(api.request, made.conversation.id);
+            const history = (await messages(api.request, made.conversation.id)).items;
+            await test.info().attach('attempt-three-graceful-recovery', {
+                body: JSON.stringify({ attempts, before: before.activeTurn, queued, closure, after: state.latestTurn, messages: history }, null, 2),
+                contentType: 'application/json',
+            });
+            expect(state.latestTurn).toMatchObject({ id: made.turn.id, attempt: 3, status: 'completed', errorCode: null });
+            expect(history.filter(message => message.role === 'assistant')).toHaveLength(1);
+            expect(history.find(message => message.role === 'assistant')?.turnId).toBe(made.turn.id);
+        } finally {
+            await test.info().attach('attempt-three-socket-events', { body: JSON.stringify({ messages: socket.messages, closed: socket.closed }, null, 2), contentType: 'application/json' });
+            await socket.close();
+        }
     });
 });
 test.describe('whole turn deadline', () => {
