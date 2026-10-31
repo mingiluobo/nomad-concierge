@@ -9,7 +9,7 @@
     "start": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env dist/server.js --production",
     "test": "vitest run --config vitest.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "eval": "tsx scripts/eval.ts"
+    "eval": "node --env-file-if-exists=.env --import tsx scripts/eval.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
