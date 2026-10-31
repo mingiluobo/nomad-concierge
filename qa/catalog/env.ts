@@ -1,0 +1,18 @@
+import type { CaseDefinition } from './types.js';
+export const envCases: CaseDefinition[] = [
+  { id: 'ENV-001', title: 'macOS Node 22.13.0 全新克隆安装与运行', type: 'env', priority: 'P0', requirements: ['H-07', 'H-09', 'S-01', 'F-environment', 'SPEC-24'], assertions: '精确 Node 22.13.0；仅按最终 README 安装、初始化、检查、测试、构建、启动；公开 API 完成收集并生成含已知信息、步骤和专业边界的计划。', evidence: 'README 哈希、每步命令和退出码、服务日志、公开 API 断言' },
+  { id: 'ENV-002', title: 'macOS Node 24 全新克隆安装与运行', type: 'env', priority: 'P0', requirements: ['H-07', 'H-09', 'S-01', 'F-environment', 'SPEC-24'], assertions: 'Node 主版本 24；从独立克隆按同版 README 完成安装、初始化、检查、测试、构建、启动和主流程。', evidence: '精确 Node 版本、操作日志、公开 API 断言' },
+  { id: 'ENV-003', title: '无编译工具的干净 Linux Node 环境', type: 'env', priority: 'P0', requirements: ['H-07', 'S-01', 'F-environment', 'SPEC-2', 'SPEC-24'], assertions: 'node:24-bookworm-slim 无 python3/make/g++/gcc；全新克隆按 README 安装、检查、测试、构建、启动及主流程成功；浏览器系统库单独登记。', evidence: '镜像、工具缺失检查、每步容器命令与退出码' },
+  { id: 'ENV-004', title: 'README Docker 路径与数据卷恢复', type: 'env', priority: 'P0', requirements: ['H-06', 'H-07', 'H-09', 'S-01', 'F-docker', 'SPEC-24.2'], assertions: '确认 3001 空闲；独立 compose 项目及卷按 README 启动；生成计划后重启容器，同用户 GET 的计划与重启前逐字段相同；只清理本轮资源。', evidence: 'compose 命令、项目名、日志、重启前后计划' },
+  { id: 'ENV-005', title: '提交文件与最终包卫生', type: 'env', priority: 'P0', requirements: ['S-02', 'SPEC-19'], assertions: 'git ls-files 和指定最终交付包不含依赖目录、构建产物、数据库、环境文件；可疑密钥只登记路径/行号并交人工判断，不输出值。', evidence: '候选 SHA、提交文件清单、交付包清单、脱敏线索' },
+  { id: 'ENV-006', title: '生产静态页面和深链接回退', type: 'env', priority: 'P1', requirements: ['F-production', 'SPEC-24.1'], assertions: '生产模式 /、/login、/c/unknown、/plans 返回 HTML；未知 /api 路由返回 404 JSON 而非 SPA HTML。', evidence: '状态码、Content-Type 与响应结构' },
+];
+export const manualCases: CaseDefinition[] = [
+  { id: 'MAN-001', title: 'README 操作说明与本地验收可读性', type: 'manual', priority: 'P0', requirements: ['H-07', 'S-01'], assertions: '逐项核对已验证系统/版本、支持范围、安装、初始化、启动、测试及无 Key 验收步骤；每个命令能定位到同版 README。', evidence: '勾选清单、候选 SHA、README 哈希及命令配方' },
+  { id: 'MAN-002', title: '焦点、标题与 favicon 提醒', type: 'manual', priority: 'P1', requirements: ['F-attention', 'SPEC-13.4'], assertions: '真实后台标签出现 (n) Nomad Concierge 和红点 favicon；聚焦并打开对应会话后未读减少，标题和 favicon 恢复。', evidence: '真实浏览器操作与截图' },
+  { id: 'MAN-003', title: '计划打印及专业措辞', type: 'manual', priority: 'P1', requirements: ['H-04', 'H-05', 'H-08', 'F-plan', 'SPEC-13.5', 'SPEC-14.2'], assertions: '打印预览无导航按钮，卡片不截断，黑白可读；示例资料明确标示用途，计划无确定签证资格/金额/税率结论，专业步骤提示持牌判断。', evidence: '计划 JSON、打印预览、逐项文字审阅' },
+  { id: 'MAN-004', title: '正常与至少两个异常的人工验收移交', type: 'manual', priority: 'P0', requirements: ['S-04'], assertions: '在同一候选完成登录至计划、停止重试、坏输出回退三个流程，并登记实际结果和录屏；自动化结果不代替人工登记。', evidence: '候选号、人工结果、三份录屏' },
+  { id: 'MAN-005', title: '提交物密钥与个人数据线索复核', type: 'manual', priority: 'P0', requirements: ['S-02', 'SPEC-19'], assertions: '逐条复核脱敏扫描线索，确认无有效密钥、令牌、真实个人或客户数据；不在报告复制敏感值。', evidence: '线索路径及复核结论' },
+  { id: 'MAN-006', title: '开发测试与内部故障边界证据移交', type: 'manual', priority: 'P0', requirements: ['S-03', 'B-24', 'B-25', 'F-security', 'SPEC-11.3', 'SPEC-21.2', 'SPEC-21.3'], assertions: '集成方提供同候选自动化执行记录；核对数据库版本超前/资料格式错误拒绝启动、迟到返回和提交前回滚由开发单元或集成测试覆盖；Secure 属性在生产/非生产与 HTTPS/HTTP 四种组合的开发单元测试也须提供同候选证据，记录测试名与结果；QA 不读取实现或伪造内部接口。', evidence: '同候选开发自测日志及移交签认' },
+  { id: 'MAN-007', title: 'HTTPS 场景 Cookie Secure', type: 'manual', priority: 'P1', requirements: ['F-security', 'SPEC-11.3'], assertions: '按 Q-02 裁定不适用：交付不提供 HTTPS 入口且不信任代理头；QA 不另建 HTTPS 环境。Secure 的生产/非生产与 HTTPS/HTTP 四种组合由开发单元测试覆盖，证据纳入 MAN-006。', evidence: '2026-10-31 用户 Q-02 裁定；MAN-006 开发单元测试证据', notApplicable: { reason: '交付不提供 HTTPS 入口且不信任代理头；Secure 四种组合由开发单元测试覆盖，QA 不另建 HTTPS 环境', decision: '2026-10-31 用户裁定 Q-02' } },
+];

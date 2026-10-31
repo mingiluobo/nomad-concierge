@@ -1,0 +1,5 @@
+dist/
+reports/*
+!reports/summary.md
+candidate.json
+environment-recipe.json

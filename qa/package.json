@@ -4,8 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "playwright test",
-    "test:e2e": "playwright test tests/e2e"
+    "check": "tsc -p tsconfig.json --noEmit",
+    "compile": "tsc -p tsconfig.json",
+    "list": "playwright test --list",
+    "docs": "npm run compile && node dist/qa/harness/documents.js",
+    "prepare:candidate": "npm run compile && node dist/qa/harness/run.js prepare",
+    "self-check": "npm run compile && node dist/qa/harness/self-check.js",
+    "test": "npm run compile && node dist/qa/harness/run.js full",
+    "test:business": "npm run compile && node dist/qa/harness/run.js business",
+    "test:e2e": "npm run compile && node dist/qa/harness/run.js e2e",
+    "test:api": "npm run compile && node dist/qa/harness/run.js api",
+    "test:ws": "npm run compile && node dist/qa/harness/run.js ws",
+    "test:env": "npm run compile && node dist/qa/harness/run.js env",
+    "report": "playwright show-report"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",

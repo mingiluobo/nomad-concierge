@@ -1,0 +1,10 @@
+{
+  "candidateCommit": "REPLACE_WITH_ASSEMBLED_40_CHARACTER_COMMIT",
+  "productCommit": "REPLACE_WITH_PRODUCT_40_CHARACTER_COMMIT",
+  "qaCommit": "REPLACE_WITH_QA_40_CHARACTER_COMMIT",
+  "wp6Ready": false,
+  "declaredReadyBy": "",
+  "specVersion": "v1.3",
+  "readmeSha256": "REPLACE_WITH_SHA256_OF_CANDIDATE_README_BYTES",
+  "lockSha256": "REPLACE_WITH_SHA256_OF_CANDIDATE_LOCKFILE_BYTES"
+}
