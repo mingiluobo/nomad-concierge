@@ -160,7 +160,7 @@ test('E2E-016 计划详情页首次连接和整体重同步内容完整', async 
   gate.online = true;
   await expect.poll(() => gate.resyncCount, { timeout: 25_000 }).toBeGreaterThan(previous);
   await ui.live();
-  await expect(page.getByTestId(TID.planFirstStep)).toHaveText(content);
+  await expect(page.getByTestId(TID.planFirstStep)).toHaveText(content, { useInnerText: true });
   await expect(page.getByTestId(TID.planKnown)).toContainText('中国');
   await expect(page.getByTestId(TID.planUnknown)).toContainText('当前居住国');
   await expect(page.getByTestId(TID.planBoundary)).not.toBeEmpty();
