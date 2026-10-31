@@ -133,9 +133,24 @@ test('E2E-015 整体重同步恢复我的计划列表', async ({ page }) => {
   await accumulateEvents(ui, traffic);
   const secondId = await ui.create('我是中国人，想搬到智利生活。');
   const secondPlan = await ui.generateEarly(secondId);
-  gate.online = true;
-  await expect.poll(() => gate.resyncCount, { timeout: 25_000 }).toBeGreaterThan(previous);
+  const captured = deferred();
+  const release = deferred();
+  await page.route('**/api/plans', async route => {
+    if (route.request().method() !== 'GET') { await route.continue(); return; }
+    const response = await route.fetch();
+    captured.resolve();
+    await release.promise;
+    await route.fulfill({ response });
+  });
+  try {
+    gate.online = true;
+    await expect.poll(() => gate.resyncCount, { timeout: 25_000 }).toBeGreaterThan(previous);
+    await captured.promise;
+    await expect(page.getByTestId(TID.plansNav)).toContainText(/…|\.\.\./);
+  } finally { release.resolve(); }
   await ui.live();
+  await expect(page.getByTestId(TID.plansNav)).toContainText(/(?:^|\D)2(?:\D|$)/);
+  await expect(page.getByTestId(TID.plansNav)).not.toContainText(/…|\.\.\./);
   await expect(page.getByTestId(TID.planCard(firstPlan.id))).toHaveCount(1);
   await expect(page.getByTestId(TID.planCard(secondPlan.id))).toHaveCount(1);
   await expect(page.getByTestId(TID.planCard(secondPlan.id))).toContainText('通用准备清单');

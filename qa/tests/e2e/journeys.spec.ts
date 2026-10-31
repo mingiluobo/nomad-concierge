@@ -53,6 +53,8 @@ test('E2E-001 登录、示例、快捷回答、修正与完整计划', async ({ 
   await expect(page.getByTestId(TID.message(assistant.seq)).getByTestId(TID.correction('partnerNationality'))).toContainText('中国');
   await expect(page.getByTestId(TID.message(assistant.seq)).getByTestId(TID.correction('partnerNationality'))).toContainText('葡萄牙');
   await page.getByTestId(TID.generatePlan).click();
+  await expect(page.getByTestId(TID.generateDialog)).toContainText('生成后这个咨询会结束，不能再补充');
+  await page.getByTestId(TID.generateConfirm).click();
   await expect.poll(async () => (await ui.detail(id)).conversation.status).toBe('completed');
   const result = await ui.detail(id);
   expect(result.plan).not.toBeNull();

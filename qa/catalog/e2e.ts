@@ -3,7 +3,7 @@ import type { CaseDefinition } from './types.js';
 export const cases: CaseDefinition[] = [
   {
     id: 'E2E-001', title: '登录、示例、快捷回答、修正与完整计划', type: 'e2e', priority: 'P0',
-    requirements: ['H-01', 'H-02', 'H-03', 'H-04', 'H-05', 'H-08', 'H-09', 'SPEC-13.5'],
+    requirements: ['H-01', 'H-02', 'H-03', 'H-04', 'H-05', 'H-08', 'H-09', 'SPEC-13.5', 'UX-06'],
     assertions: '示例卡只填入不发送；中文示例不推断国籍、居住国或身份；快捷回答填入已明确值；修正配偶国籍后其他全部槽位保持原值；完整计划包含第一步、已知、未知、待确认、步骤原因、专业边界和免责声明；完成后输入框替换为提示条。',
     evidence: '全程录屏、trace、截图、真实 HTTP 快照',
   },
@@ -87,8 +87,8 @@ export const cases: CaseDefinition[] = [
   },
   {
     id: 'E2E-015', title: '整体重同步恢复我的计划列表', type: 'e2e', priority: 'P1',
-    requirements: ['X-09', 'SPEC-13.3'],
-    assertions: '停留我的计划页断线并真实累积超过 1000 事件，期间新增计划；重连接收 resync_required 后旧计划和新计划均出现且各一次，通用清单标注保留。',
+    requirements: ['X-09', 'SPEC-13.3', 'UX-07'],
+    assertions: '停留我的计划页断线并真实累积超过 1000 事件，期间新增计划；重同步拉取真实计划快照时计数显示省略号；放行后旧计划和新计划均出现且各一次、计数为 2，通用清单标注保留。',
     evidence: 'trace、真实 WS 帧、计划列表截图',
   },
   {
@@ -120,5 +120,71 @@ export const cases: CaseDefinition[] = [
     requirements: ['H-09', 'SPEC-8.5', 'SPEC-13.5'],
     assertions: '无 Key 时远程和本地选项禁用；选择 rules 后服务端偏好为 rules；下一轮 process 为 rules 且无回退；刷新后选择仍保存。',
     evidence: 'trace、选择器状态、HTTP 和 process 快照',
+  },
+  {
+    id: 'E2E-021', title: '其他输入携带所属问题提示且不污染下一条普通文本', type: 'e2e', priority: 'P1',
+    requirements: ['UX-01', 'SPEC-5.4', 'SPEC-11.2', 'SPEC-13.5'],
+    assertions: '两个国家问题同时待回答时，点击国籍的其他输入新增所属提示，日本只更新国籍且目的国仍缺失；真实请求和消息保留 answeringSlot，下一条普通文本清除；同一用例子断言覆盖目的国、当前居住国和收入国入口。',
+    evidence: 'trace、录屏、real-hinted-and-ordinary-requests、真实消息和档案快照',
+  },
+  {
+    id: 'E2E-022', title: '提示文本发送失败后重试保留原标识和所属问题', type: 'e2e', priority: 'P1',
+    requirements: ['UX-01', 'SPEC-13.5'],
+    assertions: '首个真实发送请求中断后显示重试；重试请求完整保留内容、clientMessageId 和 answeringSlot，最终仅一条对应持久化消息，本人国籍为日本。',
+    evidence: 'trace、录屏、real-retry-requests、真实消息快照',
+  },
+  {
+    id: 'E2E-023', title: '快捷回答、咨询切换和账号切换均清除作答提示', type: 'e2e', priority: 'P1',
+    requirements: ['UX-01', 'SPEC-13.5', 'X-11'],
+    assertions: '点其他输入后改选快捷答案、客户端切换到另一咨询再返回、退出切换账号，随后真实文本请求均不带旧 answeringSlot；未回答的国籍不被误更新。',
+    evidence: 'trace、录屏、真实请求与档案快照',
+  },
+  {
+    id: 'E2E-024', title: '完整资料生成须确认且取消不发生成请求', type: 'e2e', priority: 'P1',
+    requirements: ['UX-06', 'SPEC-13.5'],
+    assertions: '完整资料点击生成后显示结束咨询警示与继续补充/生成计划按钮；取消无 plan POST，仍 collecting 且无计划；确认仅发一个 allowIncomplete=false 请求并完成咨询。',
+    evidence: 'trace、录屏、confirmation-requests、真实会话快照',
+  },
+  {
+    id: 'E2E-025', title: '计划计数跨各页面、刷新和多标签保持完整', type: 'e2e', priority: 'P1',
+    requirements: ['UX-07', 'SPEC-13.3', 'SPEC-13.5'],
+    assertions: '空白新咨询页、进行中咨询、已完成咨询、计划列表和计划详情直接进入及刷新均显示完整计数；新增真实计划后另一标签同步递增。',
+    evidence: 'trace、录屏、真实计划快照、双标签计数',
+  },
+  {
+    id: 'E2E-026', title: '计划快照加载显示省略号且旧快照不覆盖新增事件', type: 'e2e', priority: 'P1',
+    requirements: ['UX-07', 'SPEC-12.3', 'SPEC-13.3', 'SPEC-13.5'],
+    assertions: '暂扣仅有一计划的真实 GET 响应时计数显示省略号；真实生成第二计划，再用后续真实咨询事件的侧栏展示确认浏览器处理边界；释放旧响应后两卡各一次且计数为 2。额外新快照或不可观察处理边界记受阻，不能冒充乱序验证。',
+    evidence: 'trace、录屏、real-old-plan-snapshot-and-new-event；不变造响应或事件',
+  },
+  {
+    id: 'E2E-027', title: '真实计划卡片区分完整度、资料数量和精确到秒的时间', type: 'e2e', priority: 'P2',
+    requirements: ['UX-09', 'SPEC-11.2', 'SPEC-13.5'],
+    assertions: '真实税务提前计划和完整计划的列表卡分别标注完整度，已知/待了解数量等于已保存内容数组长度；真实生成时间可见到秒且可区分；列表无需逐卡请求详情。缺可选字段的旧格式兼容另需开发证据。',
+    evidence: 'trace、录屏、real-plan-content-and-summaries、浏览器真实请求',
+  },
+  {
+    id: 'E2E-028', title: '真实空计划阶段显示暂无事项提示', type: 'e2e', priority: 'P2',
+    requirements: ['UX-11', 'SPEC-13.5'],
+    assertions: '公开接口生成税务单诉求计划，按真实保存内容确认空阶段；每个空阶段内显示暂无事项、非空阶段不误标为空，提示总数等于空阶段数，标题与真实步骤完整。若真实数据没有空阶段则前置受阻，不将其判为产品失败。',
+    evidence: 'trace、录屏、real-plan-empty-phases',
+  },
+  {
+    id: 'E2E-029', title: '首次和后续新咨询均显示开始新的咨询', type: 'e2e', priority: 'P2',
+    requirements: ['UX-13', 'SPEC-13.5'],
+    assertions: '首次登录空状态、已有咨询后点新建、已有计划后的空页刷新均显示开始新的咨询，示例卡仍可见。',
+    evidence: 'trace、录屏、页面标题',
+  },
+  {
+    id: 'E2E-030', title: '主动引擎选择刷新和新建沿用且浏览旧咨询不覆盖', type: 'e2e', priority: 'P2',
+    requirements: ['UX-14', 'SPEC-13.5'],
+    assertions: '主动选择规则后刷新及新建沿用 rules；浏览自身偏好 auto 的旧咨询不改新建默认；在已有咨询主动切换 auto 会 PATCH 并更新后续新建偏好。',
+    evidence: 'trace、录屏、真实会话 enginePreference、选择器状态',
+  },
+  {
+    id: 'E2E-031', title: '引擎选择按账号隔离且首次自动能回退规则', type: 'e2e', priority: 'P2',
+    requirements: ['UX-14', 'SPEC-8.5', 'SPEC-13.5'],
+    assertions: '首次账号默认 auto，主动规则选择在退出重新登录及刷新后保留；另一新账号仍 auto 且没有配置模型时实际使用 rules；再次切换账号仍隔离。非法存储值回到自动另需开发证据，不猜存储键。',
+    evidence: 'trace、录屏、真实偏好和过程快照',
   },
 ];
