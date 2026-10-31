@@ -64,7 +64,11 @@ export class RealtimeServer implements ConnectionRegistry {
     this.clients.add(client);
     socket.on('pong', () => { client.missedPongs = 0; });
     socket.on('close', () => { client.authorized = false; this.clients.delete(client); });
-    socket.on('error', () => { client.authorized = false; socket.terminate(); });
+    socket.on('error', () => {
+      client.authorized = false;
+      // Protocol errors already initiate a close frame; preserve its code and handshake.
+      if (socket.readyState !== WebSocket.CLOSING) socket.terminate();
+    });
     socket.on('message', data => {
       if (!client.authorized) return;
       let raw: unknown;

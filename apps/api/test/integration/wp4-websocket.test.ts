@@ -78,13 +78,32 @@ describe('WebSocket protocol and committed event delivery', () => {
   it('first connection skips history but binds user identity and the global event cursor', async () => {
     const { h, sockets } = await setup(); append(h, 2); const otherIds = append(h, 1, 'other-user');
     const client = await sockets.connect();
-    client.socket.send('{bad'); client.socket.send(JSON.stringify({ type: 'unknown' }));
     client.socket.send(JSON.stringify({ type: 'resume', lastEventId: null }));
     await vi.waitFor(() => expect(client.messages).toEqual([{ type: 'ready', latestEventId: otherIds[0], userId: 'u' }]));
     const next = append(h, 1)[0]; append(h, 1, 'other-user'); await barrier(client.socket);
     const events = client.messages.filter(message => message.type === 'event');
     expect(events.map(event => event.id)).toEqual([next]);
     expect(events[0]).toMatchObject({ eventType: 'read_state.updated', payload: { conversationId: 'c', lastReadSeq: 1 } });
+  });
+
+  it.each([
+    ['malformed JSON', '{bad'],
+    ['unknown message type', JSON.stringify({ type: 'unknown' })],
+    ['invalid resume structure', JSON.stringify({ type: 'resume', lastEventId: '0' })],
+  ])('ignores %s and keeps the connection usable for subsequent valid messages', async (_label, invalid) => {
+    const { h, sockets } = await setup(); const client = await sockets.connect();
+    const closed = vi.fn(); client.socket.on('close', closed);
+    client.socket.send(invalid!);
+    await barrier(client.socket);
+    expect(client.messages).toEqual([]);
+    expect(client.socket.readyState).toBe(WebSocket.OPEN);
+    client.socket.send(JSON.stringify({ type: 'resume', lastEventId: null }));
+    await vi.waitFor(() => expect(client.messages).toEqual([{ type: 'ready', latestEventId: 0, userId: 'u' }]));
+    const eventId = append(h, 1)[0];
+    await barrier(client.socket);
+    expect(client.messages.filter(message => message.type === 'event').map(event => event.id)).toEqual([eventId]);
+    expect(client.socket.readyState).toBe(WebSocket.OPEN);
+    expect(closed).not.toHaveBeenCalled();
   });
 
   it('replays only the authenticated user events in ascending order', async () => {
@@ -150,9 +169,15 @@ describe('WebSocket protocol and committed event delivery', () => {
     expect(client.messages.filter(message => message.type === 'event').map(event => event.id)).toEqual([id]);
   });
 
-  it('disconnects clients exceeding the frame limit and clients that miss two heartbeats', async () => {
-    const { sockets } = await setup({ heartbeatMs: 30 }); const client = await sockets.connect();
-    const oversizedClosed = once(client.socket, 'close'); client.socket.send('x'.repeat(4097)); await oversizedClosed;
+  it('closes a 4097-byte frame with code 1009', async () => {
+    const { sockets } = await setup(); const client = await sockets.connect();
+    const oversizedClosed = once(client.socket, 'close'); client.socket.send('x'.repeat(4097));
+    expect((await oversizedClosed)[0]).toBe(1009);
+    expect(client.socket.readyState).toBe(WebSocket.CLOSED);
+  });
+
+  it('disconnects clients that miss two heartbeats', async () => {
+    const { sockets } = await setup({ heartbeatMs: 30 });
     const silent = new WebSocket(sockets.url, { autoPong: false, headers: { Origin: 'http://test.invalid', Cookie: 'nc_token=valid' } });
     silent.on('error', () => {}); await once(silent, 'open');
     await once(silent, 'close'); expect(silent.readyState).toBe(WebSocket.CLOSED);
