@@ -94,9 +94,22 @@ describe('rule interpreter', () => {
       intent: 'ask_professional', professionalTopic: 'visa_eligibility', updates: [{ slot: 'goals', value: ['residence'], op: 'add' }], unsure: [],
     });
   });
+  it.each([
+    { text: '我是中国籍，可以申请签证吗？', topic: 'visa_eligibility', updates: [{ slot: 'applicantNationality', value: 'CN' }, { slot: 'goals', value: ['residence'], op: 'add' }] },
+    { text: '我是中国籍，可以申请葡萄牙签证吗？', topic: 'visa_eligibility', updates: [{ slot: 'applicantNationality', value: 'CN' }, { slot: 'goals', value: ['residence'], op: 'add' }] },
+    { text: '我是中国籍，能申请居留吗？', topic: 'visa_eligibility', updates: [{ slot: 'applicantNationality', value: 'CN' }, { slot: 'goals', value: ['residence'], op: 'add' }] },
+    { text: '收入来自中国，要交多少税？', topic: 'tax_amount', updates: [{ slot: 'incomeCountry', value: 'CN' }, { slot: 'goals', value: ['tax'], op: 'add' }] },
+    { text: '我是中国籍，开公司合法吗？', topic: 'company_setup', updates: [{ slot: 'applicantNationality', value: 'CN' }, { slot: 'goals', value: ['company'], op: 'add' }] },
+  ])('retains explicit facts and the professional topic in $text', async ({ text, topic, updates }) => {
+    expect((await interpret(text)).interpretation).toEqual({ intent: 'ask_professional', professionalTopic: topic, updates, unsure: [] });
+  });
   it('keeps an ordinary visa statement informational and unrelated content off-topic', async () => {
     expect((await interpret('我想申请签证')).interpretation).toEqual({ intent: 'provide_info', updates: [{ slot: 'goals', value: ['residence'], op: 'add' }], unsure: [] });
     expect((await interpret('今天天气怎么样')).interpretation).toEqual({ intent: 'off_topic', updates: [], unsure: [] });
+  });
+  it('does not treat a visa statement or an unrelated application question as visa eligibility', async () => {
+    expect((await interpret('我可以申请签证')).interpretation).toEqual({ intent: 'provide_info', updates: [{ slot: 'goals', value: ['residence'], op: 'add' }], unsure: [] });
+    expect((await interpret('我可以申请信用卡吗？')).interpretation).toEqual({ intent: 'off_topic', updates: [], unsure: [] });
   });
   it.each([['零', 0], ['两', 2], ['十', 10], ['二十五', 25], ['9', 9], ['abc', null]] as const)('parses number %s', (input, value) => expect(chineseNumber(input)).toBe(value));
 });
