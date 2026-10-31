@@ -12,7 +12,7 @@ import { loadConfig } from '../../src/config.js';
 import type { Domain, EventPublisher, PendingEvent, TurnService } from '../../src/composition.js';
 import { createDomain } from '../../src/domain/index.js';
 import { loadKnowledge } from '../../src/knowledge/loader.js';
-import { AuthenticationService, tokenCookieOptions } from '../../src/auth/service.js';
+import { AuthenticationService } from '../../src/auth/service.js';
 import { ConversationService } from '../../src/services/conversations.js';
 import { createApiRouter } from '../../src/routes/api.js';
 import { AppError, errorHandler } from '../../src/http/errors.js';
@@ -128,7 +128,19 @@ describe('HTTP authentication and validation', () => {
     const hashes = f.db.prepare('SELECT token_hash FROM auth_tokens').all<{ token_hash: string }>().map(row => row.token_hash);
     expect(hashes).not.toContain(raw); expect(hashes).toContain(createHash('sha256').update(raw).digest('hex'));
     expect((a.response.headers['set-cookie'] as unknown as string[])[0]).toMatch(/Max-Age=315360000; Path=\/;.*HttpOnly; SameSite=Lax/);
-    expect(tokenCookieOptions(true, true).secure).toBe(true); expect(tokenCookieOptions(true, false).secure).toBe(false);
+  });
+  it.each([
+    { 'X-Forwarded-Proto': 'https' },
+    { Forwarded: 'for=127.0.0.1;proto=https;host=localhost' },
+    { 'X-Forwarded-Proto': 'https', Forwarded: 'for=127.0.0.1;proto=https;host=localhost' },
+  ])('ignores proxy headers on production HTTP requests: %j', async headers => {
+    const f = fixture({ NODE_ENV: 'production' });
+    expect(f.app.get('trust proxy')).toBe(false);
+    const response = await request(f.app).post('/api/auth/login').set(headers).send({ username: 'Alice' });
+    expect(response.status).toBe(200);
+    const cookies = response.headers['set-cookie'] as unknown as string[];
+    expect(cookies[0]).toMatch(/HttpOnly; SameSite=Lax/);
+    expect(cookies[0]).not.toMatch(/(?:^|;\s*)Secure(?:;|$)/);
   });
   it('evicts the oldest token on the eleventh login and closes only affected connections', async () => {
     const f = fixture(); const first = await f.login(); let last = first;
@@ -236,6 +248,7 @@ describe('conversation ownership, idempotency and persistence', () => {
     const f = fixture(); const { cookie } = await f.login(); const c = await f.create(cookie); f.complete(c.id);
     const before = f.broadcasts.length;
     const future = await request(f.app).post(`/api/conversations/${c.id}/read`).set('Cookie', cookie).send({ seq: 99 });
+    expect(future.status).toBe(200);
     expect(future.body).toEqual({ lastReadSeq: 2 });
     const lower = await request(f.app).post(`/api/conversations/${c.id}/read`).set('Cookie', cookie).send({ seq: 1 });
     expect(lower.body).toEqual({ lastReadSeq: 2 }); expect(f.broadcasts.slice(before)).toHaveLength(1);
