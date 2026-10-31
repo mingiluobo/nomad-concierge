@@ -2,13 +2,14 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import request from 'supertest';
+import { setImmediate } from 'node:timers/promises';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.js';
 import { AppDatabase } from '../../src/db/database.js';
 
 const cleanup: (() => void)[] = [];
 afterEach(() => { while (cleanup.length) cleanup.pop()?.(); });
-function fixture(enabled = true) {
+function fixture(enabled = true, onError?: (error: unknown) => void) {
   const directory = mkdtempSync(join(tmpdir(), 'nc-static-'));
   cleanup.push(() => rmSync(directory, { recursive: true, force: true }));
   const database = new AppDatabase(join(directory, 'app.sqlite'));
@@ -19,7 +20,12 @@ function fixture(enabled = true) {
   writeFileSync(join(webDistPath, 'index.html'), '<!doctype html><title>Nomad fixture</title>');
   writeFileSync(join(webDistPath, 'assets', 'app.js'), 'window.nomad = true;');
   writeFileSync(join(webDistPath, 'api', 'unexpected'), 'This file must not shadow the API.');
-  return createApp({ database, webDistPath: enabled ? webDistPath : undefined });
+  return createApp({ database, webDistPath: enabled ? webDistPath : undefined,
+    errorHandler: onError ? (error: unknown, _request, response, next) => {
+      void next;
+      onError(error);
+      if (!response.headersSent) response.status(500).end();
+    } : undefined });
 }
 describe('production static web serving', () => {
   it('serves assets and the SPA for direct navigation to conversation and plan routes', async () => {
@@ -43,6 +49,13 @@ describe('production static web serving', () => {
     const app = fixture();
     await request(app).post('/c/a-conversation').expect(404).expect('Content-Type', /json/);
     await request(app).head('/c/a-conversation').expect(404);
+  });
+  it('ends a successful SPA response without falling through to error handling', async () => {
+    const errors: unknown[] = [];
+    const app = fixture(true, error => errors.push(error));
+    await request(app).get('/plans/a-plan').expect(200).expect('Content-Type', /html/);
+    await setImmediate();
+    expect(errors).toEqual([]);
   });
   it('leaves web routes unavailable when static serving is disabled', async () => {
     const app = fixture(false);

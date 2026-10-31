@@ -31,7 +31,7 @@ export function createApp({ database, webOrigins = ['http://localhost:5173'], ro
       files(request, response, (error?: unknown) => {
         if (error) { next(error); return; }
         if (request.method !== 'GET') { next(); return; }
-        response.sendFile(join(webDistPath, 'index.html'), next);
+        response.sendFile(join(webDistPath, 'index.html'), error => { if (error) next(error); });
       });
     });
   }
