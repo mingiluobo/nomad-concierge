@@ -103,7 +103,7 @@ nomad-concierge/
 ├── README.md  DISCOVERY.md  DECISIONS.md  AI_USAGE.md
 ├── docs/
 │   ├── SPEC.md                   # 本文档
-│   ├── verification.md           # 验证记录（6 节，见第 24.4 节）
+│   ├── verification.md           # 验证记录（见第 24.4 节）
 │   └── eval-results.md           # 评估脚本的输出（第 23 节）
 ├── package.json                  # workspaces: apps/*, packages/*, qa
 ├── .nvmrc  .gitignore  .dockerignore  eslint.config.js
