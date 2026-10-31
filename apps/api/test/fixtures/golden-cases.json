@@ -2913,5 +2913,422 @@
       "targeted-unsure"
     ],
     "reviewed": false
+  },
+  {
+    "id": "G039",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "我是中国籍，可以申请签证吗？"
+    },
+    "expected": {
+      "intent": "ask_professional",
+      "updates": [
+        {
+          "slot": "applicantNationality",
+          "value": "CN"
+        },
+        {
+          "slot": "goals",
+          "value": [
+            "residence"
+          ],
+          "op": "add"
+        }
+      ],
+      "unsure": [],
+      "professionalTopic": "visa_eligibility"
+    },
+    "tags": [
+      "rules",
+      "key",
+      "professional",
+      "mixed-information",
+      "visa-eligibility"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G040",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "我是自由职业者，收入来自中国，要交多少税？"
+    },
+    "expected": {
+      "intent": "ask_professional",
+      "updates": [
+        {
+          "slot": "incomeCountry",
+          "value": "CN"
+        },
+        {
+          "slot": "goals",
+          "value": [
+            "tax"
+          ],
+          "op": "add"
+        },
+        {
+          "slot": "incomeSource",
+          "value": "freelancer"
+        }
+      ],
+      "unsure": [],
+      "professionalTopic": "tax_amount"
+    },
+    "tags": [
+      "rules",
+      "key",
+      "professional",
+      "mixed-information",
+      "tax-amount"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G041",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "我是中国籍，注册公司合法吗？"
+    },
+    "expected": {
+      "intent": "ask_professional",
+      "updates": [
+        {
+          "slot": "applicantNationality",
+          "value": "CN"
+        },
+        {
+          "slot": "goals",
+          "value": [
+            "company"
+          ],
+          "op": "add"
+        }
+      ],
+      "unsure": [],
+      "professionalTopic": "company_setup"
+    },
+    "tags": [
+      "rules",
+      "key",
+      "professional",
+      "mixed-information",
+      "company-setup"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G042",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "我是中国籍，能不能申请签证？"
+    },
+    "expected": {
+      "intent": "ask_professional",
+      "updates": [
+        {
+          "slot": "applicantNationality",
+          "value": "CN"
+        },
+        {
+          "slot": "goals",
+          "value": [
+            "residence"
+          ],
+          "op": "add"
+        }
+      ],
+      "unsure": [],
+      "professionalTopic": "visa_eligibility"
+    },
+    "tags": [
+      "rules",
+      "professional",
+      "mixed-information",
+      "visa-eligibility",
+      "question-variant"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G043",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "我是中国籍，想申请签证。"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "applicantNationality",
+          "value": "CN"
+        },
+        {
+          "slot": "goals",
+          "value": [
+            "residence"
+          ],
+          "op": "add"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "ordinary-intention",
+      "visa-eligibility",
+      "not-professional-question"
+    ],
+    "reviewed": false
   }
 ]
