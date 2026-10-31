@@ -1,16 +1,112 @@
 # Interpretation evaluation
 
-Run time: 2026-10-31T10:05:59.120Z
-Dataset SHA-256: 20738bcbac199ce9d0009b6c6add60ff1699035d68da83cf3f71512c43d91104
-Dataset: 38 cases; tags: ages, all-unsure, ambiguous-unsure, append-goals, arabic-number, assignment, business, chinese-number, correction, country-role, income, insurance, invalid-country, key, multi-slot, negation, no-children, no-nationality-inference, off-topic, preserve-unmentioned, professional, prompt-injection, relevant-unrecognized, replace-goals, residence-status, rules, school, shared-nationality, short-answer, solo, targeted-unsure, timeline, unsupported-destination, unsure, unsure-forbidden; key cases reviewed: 14/14
-Models: rules: deterministic rules
-Prompt version: v1 (LLM only; rules: n/a)
+Run time: 2026-10-31T11:13:05.063Z
+Dataset SHA-256: 4d23757c66b9737d3f5f442f72625b323799f1dd75159c250089c2a57fd34085
+Dataset: 49 cases; tags: ages, all-unsure, ambiguous-unsure, append-goals, arabic-number, assignment, business, chinese-number, company-setup, correction, country-role, holdout, income, insurance, invalid-country, key, llm-only, mixed-information, multi-slot, negation, no-children, no-nationality-inference, not-professional-question, off-topic, ordinary-intention, preserve-unmentioned, professional, prompt-injection, question-variant, relevant-unrecognized, replace-goals, residence-status, rules, school, shared-nationality, short-answer, solo, targeted-unsure, tax-amount, timeline, unsupported-destination, unsure, unsure-forbidden, visa-eligibility; key cases reviewed: 17/17
+Models: rules: deterministic rules; remote: deepseek-chat
+Prompt version: v2 (LLM only; rules: n/a)
 
 | Engine | Intent accuracy | Update precision | Update recall | Unsure accuracy | Semantic accuracy | Average ms | Failures |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| rules | 38/38 (100.0%) | 44/44 (100.0%) | 44/44 (100.0%) | 38/38 (100.0%) | 38/38 (100.0%) | 0.17 | {} |
+| rules | 43/43 (100.0%) | 55/55 (100.0%) | 55/55 (100.0%) | 43/43 (100.0%) | 43/43 (100.0%) | 0.20 | {} |
+| remote | 48/49 (98.0%) | 59/59 (100.0%) | 59/66 (89.4%) | 49/49 (100.0%) | 42/49 (85.7%) | 951.80 | {} |
 
 Update matches compare (slot, normalized value, operation); absent operations mean add for goals and set otherwise. Goal values are compared as sets. Semantic accuracy compares the resulting reconciled profiles. Failed cases remain in accuracy/recall denominators.
 
 Skipped cases / engines:
-- None.
+- rules G044: llm-only case
+- rules G045: llm-only case
+- rules G046: llm-only case
+- rules G047: llm-only case
+- rules G048: llm-only case
+- rules G049: llm-only case
+
+## 本轮方法与版本
+
+- 执行日期：2026-10-31；运行环境：macOS arm64，Node 24.22.2；远程配置模型：`deepseek-chat`。
+- 共执行三次 `--engines rules,remote` 评估，每次远程实际运行49条，未跳过；规则引擎运行43条，按标签跳过6条llm-only对照。没有进行第四次评估。
+- 临时观察器调用未修改的评估入口，并捕获同一次解释结果做逐例比对；不重复请求模型，不修改解释结果、校验器或指标计算。上方为最终评估脚本原始汇总。分组耗时是观察器测得的解释调用耗时，与上方包含少量统计开销的脚本耗时略有差异。
+- 三次数据集字节完全一致。已有43条期望值未改；G044～G049由未读已有用例、提示词及实现的独立作者依据SPEC编写，在任何提示词修改前冻结。作者文件SHA-256：`ec32c39f6724521b1f1f5424e5be5c08dc55da8ed85c65ada28bb32068b74b4b`。
+- 对照的文本、期望与结果未提供给提示词作者或审查者；总控在最终提示词冻结、三次评估完成后才展开对照结果。6条均为`reviewed:false`，结果仍待人工确认其标准答案。
+- 最终版本只改提示词和派生追问上下文。中间版本进入评估后，独立静态审查发现“相邻同操作可合并”仍可能破坏set/remove顺序；最终版本删除跨更新合并指令。此修正来自SPEC审查，不来自对照结果。保留中间结果，不按最高得分选择版本。
+- 所有比较均为单次样本，不代表远程模型稳定性验收，也不计入QA放行。没有保存Key、完整模型请求或登录信息。
+
+| 运行 | 基线代码/提示词提交 | 提示词版本 |
+| --- | --- | --- |
+| 基线 v1 | `dc94d9103aac0d4bb65f639be77913df4bb3a007` | `v1` |
+| 中间 v2 | `a73b6512d58200b84334e3fb67d78f0d2eda5908` | `v2` |
+| 最终 v2 | `ffe119edbe1e3b756047bba921a395b55222577b` | `v2` |
+
+## 前后指标（远程全部49条）
+
+| 运行 | 意图准确率 | 更新精确率 | 更新召回率 | unsure准确率 | 档案语义准确率 | 严格逐项通过 | 平均ms | 运行失败 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 基线 v1 | 46/49 (93.9%) | 41/46 (89.1%) | 41/66 (62.1%) | 48/49 (98.0%) | 24/49 (49.0%) | 22/49 (44.9%) | 1062.27 | 0 |
+| 中间 v2 | 48/49 (98.0%) | 60/60 (100.0%) | 60/66 (90.9%) | 49/49 (100.0%) | 43/49 (87.8%) | 42/49 (85.7%) | 925.83 | 0 |
+| 最终 v2 | 48/49 (98.0%) | 59/59 (100.0%) | 59/66 (89.4%) | 49/49 (100.0%) | 42/49 (85.7%) | 41/49 (83.7%) | 951.80 | 0 |
+
+严格逐项通过要求意图、专业主题、更新集合（含op）、unsure及合并后的档案全部符合期望。运行失败指超时、不可用或输出结构异常；本轮三次均为0，原因集合均为空。内容不一致仍计入准确率分母，不能因为调用成功而算用例通过。
+
+## 分组比较（防止已有用例掩盖对照表现）
+
+| 分组/运行 | 意图 | 更新精确率 | 更新召回率 | unsure | 档案语义 | 严格逐项 | 平均ms |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 已有43条 / 基线 v1 | 40/43 (93.0%) | 34/37 (91.9%) | 34/55 (61.8%) | 42/43 (97.7%) | 21/43 (48.8%) | 19/43 (44.2%) | 1041.32 |
+| 已有43条 / 中间 v2 | 42/43 (97.7%) | 49/49 (100.0%) | 49/55 (89.1%) | 43/43 (100.0%) | 37/43 (86.0%) | 36/43 (83.7%) | 929.45 |
+| 已有43条 / 最终 v2 | 42/43 (97.7%) | 49/49 (100.0%) | 49/55 (89.1%) | 43/43 (100.0%) | 37/43 (86.0%) | 36/43 (83.7%) | 941.84 |
+| 独立6条 / 基线 v1 | 6/6 (100.0%) | 7/9 (77.8%) | 7/11 (63.6%) | 6/6 (100.0%) | 3/6 (50.0%) | 3/6 (50.0%) | 1211.28 |
+| 独立6条 / 中间 v2 | 6/6 (100.0%) | 11/11 (100.0%) | 11/11 (100.0%) | 6/6 (100.0%) | 6/6 (100.0%) | 6/6 (100.0%) | 899 |
+| 独立6条 / 最终 v2 | 6/6 (100.0%) | 10/10 (100.0%) | 10/11 (90.9%) | 6/6 (100.0%) | 5/6 (83.3%) | 5/6 (83.3%) | 1022.41 |
+
+## 基线已有用例：逐条不一致及分类
+
+以下按可观察差异归类，不能据此断言模型内部原因。被取值校验丢弃的更新只记录了`Invalid slot value or operation`，不虚构未保存的原始格式。
+
+| 用例 | 分类 | 基线差异 | 最终结果 |
+| --- | --- | --- | --- |
+| G001 | 相对时间 | 将明年映射为gt12m，需求约定为6to12m | 通过 |
+| G006 | 值格式或操作 | goals更新未通过取值或操作校验，被丢弃 | 通过 |
+| G008 | 值格式或操作 | goals更新未通过取值或操作校验，遗漏居留诉求 | 通过 |
+| G010 | 诉求推导遗漏 | 专业签证问题遗漏居留诉求 | 不一致 |
+| G012 | 相关意图边界 | 忽略注入指令和非法值后，领域相关内容被归为off_topic | 不一致 |
+| G013 | 值格式或操作 | goals更新未通过取值或操作校验，遗漏税务诉求 | 通过 |
+| G016 | 追问与不确定归属 | 多项追问时无指向的不知道被标到多个槽位 | 通过 |
+| G020 | 家庭联动抽取 | 列出孩子年龄后遗漏可确定的人数 | 通过 |
+| G021 | 家庭联动抽取 | 列出孩子年龄后遗漏可确定的人数 | 通过 |
+| G023 | 明确否定信息遗漏 | 独自出行遗漏hasPartner=false | 通过 |
+| G027 | 值格式与诉求op | 非法更新被丢弃，且明确替换被输出为删除旧诉求 | 通过 |
+| G028 | 诉求推导遗漏 | 专业税额问题遗漏税务诉求 | 不一致 |
+| G029 | 诉求推导遗漏 | 专业公司问题遗漏公司诉求 | 通过 |
+| G030 | 专业意图边界 | 一般出国准备咨询被升级为专业资格判断 | 通过 |
+| G031 | 值格式或操作 | goals更新未通过取值或操作校验，遗漏居留诉求 | 通过 |
+| G034 | 诉求推导遗漏 | 公司业务信息遗漏相应公司诉求 | 不一致 |
+| G035 | 诉求推导遗漏 | 学校偏好信息遗漏相应教育诉求 | 通过 |
+| G036 | 诉求推导遗漏 | 医保信息遗漏相应医疗诉求 | 不一致 |
+| G038 | 相对时间 | 将明年映射为gt12m，需求约定为6to12m | 通过 |
+| G039 | 诉求推导遗漏 | 带国籍的专业签证问题遗漏居留诉求 | 不一致 |
+| G040 | 诉求推导遗漏 | 带收入信息的专业税额问题遗漏税务诉求 | 通过 |
+| G041 | 值格式或操作 | 带国籍的公司问题中goals更新被校验丢弃 | 通过 |
+| G042 | 诉求推导遗漏 | 带国籍的专业签证问题遗漏居留诉求 | 不一致 |
+| G043 | 专业意图边界与诉求遗漏 | 普通申请意愿被升级为专业判断，且遗漏居留诉求 | 通过 |
+
+基线已有43条中24条不一致。最终已有集剩7条：G010、G028、G034、G036、G039、G042仍漏相应goals更新；G012仍把相关但含非法目的国的输入判为off_topic。最终没有非法槽位更新被丢弃。
+
+## 六条独立对照：逐条前后结果
+
+| 用例 | 基线v1 | 中间v2 | 最终v2 | 基线差异/最终观察 |
+| --- | --- | --- | --- | --- |
+| G044 | 通过 | 通过 | 通过 | 通过追问上下文解析同本人国籍；三次均一致。 |
+| G045 | 通过 | 通过 | 通过 | 居住国修正与明确居留身份共同保留；三次均一致。 |
+| G046 | 不一致 | 通过 | 通过 | 基线goals更新因非法取值或op被丢弃；最终正确remove公司诉求。 |
+| G047 | 不一致 | 通过 | 通过 | 基线用remove旧项加add教育代替明确set，档案修正语义不符；最终正确set教育。 |
+| G048 | 通过 | 通过 | 通过 | 同行/孩子人数与年龄/相对时长均正确；三次均一致。 |
+| G049 | 不一致 | 通过 | 不一致 | 基线遗漏税务诉求和自由职业收入来源；中间版本两者正确，最终保留税务诉求、专业意图和timeline不确定，但遗漏incomeSource=freelancer。 |
+
+对照最终5/6，与中间版本6/6不同；未针对G049继续调参。6条样本较少且尚未人工审核，不能据此宣称普遍效果或稳定性。
+
+## 结论与未解决项
+
+- 采用最终v2：已有集档案语义准确率由21/43提升到37/43；独立对照由3/6提升到5/6。全部49条语义准确率由24/49提升到42/49。
+- 规则引擎在其43条适用用例上各指标仍为100%；6条对照依标签明确未执行规则评估。远程最终仍有8条内容不一致（7条已有用例、G049一条对照），未将这些遗漏修补到业务规则或校验逻辑。
+- 本轮到此停止，不继续调整提示词、不修改标准答案。真实模型评估独立于开发测试及QA验收。
+- 提交前已执行凭据残留检查：仅排除原始配置文件，其余指定目录匹配数为0；临时评估副本已删除。
