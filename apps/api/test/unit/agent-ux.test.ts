@@ -50,6 +50,15 @@ describe('UX04 requested scope and background facts', () => {
     expect(result.updates).toContainEqual({ slot: 'hasHealthInsurance', value: true });
   });
   it.each([
+    ['只想了解税务且公司主要做软件', 'businessType', 'software'],
+    ['只想了解税务我有医疗保险', 'hasHealthInsurance', true],
+    ['只想了解税务孩子想上公立学校', 'schoolPreference', 'public'],
+  ])('does not extend an earlier scope request into a later fact: %s', async (text, slot, value) => {
+    const result = await interpret(text);
+    expect(result.updates.filter(update => update.slot === 'goals')).toEqual([{ slot: 'goals', value: ['tax'], op: 'set' }]);
+    expect(result.updates).toContainEqual({ slot, value });
+  });
+  it.each([
     ['已经有医疗保险', 'hasHealthInsurance', true], ['没有医疗保险', 'hasHealthInsurance', false],
     ['公司主要做软件', 'businessType', 'software'], ['孩子想上公立学校', 'schoolPreference', 'public'],
     ['我是自由职业者', 'incomeSource', 'freelancer'], ['自己做生意', 'incomeSource', 'business_owner'],
