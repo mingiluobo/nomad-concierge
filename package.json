@@ -1,20 +1,28 @@
 {
-  "name": "nomad-concierge-starter",
+  "name": "nomad-concierge",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*",
+    "qa"
   ],
   "engines": {
-    "node": ">=22.13.0"
+    "node": "^22.13.0 || ^24.0.0 || >=26.0.0",
+    "npm": ">=10"
   },
   "scripts": {
-    "dev": "concurrently -k -n api,web -c blue,green \"npm run dev --workspace @nomad/api\" \"npm run dev --workspace @nomad/web\"",
-    "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
+    "predev": "npm run build --workspace @nomad/shared",
+    "dev": "concurrently -k -n shared,api,web -c yellow,blue,green \"npm run dev --workspace @nomad/shared\" \"npm run dev --workspace @nomad/api\" \"npm run dev --workspace @nomad/web\"",
+    "build": "npm run build --workspace @nomad/shared && npm run build --workspace @nomad/api && npm run build --workspace @nomad/web",
+    "start": "npm run start --workspace @nomad/api",
+    "pretest": "npm run build --workspace @nomad/shared",
+    "test": "npm run test --workspace @nomad/shared --workspace @nomad/api --workspace @nomad/web",
+    "test:e2e": "npm run test:e2e --workspace qa",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspace @nomad/shared --workspace @nomad/api --workspace @nomad/web",
+    "precheck": "npm run build --workspace @nomad/shared",
     "check": "npm run lint && npm run typecheck"
   },
   "devDependencies": {

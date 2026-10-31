@@ -6,6 +6,11 @@ coverage/
 .env.local
 *.log
 *.tsbuildinfo
-apps/api/data/*.sqlite
-apps/api/data/*.sqlite-shm
-apps/api/data/*.sqlite-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+qa/reports/*
+!qa/reports/summary.md
+playwright-report/
+test-results/

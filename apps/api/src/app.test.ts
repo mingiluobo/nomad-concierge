@@ -1,9 +1,9 @@
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from './app.js';
-import { AppDatabase } from './database.js';
+import { AppDatabase } from './db/database.js';
 
-describe('starter API', () => {
+describe('API foundation', () => {
   let database: AppDatabase;
 
   beforeEach(() => {
@@ -30,7 +30,7 @@ describe('starter API', () => {
     const response = await request(createApp({ database })).get('/api/unknown');
 
     expect(response.status).toBe(404);
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       error: {
         code: 'NOT_FOUND',
         message: 'The requested resource was not found.',

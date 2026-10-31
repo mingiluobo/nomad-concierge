@@ -1,69 +1,37 @@
 import { randomUUID } from 'node:crypto';
 import cors from 'cors';
-import express, {
-  type ErrorRequestHandler,
-  type Express,
-  type RequestHandler,
-} from 'express';
-import type { AppDatabase } from './database.js';
+import cookieParser from 'cookie-parser';
+import express from 'express';
+import type { ErrorRequestHandler, Express, RequestHandler, Router } from 'express';
+import type { AppDatabase } from './db/database.js';
 
-type AppOptions = {
-  database: AppDatabase;
-  webOrigin?: string;
-};
-
+export interface AppOptions { database: AppDatabase; webOrigins?: string[]; router?: Router; errorHandler?: ErrorRequestHandler }
 const requestId: RequestHandler = (request, response, next) => {
-  const id = request.header('x-request-id') ?? randomUUID();
-  response.setHeader('x-request-id', id);
+  response.locals.requestId = request.header('x-request-id') ?? randomUUID();
+  response.setHeader('x-request-id', response.locals.requestId as string);
   next();
 };
-
-export function createApp({
-  database,
-  webOrigin = 'http://localhost:5173',
-}: AppOptions): Express {
+export function createApp({ database, webOrigins = ['http://localhost:5173'], router, errorHandler }: AppOptions): Express {
   const app = express();
-
   app.disable('x-powered-by');
   app.use(requestId);
-  app.use(cors({ origin: webOrigin }));
-  app.use(express.json({ limit: '1mb' }));
-
+  app.use(cors({ origin: webOrigins, credentials: true }));
+  app.use(express.json({ limit: '64kb' }));
+  app.use(cookieParser());
   app.get('/api/health', (_request, response) => {
-    response.json({
-      service: 'nomad-concierge-api',
-      status: 'ok',
-      database: database.ping() ? 'connected' : 'unavailable',
-      timestamp: new Date().toISOString(),
-    });
+    response.json({ service: 'nomad-concierge-api', status: 'ok', database: database.ping() ? 'connected' : 'unavailable', timestamp: new Date().toISOString() });
   });
-
+  if (router) app.use(router);
   app.use((_request, response) => {
-    response.status(404).json({
-      error: {
-        code: 'NOT_FOUND',
-        message: 'The requested resource was not found.',
-      },
-    });
+    response.status(404).json({ error: { code: 'NOT_FOUND', message: 'The requested resource was not found.', requestId: response.locals.requestId } });
   });
-
-  const errorHandler: ErrorRequestHandler = (
-    error: unknown,
-    _request,
-    response,
-    _next,
-  ) => {
-    void _next;
-    console.error('Unhandled request error', error);
-    response.status(500).json({
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An unexpected error occurred.',
-      },
-    });
+  const defaultErrorHandler: ErrorRequestHandler = (error: unknown, _request, response, next) => {
+    void next;
+    const invalidJson = error instanceof SyntaxError && typeof error === 'object' && 'type' in error && error.type === 'entity.parse.failed';
+    const tooLarge = typeof error === 'object' && error !== null && 'type' in error && error.type === 'entity.too.large';
+    if (!invalidJson && !tooLarge) console.error('Unhandled request error', { requestId: response.locals.requestId, error });
+    response.status(invalidJson || tooLarge ? 400 : 500).json({ error: { code: invalidJson || tooLarge ? 'BAD_REQUEST' : 'INTERNAL_ERROR', message: invalidJson || tooLarge ? 'Invalid request body.' : 'An unexpected error occurred.', requestId: response.locals.requestId } });
   };
-
-  app.use(errorHandler);
-
+  app.use(errorHandler ?? defaultErrorHandler);
   return app;
 }

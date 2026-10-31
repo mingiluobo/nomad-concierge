@@ -1,31 +1,19 @@
-import { createApp } from './app.js';
 import { loadConfig } from './config.js';
-import { AppDatabase } from './database.js';
+import { createComposition } from './composition.js';
 
+if (process.argv.includes('--production')) process.env.NODE_ENV = 'production';
 const config = loadConfig();
-const database = new AppDatabase(config.databasePath);
-const app = createApp({ database, webOrigin: config.webOrigin });
-
-const server = app.listen(config.port, () => {
-  console.log(`Nomad Concierge API listening on http://localhost:${config.port}`);
+const { database, server } = createComposition(config);
+server.listen(config.port, () => {
+  const address = server.address();
+  const port = typeof address === 'object' && address ? address.port : config.port;
+  console.log(`Nomad Concierge API listening on http://localhost:${port}`);
 });
-
 let isShuttingDown = false;
-
-function shutDown(signal: string): void {
-  if (isShuttingDown) {
-    return;
-  }
-
+function shutDown(): void {
+  if (isShuttingDown) return;
   isShuttingDown = true;
-  console.log(`Received ${signal}; shutting down.`);
-
-  server.close(() => {
-    database.close();
-    process.exit(0);
-  });
+  server.close(() => { database.close(); process.exitCode = 0; });
 }
-
-process.on('SIGINT', () => shutDown('SIGINT'));
-process.on('SIGTERM', () => shutDown('SIGTERM'));
-
+process.on('SIGINT', shutDown);
+process.on('SIGTERM', shutDown);
