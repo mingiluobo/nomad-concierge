@@ -19,7 +19,7 @@ function countryMentions(text: string): { code: string; alias: string; index: nu
   return found.sort((a, b) => a.index - b.index);
 }
 function professionalTopic(text: string): ProfessionalTopic | undefined {
-  if (!/能不能申请|可以申请吗|能申请吗|符合.{0,20}条件|要交多少|税率|多少税|合法吗|会被拒吗/.test(text)) return undefined;
+  if (!/能不能申请|可以申请吗|能申请吗|(?:能|可以)申请哪(?:个|种)签证|符合.{0,20}条件|要交多少|税率|多少税|合法吗|会被拒吗/.test(text)) return undefined;
   return /税/.test(text) ? 'tax_amount' : /公司|注册|创业/.test(text) ? 'company_setup' : /签证|申请|拒|居留/.test(text) ? 'visa_eligibility' : 'other';
 }
 function interpretMessage(text: string, input: InterpretInput, droppedUpdates: InterpretResult['droppedUpdates']): Interpretation {

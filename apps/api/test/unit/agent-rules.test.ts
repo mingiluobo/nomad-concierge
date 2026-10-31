@@ -89,5 +89,14 @@ describe('rule interpreter', () => {
       intent: 'ask_professional', professionalTopic: 'visa_eligibility', updates: [{ slot: 'incomeSource', value: 'freelancer' }], unsure: ['timeline'],
     });
   });
+  it.each(['我能申请哪个签证', '可以申请哪种签证'])('recognizes the visa eligibility question %s while retaining the residence goal', async text => {
+    expect((await interpret(text)).interpretation).toEqual({
+      intent: 'ask_professional', professionalTopic: 'visa_eligibility', updates: [{ slot: 'goals', value: ['residence'], op: 'add' }], unsure: [],
+    });
+  });
+  it('keeps an ordinary visa statement informational and unrelated content off-topic', async () => {
+    expect((await interpret('我想申请签证')).interpretation).toEqual({ intent: 'provide_info', updates: [{ slot: 'goals', value: ['residence'], op: 'add' }], unsure: [] });
+    expect((await interpret('今天天气怎么样')).interpretation).toEqual({ intent: 'off_topic', updates: [], unsure: [] });
+  });
   it.each([['零', 0], ['两', 2], ['十', 10], ['二十五', 25], ['9', 9], ['abc', null]] as const)('parses number %s', (input, value) => expect(chineseNumber(input)).toBe(value));
 });
