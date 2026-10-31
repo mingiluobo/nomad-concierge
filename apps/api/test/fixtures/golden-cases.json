@@ -2590,7 +2590,7 @@
       "rules",
       "business"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G035",
@@ -2662,7 +2662,7 @@
       "rules",
       "school"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G036",
@@ -2734,7 +2734,7 @@
       "rules",
       "insurance"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G037",
@@ -3391,7 +3391,7 @@
       "llm-only",
       "holdout"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G045",
@@ -3484,7 +3484,7 @@
       "llm-only",
       "holdout"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G046",
@@ -3572,7 +3572,7 @@
       "llm-only",
       "holdout"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G047",
@@ -3667,7 +3667,7 @@
       "llm-only",
       "holdout"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G048",
@@ -3769,7 +3769,7 @@
       "llm-only",
       "holdout"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G049",
@@ -3867,7 +3867,7 @@
       "llm-only",
       "holdout"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G050",
@@ -3945,7 +3945,7 @@
       "ux-professional",
       "visa-eligibility"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G051",
@@ -4031,7 +4031,7 @@
       "ux-professional",
       "country-role"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G052",
@@ -4121,7 +4121,7 @@
       "ux-professional",
       "country-role"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G053",
@@ -4202,7 +4202,7 @@
       "ux-professional",
       "company-setup"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G054",
@@ -4283,7 +4283,7 @@
       "ux-professional",
       "tax-amount"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G055",
@@ -4360,7 +4360,7 @@
       "ux-professional",
       "visa-eligibility"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G056",
@@ -4441,7 +4441,7 @@
       "ux-scope",
       "background-fact"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G057",
@@ -4522,7 +4522,7 @@
       "ux-scope",
       "background-fact"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G058",
@@ -4599,7 +4599,7 @@
       "ux-scope",
       "background-fact"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G059",
@@ -4679,7 +4679,7 @@
       "ux-scope",
       "explicit-request"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G060",
@@ -4753,7 +4753,7 @@
       "ux-time",
       "boundary"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G061",
@@ -4827,7 +4827,7 @@
       "ux-time",
       "boundary"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G062",
@@ -4901,7 +4901,7 @@
       "ux-time",
       "boundary"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G063",
@@ -4974,7 +4974,7 @@
       "ux-time",
       "relative-duration"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G064",
@@ -5047,7 +5047,7 @@
       "ux-time",
       "relative-duration"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G065",
@@ -5120,7 +5120,7 @@
       "ux-time",
       "relative-duration"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G066",
@@ -5193,7 +5193,7 @@
       "ux-time",
       "relative-duration"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G067",
@@ -5266,7 +5266,7 @@
       "ux-time",
       "relevant-unrecognized"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G068",
@@ -5342,6 +5342,6 @@
       "ux-scope",
       "explicit-request"
     ],
-    "reviewed": false
+    "reviewed": true
   }
 ]
