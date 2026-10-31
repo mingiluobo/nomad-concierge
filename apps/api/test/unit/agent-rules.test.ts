@@ -96,7 +96,7 @@ describe('rule interpreter', () => {
   });
   it.each([
     { text: '我是中国籍，可以申请签证吗？', topic: 'visa_eligibility', updates: [{ slot: 'applicantNationality', value: 'CN' }, { slot: 'goals', value: ['residence'], op: 'add' }] },
-    { text: '我是中国籍，可以申请葡萄牙签证吗？', topic: 'visa_eligibility', updates: [{ slot: 'applicantNationality', value: 'CN' }, { slot: 'goals', value: ['residence'], op: 'add' }] },
+    { text: '我是中国籍，可以申请葡萄牙签证吗？', topic: 'visa_eligibility', updates: [{ slot: 'applicantNationality', value: 'CN' }, { slot: 'destination', value: 'PT' }, { slot: 'goals', value: ['residence'], op: 'add' }] },
     { text: '我是中国籍，能申请居留吗？', topic: 'visa_eligibility', updates: [{ slot: 'applicantNationality', value: 'CN' }, { slot: 'goals', value: ['residence'], op: 'add' }] },
     { text: '收入来自中国，要交多少税？', topic: 'tax_amount', updates: [{ slot: 'incomeCountry', value: 'CN' }, { slot: 'goals', value: ['tax'], op: 'add' }] },
     { text: '我是中国籍，开公司合法吗？', topic: 'company_setup', updates: [{ slot: 'applicantNationality', value: 'CN' }, { slot: 'goals', value: ['company'], op: 'add' }] },
