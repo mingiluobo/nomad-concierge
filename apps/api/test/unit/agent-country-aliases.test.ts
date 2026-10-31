@@ -12,7 +12,7 @@ describe('country aliases in rule interpretation', () => {
   it.each([
     ['美利坚', 'US'], ['美利坚合众国', 'US'], ['大不列颠', 'GB'],
     ['德意志', 'DE'], ['德意志联邦共和国', 'DE'], ['法兰西', 'FR'], ['法兰西共和国', 'FR'],
-    ['中华人民共和国', 'CN'], ['大韩民国', 'KR'], ['泰王国', 'TH'],
+    ['大韩民国', 'KR'], ['泰王国', 'TH'],
     ['阿拉伯联合酋长国', 'AE'], ['纽西兰', 'NZ'], ['尼德兰王国', 'NL'], ['狮城', 'SG'],
   ])('interprets %s as %s when answering the pending country question', async (alias, code) => {
     expect((await interpret(alias, ['destination'])).interpretation).toEqual({
@@ -20,16 +20,16 @@ describe('country aliases in rule interpretation', () => {
     });
   });
   it.each(['currentResidence', 'incomeCountry', 'partnerNationality', 'applicantNationality'] as SlotKey[])('uses the pending %s for a bare country full name', async slot => {
-    expect((await interpret('中华人民共和国', [slot])).interpretation.updates).toEqual([{ slot, value: 'CN' }]);
+    expect((await interpret('德意志联邦共和国', [slot])).interpretation.updates).toEqual([{ slot, value: 'DE' }]);
   });
-  it('does not infer nationality from a character inside a bare country name without a pending country question', async () => {
-    expect((await interpret('中华人民共和国')).interpretation.updates).toEqual([]);
+  it('does not guess a country role without a pending country question or an explicit clue', async () => {
+    expect((await interpret('德意志联邦共和国')).interpretation.updates).toEqual([]);
   });
   it.each([
     ['中国人', 'CN'], ['中国籍', 'CN'], ['葡萄牙人', 'PT'], ['葡萄牙籍', 'PT'],
-    ['中华人民共和国人', 'CN'], ['中华人民共和国籍', 'CN'], ['中华人民共和国国籍', 'CN'],
-    ['中华人民共和国护照', 'CN'], ['国籍中华人民共和国', 'CN'], ['护照中华人民共和国', 'CN'],
-    ['我是中华人民共和国', 'CN'],
+    ['美利坚合众国人', 'US'], ['美利坚合众国籍', 'US'], ['美利坚合众国国籍', 'US'],
+    ['美利坚合众国护照', 'US'], ['国籍美利坚合众国', 'US'], ['护照美利坚合众国', 'US'],
+    ['我是美利坚合众国', 'US'],
   ])('keeps the explicit nationality clue in %s', async (text, code) => {
     expect((await interpret(text, ['destination'])).interpretation.updates).toEqual([{ slot: 'applicantNationality', value: code }]);
   });

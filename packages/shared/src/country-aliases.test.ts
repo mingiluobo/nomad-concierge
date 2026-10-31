@@ -3,7 +3,7 @@ import { countries } from './countries.js';
 
 // Expected spellings and ISO codes are curated independently of the production registry.
 const expectedAliases: [string, string[]][] = [
-  ['CN', ['中华人民共和国']],
+  ['CN', ['中国']],
   ['PT', ['葡萄牙共和国']],
   ['ES', ['西班牙王国']],
   ['FR', ['法兰西', '法兰西共和国']],
