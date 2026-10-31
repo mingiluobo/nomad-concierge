@@ -12,7 +12,16 @@
 - Docker 方式需要已安装并运行的 Docker Desktop 或 Docker Engine，以及支持可选 `env_file` 的 Compose 插件。安装 Docker Desktop 本身可能需要管理员权限。
 - 可选本地模型需要另外安装 Ollama，并下载约 4.7 GB 的 `qwen2.5:7b-instruct`，预留约 5 GB 模型空间；它不是默认启动条件。
 
-运行验证状态：当前工作包正在验证 macOS 的 Node 22.13.0/24、Linux 容器中的 Node 方式与 Docker Compose；最终结果在完成验证后更新。Windows 预期兼容，未实测。真实大模型不属于自动测试。
+操作验证记录（2026-10-31；完整候选 QA 另行执行）：
+
+| 系统 / 环境 | 实际验证范围 |
+| --- | --- |
+| macOS arm64，Node 22.13.0 / 24.22.2 | 全新克隆的安装、检查、测试、构建，以及开发和生产模式的浏览器主流程、刷新恢复 |
+| Debian 12 arm64，Node 24.22.2，干净 `node:24-bookworm-slim` 容器 | 按 Node 方式安装、检查、测试、构建；生产页面、API、登录、规则回复、SQLite 写入与停机 |
+| Debian 12 arm64，Node 24.22.2，干净 `node:24-bookworm` 容器 | 开发页面、API、代理登录、热重载，以及真实终端 Ctrl+C 自然退出，无原生断言 |
+| macOS Docker Desktop，Docker Engine 29.8.1 / Compose 5.5.1 | README Compose 路径、生产浏览器主流程、非 root 写库、卷持久化、在途任务停机后续跑且不重复回复 |
+
+Linux 开发模式的进程管理使用系统 `ps` 命令，上述 `bookworm` 环境已提供；极简 `bookworm-slim` 环境的验证范围为 Node 生产模式和 Docker 生产镜像。开发聚合命令在 Ctrl+C 后可能报告 SIGINT/SIGTERM 并返回非零退出码；上述 Linux 实测返回 1，但进程自然退出、没有原生崩溃。生产容器停机实测返回 0。Windows 预期兼容，未实测。真实大模型不属于自动测试。
 
 ## 方式一：Node 直接启动
 
@@ -25,7 +34,7 @@ npm install
 npm run dev
 ```
 
-打开 <http://localhost:5173>。健康检查地址为 <http://localhost:3001/api/health>。Vite 将 `/api` 和 `/ws` 转发给 API；用终端的 Ctrl+C 停止开发服务。
+等待终端首次编译完成、API 和页面服务就绪后，打开 <http://localhost:5173>。健康检查地址为 <http://localhost:3001/api/health>。Vite 将 `/api` 和 `/ws` 转发给 API；用终端的 Ctrl+C 停止开发服务。
 
 安装时可能出现依赖审计提示：本次锁文件有 14 个受影响依赖节点（13 moderate、1 high），已执行一次不带 `--force` 的 `npm audit fix`；剩余修复涉及主版本升级，尚未进行。此数字不是已确认的业务漏洞数量。
 
