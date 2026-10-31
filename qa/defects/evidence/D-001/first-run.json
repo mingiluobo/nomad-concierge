@@ -1,0 +1,405 @@
+{
+  "case": "API-042",
+  "candidateCommit": "50a1bdbf660bb942f661fe7175a1afe2c812007b",
+  "productCommit": "35858ba665a0667fcb5016a5742c4553e67ed5d6",
+  "qaCommit": "9cb58a20666561aeb0758146dfba6a79829287c7",
+  "wp6Ready": true,
+  "declaredReadyBy": "用户交接候选并确认 README 全新克隆流程",
+  "specVersion": "v1.3",
+  "readmeSha256": "5c78826b1d3a51bbc3de043578a4132a305b4e3b911b2a88b3451870908f9edc",
+  "lockSha256": "301d7b1ed5480dc1cdcd0e1c4b5ba60054a25fe5b90ebb03cd70dc76570c7a35",
+  "creationRequest": {
+    "method": "POST",
+    "path": "/api/conversations",
+    "body": {
+      "content": "我是中国籍，可以申请签证吗？",
+      "clientMessageId": "aa2e8834-717b-42eb-ab55-6a0592dc7d46",
+      "enginePreference": "rules"
+    }
+  },
+  "createResponse": {
+    "status": 201,
+    "body": {
+      "conversation": {
+        "id": "41fc2c9a-a802-4e86-ba08-fcfaeb26f2ad",
+        "title": "新的出海咨询",
+        "status": "collecting",
+        "enginePreference": "rules",
+        "lastSeq": 1,
+        "lastAssistantSeq": 0,
+        "messageCount": 1,
+        "lastMessagePreview": "我是中国籍，可以申请签证吗？",
+        "planId": null,
+        "version": 2,
+        "createdAt": "2026-10-31T10:25:57.101Z",
+        "updatedAt": "2026-10-31T10:25:57.101Z",
+        "profile": {
+          "slots": {
+            "destination": {
+              "status": "missing"
+            },
+            "goals": {
+              "status": "missing"
+            },
+            "applicantNationality": {
+              "status": "missing"
+            },
+            "hasPartner": {
+              "status": "missing"
+            },
+            "partnerNationality": {
+              "status": "missing"
+            },
+            "childrenCount": {
+              "status": "missing"
+            },
+            "childrenAges": {
+              "status": "missing"
+            },
+            "currentResidence": {
+              "status": "missing"
+            },
+            "residenceStatus": {
+              "status": "missing"
+            },
+            "timeline": {
+              "status": "missing"
+            },
+            "incomeSource": {
+              "status": "missing"
+            },
+            "businessType": {
+              "status": "missing"
+            },
+            "incomeCountry": {
+              "status": "missing"
+            },
+            "schoolPreference": {
+              "status": "missing"
+            },
+            "hasHealthInsurance": {
+              "status": "missing"
+            }
+          },
+          "pendingSlots": []
+        },
+        "progress": {
+          "required": 8,
+          "answered": 0,
+          "missing": [
+            "destination",
+            "goals",
+            "applicantNationality",
+            "hasPartner",
+            "childrenCount",
+            "currentResidence",
+            "residenceStatus",
+            "timeline"
+          ],
+          "unsure": [],
+          "isComplete": false,
+          "canGenerateEarly": false
+        }
+      },
+      "message": {
+        "id": "4ed2e62f-a044-4d73-9c52-3c26423160a3",
+        "conversationId": "41fc2c9a-a802-4e86-ba08-fcfaeb26f2ad",
+        "seq": 1,
+        "content": "我是中国籍，可以申请签证吗？",
+        "clientMessageId": "aa2e8834-717b-42eb-ab55-6a0592dc7d46",
+        "turnId": null,
+        "createdAt": "2026-10-31T10:25:57.101Z",
+        "role": "user",
+        "payload": null
+      },
+      "turn": {
+        "id": "07bf129e-9175-4d17-beff-bee6a061c985",
+        "conversationId": "41fc2c9a-a802-4e86-ba08-fcfaeb26f2ad",
+        "status": "queued",
+        "stage": "queued",
+        "engineRequested": "rules",
+        "engineUsed": null,
+        "fallbacks": [],
+        "timings": {},
+        "errorCode": null,
+        "promptVersion": null,
+        "retryOfTurnId": null,
+        "attempt": 1,
+        "version": 1,
+        "createdAt": "2026-10-31T10:25:57.101Z",
+        "startedAt": null,
+        "finishedAt": null
+      }
+    }
+  },
+  "detailResponse": {
+    "status": 200,
+    "body": {
+      "conversation": {
+        "id": "41fc2c9a-a802-4e86-ba08-fcfaeb26f2ad",
+        "title": "新的出海咨询",
+        "status": "collecting",
+        "enginePreference": "rules",
+        "lastSeq": 2,
+        "lastAssistantSeq": 2,
+        "messageCount": 2,
+        "lastMessagePreview": "已记录：本人国籍 中国；诉求 居留\n\n还需要了解：你打算去哪个国家？ 有配偶或伴侣一起去吗？",
+        "planId": null,
+        "version": 3,
+        "createdAt": "2026-10-31T10:25:57.101Z",
+        "updatedAt": "2026-10-31T10:25:57.106Z",
+        "profile": {
+          "slots": {
+            "destination": {
+              "status": "missing"
+            },
+            "goals": {
+              "status": "known",
+              "value": [
+                "residence"
+              ],
+              "sourceMessageId": "4ed2e62f-a044-4d73-9c52-3c26423160a3",
+              "updatedAt": "2026-10-31T10:25:57.105Z"
+            },
+            "applicantNationality": {
+              "status": "known",
+              "value": "CN",
+              "sourceMessageId": "4ed2e62f-a044-4d73-9c52-3c26423160a3",
+              "updatedAt": "2026-10-31T10:25:57.105Z"
+            },
+            "hasPartner": {
+              "status": "missing"
+            },
+            "partnerNationality": {
+              "status": "missing"
+            },
+            "childrenCount": {
+              "status": "missing"
+            },
+            "childrenAges": {
+              "status": "missing"
+            },
+            "currentResidence": {
+              "status": "missing"
+            },
+            "residenceStatus": {
+              "status": "missing"
+            },
+            "timeline": {
+              "status": "missing"
+            },
+            "incomeSource": {
+              "status": "missing"
+            },
+            "businessType": {
+              "status": "missing"
+            },
+            "incomeCountry": {
+              "status": "missing"
+            },
+            "schoolPreference": {
+              "status": "missing"
+            },
+            "hasHealthInsurance": {
+              "status": "missing"
+            }
+          },
+          "pendingSlots": [
+            "destination",
+            "hasPartner"
+          ]
+        },
+        "progress": {
+          "required": 9,
+          "answered": 2,
+          "missing": [
+            "destination",
+            "hasPartner",
+            "childrenCount",
+            "currentResidence",
+            "residenceStatus",
+            "timeline",
+            "incomeSource"
+          ],
+          "unsure": [],
+          "isComplete": false,
+          "canGenerateEarly": false
+        }
+      },
+      "activeTurn": null,
+      "latestTurn": {
+        "id": "07bf129e-9175-4d17-beff-bee6a061c985",
+        "conversationId": "41fc2c9a-a802-4e86-ba08-fcfaeb26f2ad",
+        "status": "completed",
+        "stage": "done",
+        "engineRequested": "rules",
+        "engineUsed": "rules",
+        "fallbacks": [],
+        "timings": {
+          "queuedMs": 1,
+          "understandingMs": 3,
+          "decidingMs": 1,
+          "replyingMs": 0,
+          "totalMs": 4
+        },
+        "errorCode": null,
+        "promptVersion": null,
+        "retryOfTurnId": null,
+        "attempt": 1,
+        "version": 5,
+        "createdAt": "2026-10-31T10:25:57.101Z",
+        "startedAt": "2026-10-31T10:25:57.102Z",
+        "finishedAt": "2026-10-31T10:25:57.106Z"
+      },
+      "plan": null,
+      "readState": {
+        "lastReadSeq": 0
+      }
+    }
+  },
+  "messagesResponse": {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "4ed2e62f-a044-4d73-9c52-3c26423160a3",
+          "conversationId": "41fc2c9a-a802-4e86-ba08-fcfaeb26f2ad",
+          "seq": 1,
+          "content": "我是中国籍，可以申请签证吗？",
+          "clientMessageId": "aa2e8834-717b-42eb-ab55-6a0592dc7d46",
+          "turnId": null,
+          "createdAt": "2026-10-31T10:25:57.101Z",
+          "role": "user",
+          "payload": null
+        },
+        {
+          "id": "f6004980-bc7a-4636-9ba2-09d5e5d69c43",
+          "conversationId": "41fc2c9a-a802-4e86-ba08-fcfaeb26f2ad",
+          "seq": 2,
+          "content": "已记录：本人国籍 中国；诉求 居留\n\n还需要了解：你打算去哪个国家？ 有配偶或伴侣一起去吗？",
+          "clientMessageId": null,
+          "turnId": "07bf129e-9175-4d17-beff-bee6a061c985",
+          "createdAt": "2026-10-31T10:25:57.106Z",
+          "role": "assistant",
+          "payload": {
+            "recorded": [
+              {
+                "slot": "applicantNationality",
+                "label": "本人国籍",
+                "display": "中国"
+              },
+              {
+                "slot": "goals",
+                "label": "诉求",
+                "display": "居留"
+              }
+            ],
+            "corrections": [],
+            "notices": [],
+            "questions": [
+              {
+                "slot": "destination",
+                "text": "你打算去哪个国家？",
+                "options": [
+                  {
+                    "label": "葡萄牙",
+                    "value": "PT"
+                  }
+                ],
+                "allowUnsure": false
+              },
+              {
+                "slot": "hasPartner",
+                "text": "有配偶或伴侣一起去吗？",
+                "options": [
+                  {
+                    "label": "是",
+                    "value": true
+                  },
+                  {
+                    "label": "否",
+                    "value": false
+                  }
+                ],
+                "allowUnsure": false
+              }
+            ],
+            "progress": {
+              "required": 9,
+              "answered": 2,
+              "missing": [
+                "destination",
+                "hasPartner",
+                "childrenCount",
+                "currentResidence",
+                "residenceStatus",
+                "timeline",
+                "incomeSource"
+              ],
+              "unsure": [],
+              "isComplete": false,
+              "canGenerateEarly": false
+            },
+            "process": {
+              "engineUsed": "rules",
+              "fallbacks": [],
+              "timings": {
+                "queuedMs": 1,
+                "understandingMs": 3,
+                "decidingMs": 1,
+                "replyingMs": 0,
+                "totalMs": 4
+              },
+              "promptVersion": null
+            }
+          }
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "instance": {
+    "baseURL": "http://127.0.0.1:64951",
+    "processes": [
+      {
+        "pid": 53770,
+        "args": [
+          "--disable-warning=ExperimentalWarning",
+          "--env-file-if-exists=.env",
+          "dist/server.js",
+          "--production"
+        ],
+        "node": "v24.22.1",
+        "at": "2026-10-31T10:25:56.962Z"
+      }
+    ],
+    "config": {
+      "LOCAL_LLM_MODEL": "",
+      "LLM_BASE_URL": "http://127.0.0.1:64949/v1",
+      "LOCAL_LLM_BASE_URL": "http://127.0.0.1:64950/v1",
+      "SERVE_WEB_DIST": "true",
+      "LLM_MODEL": "qa-model",
+      "PORT": "64951",
+      "WEB_ORIGIN": "http://127.0.0.1:64951",
+      "DATABASE_PATH": "/var/folders/j9/y00351wx0f717s6xgxrw8jgh0000gn/T/nc-qa-instance-lDPlVO/qa.sqlite"
+    },
+    "purpose": "candidate-acceptance",
+    "candidate": "50a1bdbf660bb942f661fe7175a1afe2c812007b"
+  },
+  "fakeRequests": {
+    "remote": [],
+    "local": []
+  },
+  "processLog": "\nstart pid=53770 command=node --disable-warning=ExperimentalWarning --env-file-if-exists=.env dist/server.js --production\n.env not found. Continuing without it.\nNomad Concierge API listening on http://localhost:64951\n\nexit code=0 signal=null\n",
+  "artifacts": [
+    "qa/reports/2026-10-31T10-23-47.839Z-d524354e-qa-9cb58a2/round-1/attachments/API-042-retry0-0-HTTP_201__api_conversations",
+    "qa/reports/2026-10-31T10-23-47.839Z-d524354e-qa-9cb58a2/round-1/attachments/API-042-retry0-1-HTTP_200__api_conversations_41fc2c9a-a802-4e86-ba08-fcfaeb26f2ad",
+    "qa/reports/2026-10-31T10-23-47.839Z-d524354e-qa-9cb58a2/round-1/attachments/API-042-retry0-2-HTTP_200__api_conversations_41fc2c9a-a802-4e86-ba08-fcfaeb26f2ad_messages",
+    "qa/reports/2026-10-31T10-23-47.839Z-d524354e-qa-9cb58a2/round-1/artifacts/api-profile-API-042-专业问法保留信息并展示条件-api/error-context.md",
+    "qa/reports/2026-10-31T10-23-47.839Z-d524354e-qa-9cb58a2/round-1/artifacts/api-profile-API-042-专业问法保留信息并展示条件-api/attachments/owned-instance-2015857cfc950a5ffcbeee7eeb67d373f61fe141.json",
+    "qa/reports/2026-10-31T10-23-47.839Z-d524354e-qa-9cb58a2/round-1/artifacts/api-profile-API-042-专业问法保留信息并展示条件-api/attachments/fake-requests-7a16730720d2a897c979ec2480efbcb1abad13ec.json",
+    "qa/reports/2026-10-31T10-23-47.839Z-d524354e-qa-9cb58a2/round-1/artifacts/api-profile-API-042-专业问法保留信息并展示条件-api/attachments/api-process-3ea98809fb89204b2831660c853f321548109732.log",
+    "qa/reports/2026-10-31T10-23-47.839Z-d524354e-qa-9cb58a2/round-1/artifacts/api-profile-API-042-专业问法保留信息并展示条件-api/trace.zip"
+  ],
+  "traceSha256": "45d2e4333ec7858cd6043bf0872fa137a83dc95d3ffa94bc2eac83a7243f8ee5"
+}
