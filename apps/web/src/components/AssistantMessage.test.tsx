@@ -69,8 +69,10 @@ describe('process summaries with current engine configuration', () => {
     expect(screen.getByTestId('process-info-toggle')).toHaveTextContent('已回退到规则');
     rerender(<AssistantMessage {...props} engines={[unconfigured[0]!]} />);
     expect(screen.getByTestId('process-info-toggle')).toHaveTextContent('已回退到规则');
-    rerender(<AssistantMessage {...props} engines={[unconfigured[0]!, { id: 'local', available: false, reason: 'unreachable' }]} />);
-    expect(screen.getByTestId('process-info-toggle')).toHaveTextContent('已回退到规则');
+    for (const reason of ['unreachable', 'model_missing', 'circuit_open'] as const) {
+      rerender(<AssistantMessage {...props} engines={[unconfigured[0]!, { id: 'local', available: false, reason }]} />);
+      expect(screen.getByTestId('process-info-toggle')).toHaveTextContent('已回退到规则');
+    }
   });
   it('explicitly treats current configuration as a display hint for an unchanged historical record', () => {
     const payload = processPayload([{ engine: 'remote', reason: 'unavailable' }]); deepFreeze(payload);
