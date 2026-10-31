@@ -36,7 +36,8 @@ export class TurnRunner {
       if (event.eventType !== 'turn.upserted') return;
       const turn = event.payload.turn;
       if (['superseded', 'cancelled', 'failed'].includes(turn.status)) this.abortAndRelease(turn.id);
-      if (turn.status === 'queued') this.kick();
+      // Finish publishing this committed batch before claiming work that emits newer events.
+      if (turn.status === 'queued') queueMicrotask(() => this.kick());
     });
   }
   start(): void {
@@ -192,6 +193,10 @@ export class TurnRunner {
     this.publisher.flush(ids);
   }
   dispose(): void { this.suspend(); this.unsubscribe(); }
-  async settled(): Promise<void> { while (this.jobs.size) await Promise.all([...this.jobs]); }
+  async settled(): Promise<void> {
+    // Let already-scheduled claims register their jobs before observing completion.
+    await Promise.resolve();
+    while (this.jobs.size) await Promise.all([...this.jobs]);
+  }
   activeCount(): number { return this.running.size; }
 }

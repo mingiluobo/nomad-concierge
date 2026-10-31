@@ -1,7 +1,9 @@
 import { once } from 'node:events';
+import { randomUUID } from 'node:crypto';
 import { WebSocket } from 'ws';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createHarness, socketHarness } from '../helpers/wp4.js';
+import { appendTurnEvent } from '../../src/turns/service.js';
+import { controlledInterpreter, createHarness, result, socketHarness } from '../helpers/wp4.js';
 
 const cleanup: (() => void | Promise<void>)[] = [];
 afterEach(async () => { while (cleanup.length) await cleanup.pop()!(); });
@@ -24,6 +26,44 @@ async function rejected(url: string, headers: Record<string, string>): Promise<n
 async function barrier(socket: WebSocket): Promise<void> { const pong = once(socket, 'pong'); socket.ping(); await pong; }
 
 describe('WebSocket protocol and committed event delivery', () => {
+  it('delivers a committed batch before events from a queued turn claimed by an earlier subscriber', async () => {
+    const controlled = controlledInterpreter();
+    // Constructing the harness registers the runner before the WebSocket listener.
+    const h = createHarness({ interpreter: controlled.interpreter }); cleanup.push(h.close);
+    const sockets = await socketHarness(h); cleanup.push(sockets.close);
+    const client = await sockets.connect();
+    client.socket.send(JSON.stringify({ type: 'resume', lastEventId: null }));
+    await vi.waitFor(() => expect(client.messages[0]?.type).toBe('ready'));
+    const conversationId = h.conversation();
+    h.runner.start();
+    const batchIds = h.database.transaction(tx => {
+      const messageId = randomUUID(); const now = new Date().toISOString();
+      tx.prepare('UPDATE conversations SET last_seq = 1, message_count = 1, version = version + 1 WHERE id = ?').run(conversationId);
+      tx.prepare("INSERT INTO messages (id, conversation_id, seq, role, content, client_message_id, created_at) VALUES (?, ?, 1, 'user', 'hello', ?, ?)")
+        .run(messageId, conversationId, messageId, now);
+      const { turn } = h.service.onUserMessage(tx, conversationId, messageId);
+      const common = { userId: 'u', conversationId };
+      return [appendTurnEvent(tx, h.turns, h.publisher, turn),
+        h.publisher.append(tx, { ...common, type: 'conversation.upserted', payload: { conversation: h.turns.conversation(conversationId, tx)!.conversation } }),
+        h.publisher.append(tx, { ...common, type: 'message.created', payload: { message: h.turns.unconsumed(conversationId, tx)[0]! } })];
+    });
+    h.publisher.flush(batchIds);
+    await vi.waitFor(() => expect(controlled.calls).toHaveLength(1));
+    controlled.calls[0]!.release(result());
+    await h.runner.settled();
+    // All writes are complete; pong follows their frames on this same connection.
+    await barrier(client.socket);
+    const events = client.messages.filter(message => message.type === 'event');
+    const ids = events.map(event => event.id);
+    expect(ids).toEqual([...ids].sort((a, b) => a - b));
+    expect(ids.slice(0, batchIds.length)).toEqual(batchIds);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(events.slice(0, 4).map(event => event.eventType)).toEqual(['turn.upserted', 'conversation.upserted', 'message.created', 'turn.upserted']);
+    expect(events[3]).toMatchObject({ payload: { turn: { status: 'running' } } });
+    expect(events.some(event => event.eventType === 'turn.upserted' && event.payload.turn.status === 'completed')).toBe(true);
+    expect(h.errors).toEqual([]);
+  });
+
   it('validates cookies and Origin before upgrade, including same-origin production access', async () => {
     const { sockets } = await setup({ serveWebDist: true });
     expect(await rejected(sockets.url, { Origin: 'http://test.invalid' })).toBe(401);
