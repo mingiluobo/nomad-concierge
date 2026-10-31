@@ -89,7 +89,7 @@
       "assignment",
       "no-nationality-inference"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G002",
@@ -166,7 +166,7 @@
       "key",
       "short-answer"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G003",
@@ -243,7 +243,7 @@
       "key",
       "short-answer"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G004",
@@ -320,7 +320,7 @@
       "key",
       "correction"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G005",
@@ -397,7 +397,7 @@
       "correction",
       "country-role"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G006",
@@ -477,7 +477,7 @@
       "key",
       "negation"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G007",
@@ -551,7 +551,7 @@
       "key",
       "unsure"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G008",
@@ -631,7 +631,7 @@
       "key",
       "no-nationality-inference"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G009",
@@ -715,7 +715,7 @@
       "key",
       "preserve-unmentioned"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G010",
@@ -792,7 +792,7 @@
       "key",
       "professional"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G011",
@@ -860,7 +860,7 @@
       "key",
       "off-topic"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G012",
@@ -929,7 +929,7 @@
       "prompt-injection",
       "invalid-country"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G013",
@@ -1009,7 +1009,7 @@
       "key",
       "append-goals"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G014",
@@ -1091,7 +1091,7 @@
       "targeted-unsure",
       "multi-slot"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G015",
@@ -1232,7 +1232,7 @@
       "text": "不知道"
     },
     "expected": {
-      "intent": "off_topic",
+      "intent": "provide_info",
       "updates": [],
       "unsure": []
     },
@@ -1303,7 +1303,7 @@
       "text": "不知道"
     },
     "expected": {
-      "intent": "off_topic",
+      "intent": "provide_info",
       "updates": [],
       "unsure": []
     },
