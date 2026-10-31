@@ -1,0 +1,467 @@
+{
+  "candidateCommit": "39c6bd879eb147e568bb92530423d687bd674601",
+  "productCommit": "bed75ee8e0a8c9e098a8e7a395dd65030f548a64",
+  "candidateQaCommit": "7965960bf6c4bb83d6c299d5f7428391af150f37",
+  "executedQaCommit": "bed75998be150fdf9162d0db7b1dda9a82144348",
+  "specVersion": "v1.3",
+  "specSha256": "4aa92c7f0a3417ca00cb3b47797b4b525c0e405c0820493f9d7bdff976f6d86d",
+  "defect": "D-002",
+  "resolution": "规格调整（负责人决定），候选规格已核验并回归通过；不记为代码已修复",
+  "formalRounds": {
+    "round-1": [
+      {
+        "id": "API-073",
+        "result": "通过",
+        "errors": []
+      },
+      {
+        "id": "API-074",
+        "result": "通过",
+        "errors": []
+      },
+      {
+        "id": "API-075",
+        "result": "通过",
+        "errors": []
+      },
+      {
+        "id": "API-103",
+        "result": "通过",
+        "errors": []
+      }
+    ],
+    "round-2": [
+      {
+        "id": "API-073",
+        "result": "通过",
+        "errors": []
+      },
+      {
+        "id": "API-074",
+        "result": "通过",
+        "errors": []
+      },
+      {
+        "id": "API-075",
+        "result": "通过",
+        "errors": []
+      },
+      {
+        "id": "API-103",
+        "result": "通过",
+        "errors": []
+      }
+    ],
+    "round-3": [
+      {
+        "id": "API-073",
+        "result": "通过",
+        "errors": []
+      },
+      {
+        "id": "API-074",
+        "result": "通过",
+        "errors": []
+      },
+      {
+        "id": "API-075",
+        "result": "通过",
+        "errors": []
+      },
+      {
+        "id": "API-103",
+        "result": "通过",
+        "errors": []
+      }
+    ]
+  },
+  "observations": [
+    {
+      "source": "qa/reports/2026-10-31T12-25-30.476Z-56747645/regression/round-1/attachments/API-074-retry0-5-graceful-attempt-observation",
+      "sha256": "2dad721837e2a4a6c05aa728ddaa0496631d770f9b1f702cfd7996096fcb718a",
+      "observation": {
+        "before": {
+          "id": "d379525f-2537-4361-8f2f-a80ae5a3f60a",
+          "conversationId": "08c782db-438d-45f9-ac77-543fdaf4617b",
+          "status": "running",
+          "stage": "understanding",
+          "engineRequested": "rules",
+          "engineUsed": null,
+          "fallbacks": [],
+          "errorCode": null,
+          "timings": {},
+          "promptVersion": null,
+          "retryOfTurnId": null,
+          "attempt": 1,
+          "version": 2,
+          "createdAt": "2026-10-31T12:26:01.479Z",
+          "startedAt": "2026-10-31T12:26:01.480Z",
+          "finishedAt": null
+        },
+        "queued": {
+          "id": "d379525f-2537-4361-8f2f-a80ae5a3f60a",
+          "conversationId": "08c782db-438d-45f9-ac77-543fdaf4617b",
+          "status": "queued",
+          "stage": "queued",
+          "engineRequested": "rules",
+          "engineUsed": null,
+          "fallbacks": [],
+          "errorCode": null,
+          "timings": {},
+          "promptVersion": null,
+          "retryOfTurnId": null,
+          "attempt": 1,
+          "version": 3,
+          "createdAt": "2026-10-31T12:26:01.479Z",
+          "startedAt": "2026-10-31T12:26:01.480Z",
+          "finishedAt": null
+        },
+        "closure": {
+          "code": 1012,
+          "reason": "Service restarting"
+        },
+        "after": {
+          "id": "d379525f-2537-4361-8f2f-a80ae5a3f60a",
+          "conversationId": "08c782db-438d-45f9-ac77-543fdaf4617b",
+          "status": "completed",
+          "stage": "done",
+          "engineRequested": "rules",
+          "engineUsed": "rules",
+          "fallbacks": [],
+          "errorCode": null,
+          "timings": {
+            "queuedMs": 86,
+            "understandingMs": 1205,
+            "decidingMs": 3,
+            "replyingMs": 0,
+            "totalMs": 1208
+          },
+          "promptVersion": null,
+          "retryOfTurnId": null,
+          "attempt": 1,
+          "version": 7,
+          "createdAt": "2026-10-31T12:26:01.479Z",
+          "startedAt": "2026-10-31T12:26:01.565Z",
+          "finishedAt": "2026-10-31T12:26:02.773Z"
+        },
+        "messageCount": 2,
+        "assistantMessageCount": 1,
+        "messages": [
+          {
+            "id": "e3e2367d-f89d-482a-827d-7540c68ee47e",
+            "conversationId": "08c782db-438d-45f9-ac77-543fdaf4617b",
+            "seq": 1,
+            "content": "我想搬到葡萄牙生活",
+            "clientMessageId": "38a32728-aea2-4a2d-a3ed-59c5d67feb1f",
+            "turnId": null,
+            "createdAt": "2026-10-31T12:26:01.479Z",
+            "role": "user",
+            "payload": null
+          },
+          {
+            "id": "d811d0dd-537a-4b97-a384-3ce66a9d3d6e",
+            "conversationId": "08c782db-438d-45f9-ac77-543fdaf4617b",
+            "seq": 2,
+            "content": "已记录：目的国 葡萄牙；诉求 居留\n\n还需要了解：你的国籍是哪个国家？ 有配偶或伴侣一起去吗？",
+            "clientMessageId": null,
+            "turnId": "d379525f-2537-4361-8f2f-a80ae5a3f60a",
+            "createdAt": "2026-10-31T12:26:02.773Z",
+            "role": "assistant",
+            "payload": {
+              "recorded": [
+                {
+                  "slot": "destination",
+                  "label": "目的国",
+                  "display": "葡萄牙"
+                },
+                {
+                  "slot": "goals",
+                  "label": "诉求",
+                  "display": "居留"
+                }
+              ],
+              "corrections": [],
+              "notices": [],
+              "questions": [
+                {
+                  "slot": "applicantNationality",
+                  "text": "你的国籍是哪个国家？",
+                  "options": [
+                    {
+                      "label": "中国",
+                      "value": "CN"
+                    },
+                    {
+                      "label": "葡萄牙",
+                      "value": "PT"
+                    }
+                  ],
+                  "allowUnsure": false
+                },
+                {
+                  "slot": "hasPartner",
+                  "text": "有配偶或伴侣一起去吗？",
+                  "options": [
+                    {
+                      "label": "是",
+                      "value": true
+                    },
+                    {
+                      "label": "否",
+                      "value": false
+                    }
+                  ],
+                  "allowUnsure": false
+                }
+              ],
+              "progress": {
+                "required": 9,
+                "answered": 2,
+                "missing": [
+                  "applicantNationality",
+                  "hasPartner",
+                  "childrenCount",
+                  "currentResidence",
+                  "residenceStatus",
+                  "timeline",
+                  "incomeSource"
+                ],
+                "unsure": [],
+                "isComplete": false,
+                "canGenerateEarly": false
+              },
+              "process": {
+                "engineUsed": "rules",
+                "fallbacks": [],
+                "timings": {
+                  "queuedMs": 86,
+                  "understandingMs": 1205,
+                  "decidingMs": 3,
+                  "replyingMs": 0,
+                  "totalMs": 1208
+                },
+                "promptVersion": null
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "source": "qa/reports/2026-10-31T12-25-30.476Z-56747645/regression/round-1/attachments/API-103-retry0-6-attempt-three-graceful-recovery",
+      "sha256": "a48352d85af8ca8dc24c98f295775d972b890bc61c76e9537cc6649a813ec70e",
+      "observation": {
+        "attempts": [
+          {
+            "id": "a75154fe-1336-4a3c-9c15-6fc38a9c3b67",
+            "conversationId": "1327c33d-ac5b-49fc-aaa4-6b30cacf567f",
+            "status": "running",
+            "stage": "understanding",
+            "engineRequested": "rules",
+            "engineUsed": null,
+            "fallbacks": [],
+            "errorCode": null,
+            "timings": {},
+            "promptVersion": null,
+            "retryOfTurnId": null,
+            "attempt": 1,
+            "version": 2,
+            "createdAt": "2026-10-31T12:26:03.052Z",
+            "startedAt": "2026-10-31T12:26:03.052Z",
+            "finishedAt": null
+          },
+          {
+            "id": "a75154fe-1336-4a3c-9c15-6fc38a9c3b67",
+            "conversationId": "1327c33d-ac5b-49fc-aaa4-6b30cacf567f",
+            "status": "running",
+            "stage": "understanding",
+            "engineRequested": "rules",
+            "engineUsed": null,
+            "fallbacks": [],
+            "errorCode": null,
+            "timings": {},
+            "promptVersion": null,
+            "retryOfTurnId": null,
+            "attempt": 2,
+            "version": 4,
+            "createdAt": "2026-10-31T12:26:03.052Z",
+            "startedAt": "2026-10-31T12:26:03.137Z",
+            "finishedAt": null
+          }
+        ],
+        "before": {
+          "id": "a75154fe-1336-4a3c-9c15-6fc38a9c3b67",
+          "conversationId": "1327c33d-ac5b-49fc-aaa4-6b30cacf567f",
+          "status": "running",
+          "stage": "understanding",
+          "engineRequested": "rules",
+          "engineUsed": null,
+          "fallbacks": [],
+          "errorCode": null,
+          "timings": {},
+          "promptVersion": null,
+          "retryOfTurnId": null,
+          "attempt": 3,
+          "version": 6,
+          "createdAt": "2026-10-31T12:26:03.052Z",
+          "startedAt": "2026-10-31T12:26:03.280Z",
+          "finishedAt": null
+        },
+        "queued": {
+          "type": "event",
+          "id": 9,
+          "conversationId": "1327c33d-ac5b-49fc-aaa4-6b30cacf567f",
+          "createdAt": "2026-10-31T12:26:03.338Z",
+          "eventType": "turn.upserted",
+          "payload": {
+            "turn": {
+              "id": "a75154fe-1336-4a3c-9c15-6fc38a9c3b67",
+              "conversationId": "1327c33d-ac5b-49fc-aaa4-6b30cacf567f",
+              "status": "queued",
+              "stage": "queued",
+              "engineRequested": "rules",
+              "engineUsed": null,
+              "fallbacks": [],
+              "errorCode": null,
+              "timings": {},
+              "promptVersion": null,
+              "retryOfTurnId": null,
+              "attempt": 3,
+              "version": 7,
+              "createdAt": "2026-10-31T12:26:03.052Z",
+              "startedAt": "2026-10-31T12:26:03.280Z",
+              "finishedAt": null
+            }
+          }
+        },
+        "closure": {
+          "code": 1012,
+          "reason": "Service restarting"
+        },
+        "after": {
+          "id": "a75154fe-1336-4a3c-9c15-6fc38a9c3b67",
+          "conversationId": "1327c33d-ac5b-49fc-aaa4-6b30cacf567f",
+          "status": "completed",
+          "stage": "done",
+          "engineRequested": "rules",
+          "engineUsed": "rules",
+          "fallbacks": [],
+          "errorCode": null,
+          "timings": {
+            "queuedMs": 368,
+            "understandingMs": 10005,
+            "decidingMs": 2,
+            "replyingMs": 1,
+            "totalMs": 10008
+          },
+          "promptVersion": null,
+          "retryOfTurnId": null,
+          "attempt": 3,
+          "version": 11,
+          "createdAt": "2026-10-31T12:26:03.052Z",
+          "startedAt": "2026-10-31T12:26:03.420Z",
+          "finishedAt": "2026-10-31T12:26:13.428Z"
+        },
+        "messages": [
+          {
+            "id": "0ea49286-945e-4484-a82e-04ed730bebdb",
+            "conversationId": "1327c33d-ac5b-49fc-aaa4-6b30cacf567f",
+            "seq": 1,
+            "content": "我想搬到葡萄牙生活",
+            "clientMessageId": "e591537c-0518-48d3-9e92-07ff4a5d2bd5",
+            "turnId": null,
+            "createdAt": "2026-10-31T12:26:03.051Z",
+            "role": "user",
+            "payload": null
+          },
+          {
+            "id": "d22a64f1-056d-4650-8c95-3dd869207b18",
+            "conversationId": "1327c33d-ac5b-49fc-aaa4-6b30cacf567f",
+            "seq": 2,
+            "content": "已记录：目的国 葡萄牙；诉求 居留\n\n还需要了解：你的国籍是哪个国家？ 有配偶或伴侣一起去吗？",
+            "clientMessageId": null,
+            "turnId": "a75154fe-1336-4a3c-9c15-6fc38a9c3b67",
+            "createdAt": "2026-10-31T12:26:13.428Z",
+            "role": "assistant",
+            "payload": {
+              "recorded": [
+                {
+                  "slot": "destination",
+                  "label": "目的国",
+                  "display": "葡萄牙"
+                },
+                {
+                  "slot": "goals",
+                  "label": "诉求",
+                  "display": "居留"
+                }
+              ],
+              "corrections": [],
+              "notices": [],
+              "questions": [
+                {
+                  "slot": "applicantNationality",
+                  "text": "你的国籍是哪个国家？",
+                  "options": [
+                    {
+                      "label": "中国",
+                      "value": "CN"
+                    },
+                    {
+                      "label": "葡萄牙",
+                      "value": "PT"
+                    }
+                  ],
+                  "allowUnsure": false
+                },
+                {
+                  "slot": "hasPartner",
+                  "text": "有配偶或伴侣一起去吗？",
+                  "options": [
+                    {
+                      "label": "是",
+                      "value": true
+                    },
+                    {
+                      "label": "否",
+                      "value": false
+                    }
+                  ],
+                  "allowUnsure": false
+                }
+              ],
+              "progress": {
+                "required": 9,
+                "answered": 2,
+                "missing": [
+                  "applicantNationality",
+                  "hasPartner",
+                  "childrenCount",
+                  "currentResidence",
+                  "residenceStatus",
+                  "timeline",
+                  "incomeSource"
+                ],
+                "unsure": [],
+                "isComplete": false,
+                "canGenerateEarly": false
+              },
+              "process": {
+                "engineUsed": "rules",
+                "fallbacks": [],
+                "timings": {
+                  "queuedMs": 368,
+                  "understandingMs": 10005,
+                  "decidingMs": 2,
+                  "replyingMs": 1,
+                  "totalMs": 10008
+                },
+                "promptVersion": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 
 已进入候选验收。当前候选、实际执行范围、缺陷和未完成项以 `reports/summary.md` 为准。只有在集成负责人提供已完成 WP6 的确定候选并通知正式执行后，才运行验收命令；同候选的单轮结果不等于连续三轮通过。
 
-当前按 main 的 SPEC 变化补充下一候选用例，见 [下一候选准备清单](checklists/next-candidate-preparation.md)。这些新增及调整后的期望尚未执行；不能用现存旧候选声明启动。新候选交接后先复核其 SPEC 和 shared，再在该候选独立副本中编译执行，旧报告保持原样。
+候选 `39c6bd879eb147e568bb92530423d687bd674601` 已完成契约复核、42 项定向回归、业务连续三轮及环境一轮；实际结果和剩余人工/交付包检查见 [执行报告](reports/summary.md) 与 [候选清单](checklists/candidate-39c6bd87.md)。原准备设计保留在 [准备清单](checklists/next-candidate-preparation.md)。
 
 ## 准备检查
 
@@ -18,7 +18,7 @@ npm run list --workspace qa
 
 以上仅安装依赖、准备完整版 Chromium、类型检查、编译和发现用例。`--list` 不创建应用进程。依赖由根锁文件管理；QA 没有新增依赖，也不修改锁文件。
 
-`test-plan.md` 是用例清单，`traceability.md` 是包含具体断言的需求矩阵；`catalog/` 是二者的结构化来源。更新用例后运行 `npm run docs --workspace qa` 重新生成两份文档。`checklists/acceptance.md` 包含人工操作和内部测试证据的移交步骤；`contract-questions.md` 记录已裁定的契约解释；Q-01～Q-03 均已关闭。
+`test-plan.md` 是用例清单，`traceability.md` 是包含具体断言的需求矩阵；`catalog/` 是二者的结构化来源。更新用例后运行 `npm run docs --workspace qa` 生成设计基线；正式执行后按本轮结果回填状态，不能用准备生成命令重置已发布的执行状态。`checklists/acceptance.md` 包含人工操作和内部测试证据的移交步骤；`contract-questions.md` 记录已裁定的契约解释；Q-01～Q-03 均已关闭。
 
 ## 单独授权的测试工具自检
 
@@ -31,7 +31,7 @@ npm run list --workspace qa
 ## 候选交接
 
 1. 集成负责人组装产品提交与 QA 提交，提供候选完整 SHA、两者的 SHA、WP6 完成声明、声明人以及 SPEC 版本。
-2. 在 `qa/candidate.json` 填入 `candidate.example.json` 所示字段。README 与锁文件哈希按候选文件的原始字节计算 SHA-256。模板不是可执行候选声明。
+2. 在 `qa/candidate.json` 填入 `candidate.example.json` 所示字段。README 与锁文件哈希按候选文件的原始字节计算 SHA-256。模板不是可执行候选声明。候选契约复核若仅需调整 QA，可额外指定 `reviewedQaCommit`：准备副本只应用该提交的 `qa/` 树，每轮验证产品仍属原候选、QA 与冻结提交完全相同，并分别记录候选内 QA 和实际执行 QA。
 3. 将最终 README 操作命令逐字转录为 `qa/environment-recipe.json`（结构见下文），每一步附原文片段及同一 README 的哈希。模板 README 不能代替最终运行说明。此转录属于 QA 准备工作，不要求开发方读取用例。
 4. 准备 macOS Node 22.13.0 和 24 的独立安装，分别设置 `QA_NODE22_BIN`、`QA_NODE24_BIN` 为绝对 node 路径；对应目录中的 npm 必须能使用该 node。准备 Docker、`node:24-bookworm-slim` 镜像及离线 npm/构建缓存。安装及下载阶段可联网，验收过程不调用真实模型。
 5. 指定 `QA_ENV_RECIPE` 为配方绝对路径，`QA_LINUX_NPM_CACHE` 为已预热的 Linux npm 缓存目录；提供 `QA_SUBMISSION_ARCHIVE`（tar 可列出的最终提交包）。未提供的环境项记受阻，不跳过、不算通过。
@@ -100,3 +100,9 @@ npm test --workspace qa
 人工登记可通过 `QA_MANUAL_RESULTS` 指向 JSON 文件导入，结构为 `{candidateCommit, results:[{id:"MAN-001", result:"通过", executedAt, executedBy, evidence:["证据路径"], notes}]}`。MAN-005 如确认扫描线索是安全占位，另填 `reviewedClues:[{path,line}]`；只认可同候选、逐条对应的复核。缺陷审阅由 `QA_DEFECT_REVIEW` 指向 `{candidateCommit,reviewedBy,reviewedAt,items:[{id,priority,status,evidence}]}`，`status` 为 `closed` 或经负责人确认的 `accepted`（仅 P2/P3）；无缺陷也须显式登记空数组。适用项缺少登记时报告不可放行。MAN-007 的不适用状态直接来自已裁定目录，无需另行签认，也不允许用未裁定的不适用状态绕过其他检查。
 
 Linux 安装验收容器使用 `--network=none`。Docker 验收保留 README 的 `compose up --build` 命令及运行时网络，只在本轮 override 中禁止自动拉镜像、清空模型配置并把模型地址固定到本地关闭端口；浏览器只访问本轮应用，不宣称运行容器全程强制断网。构建缓存必须提前准备。可用 `QA_DOCKER_BUILDER` 指定准备好的专用 builder，harness 验证其无网络连接且不是 host 网络；`QA_DOCKER_BASE_CONTEXT` 可提供同一 Node 镜像的本地 OCI 布局及 digest，避免基镜像标签解析访问外网。未设置专用 builder 时构建 RUN 使用 `network=none`。本轮 override、镜像哈希、隔离核验与实际命令均留证；离线构建前置不满足时记受阻，不能在验收中下载依赖。
+
+## 本轮追加约定
+
+- 负责人指定 2026-10-31 22:17（Asia/Shanghai）代码冻结。本候选已按既定三轮执行；之后若有修复候选，按“受影响用例回归 + 1 轮完整业务套件”执行并在报告注明调整，不沿用旧候选通过结果。
+- P0/P1 登记提交后立即通知编号及摘要，继续剩余用例；P2/P3 在轮次结束统一汇报。
+- 报告、缺陷、清单、JSON、trace 和 HTML 附件使用仓库相对路径或临时目录描述。规范化及可读性检查见 [路径约定](checklists/path-portability.md)。运行内部指针清理后再处理产物，最终校验值重新生成。
