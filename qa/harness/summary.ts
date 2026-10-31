@@ -19,7 +19,7 @@ export async function writeSummary(reportRoot: string, runDirectory: string, inf
     const found = rows.filter(row => row.id === id);
     const definition = cases.find(row => row.id === id)!;
     if (definition.notApplicable) return '不适用';
-    const required = definition.type === 'manual' ? 1 : definition.type === 'env' ? 1 : 3;
+    const required = definition.type === 'manual' || definition.type === 'env' || mode === 'round' ? 1 : 3;
     const bad = ['失败', '受阻', '不稳定', '跳过'].find(state => found.some(row => row.result === state));
     if (bad) return bad;
     const passedRounds = found.filter(row => row.result === '通过').length;
@@ -37,6 +37,7 @@ export async function writeSummary(reportRoot: string, runDirectory: string, inf
   const lines = [tooling ? '# 测试工具报告生成自检（不代表产品验收）' : '# Nomad Concierge QA 执行报告', '', `时间：${new Date().toISOString()}；运行目录：${runDirectory}；模式：${mode}。`, '',
     tooling ? `仅工具自检：main 快照 ${info.productCommit}；QA：${info.qaCommit}。正式候选未交接，产品用例未执行。` : `候选：${info.candidateCommit}；产品：${info.productCommit}；QA：${info.qaCommit}；契约：${info.specVersion}。`,
     `README SHA-256：${info.readmeSha256}；锁文件 SHA-256：${info.lockSha256}。环境、构建方式和实际进程见 metadata.json、build.log 及每例 instance.json。`, '',
+    ...(mode === 'round' ? ['本报告仅统计当前候选这一轮的实际结果；单轮通过不代表满足业务连续三轮及全部环境、人工、缺陷处置的放行要求。', ''] : []),
     `结论：${pass ? '同候选的用例、轮次、人工登记与缺陷处置符合进入下一环节的要求。' : '不可放行：有未通过、未执行、未登记的必测项或缺陷处置。'}`, '',
     runnerErrors.length ? `运行错误：${runnerErrors.join('; ')}` : '',
     '| 类型 | 用例数 | 不适用数 | 通过数 | 适用项通过率 |', '| --- | --- | --- | --- | --- |',
