@@ -14,7 +14,7 @@ export const enumWords: { slot: SlotKey; values: [unknown, RegExp][] }[] = [
   { slot: 'residenceStatus', values: [['permanent_resident', /永久居民|永居/], ['work_or_study_visa', /工作签证|学习签证|学生签证|留学签证/], ['citizen', /公民/], ['other', /其他身份|其他居留/]] },
   { slot: 'businessType', values: [['consulting', /咨询服务|咨询业务/], ['ecommerce', /电商|电子商务/], ['software', /软件|技术服务/], ['other', /其他业务/]] },
   { slot: 'schoolPreference', values: [['public', /公立/], ['international', /国际学校/]] },
-  { slot: 'hasHealthInsurance', values: [[false, /没有(?:医疗)?保险|没(?:有)?医保|未(?:买|有)(?:医疗)?保险/], [true, /(?:已经|已|有)(?:有|买了)?医疗保险|已有医保|有保险/]] },
+  { slot: 'hasHealthInsurance', values: [[false, /没有(?:医疗)?保险|没(?:有)?医保|未(?:买|有)(?:医疗)?保险/], [true, /(?:已经|已|有)(?:有|买了)?的?医疗保险|已有的?医保|有医保|有保险/]] },
 ];
 export const partnerWords = '配偶|老婆|老公|妻子|丈夫|爱人|伴侣|太太|先生';
 export const unsureWords = /不知道|不确定|还没想好|没想好|看情况|跳过|不清楚/;

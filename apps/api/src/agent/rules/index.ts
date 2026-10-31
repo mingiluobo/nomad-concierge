@@ -87,7 +87,7 @@ function interpretMessage(text: string, input: InterpretInput, droppedUpdates: I
       const ages = [...clause.matchAll(new RegExp(`(${numberPattern})\\s*岁`, 'g'))].map(match => chineseNumber(match[1]!)).filter((value): value is number => value !== null);
       if (ages.length) { add('childrenAges', ages); if (!explicitCount) add('childrenCount', ages.length); }
     }
-    for (const part of clause.split(/(?=而且|并且|另外|同时|但是|已经|已有)/).filter(Boolean)) {
+    for (const part of clause.split(/(?=而且|并且|另外|同时|但是)|(?<![和及与])(?=已经|已有)/).filter(Boolean)) {
       const operations = new Map<SlotUpdate['op'], Goal[]>();
       const explicitRequest = /了解|咨询|建议|方案|帮助|申请|办理|(?:想|计划|打算|准备|要|需要).{0,8}(?:开|注册|创业|做生意)|搬到|移居|定居/.test(part);
       const topic = professionalTopic(part, input.profile);
@@ -99,8 +99,9 @@ function interpretMessage(text: string, input: InterpretInput, droppedUpdates: I
         const professionalRequest = goal === 'residence' && topic === 'visa_eligibility' || goal === 'company' && topic === 'company_setup' || goal === 'tax' && topic === 'tax_amount';
         const requestIndex = [...prefix.matchAll(/了解|咨询|建议|方案|帮助|申请|办理|改成|替换成|(?:想|计划|打算|准备|要|需要).{0,8}(?:开|注册|创业|做生意)/g)].at(-1)?.index ?? -1;
         const requestTargetsEarlierGoal = goalWords.some(([earlierGoal, expression]) => earlierGoal !== goal && [...prefix.matchAll(new RegExp(expression.source, 'g'))].some(match => match.index > requestIndex));
+        const coordinatedRequest = /(?:和|及|与)(?:已有的?|已经有的?)?$/.test(prefix);
         // An earlier request about another topic does not turn the following fact into a request.
-        if (op !== 'remove' && isBackgroundFact(goal, part) && !(explicitRequest && !requestTargetsEarlierGoal) && !professionalRequest) continue;
+        if (op !== 'remove' && isBackgroundFact(goal, part) && !(explicitRequest && (!requestTargetsEarlierGoal || coordinatedRequest)) && !professionalRequest) continue;
         operations.set(op, [...(operations.get(op) ?? []), goal]);
       }
       for (const [op, value] of operations) add('goals', value, op);
