@@ -1,6 +1,6 @@
 # Nomad Concierge QA
 
-当前阶段是准备。测试代码已编写，产品用例全部未执行。只有在集成负责人提供已完成 WP6 的确定候选并通知正式执行后，才运行验收命令。
+已进入候选验收。当前候选、实际执行范围、缺陷和未完成项以 `reports/summary.md` 为准。只有在集成负责人提供已完成 WP6 的确定候选并通知正式执行后，才运行验收命令；同候选的单轮结果不等于连续三轮通过。
 
 ## 准备检查
 
@@ -89,7 +89,7 @@ npm test --workspace qa
 
 ## 状态与放行
 
-通过、失败、受阻、未执行、跳过、不稳定分别报告；重试通过算不稳定。默认 `retries: 0`，不通过重试掩盖问题。准备报告没有产品通过率。适用人工检查未签认不算通过。MAN-007 按 Q-02 记为不适用，注明不提供 HTTPS 入口且不信任代理头，排除在通过数及通过率分母之外；Secure 四种组合由开发单元测试覆盖，QA 不另建 HTTPS 环境。完整入口产生自动化结果后，还需登记缺陷和人工结果；不能用零缺陷代替执行证据。
+通过、失败、受阻、未执行、跳过、不稳定分别报告；重试通过算不稳定。默认 `retries: 0`，不通过重试掩盖问题。确定属于 QA 断言或工具错误时，保留原始失败、契约依据和修正提交，再完成受影响用例；不能把产品失败改写成 QA 错误。`writeSummary` 的 `round` 模式仅统计一次完整或分段完成的当前轮次，永不据此放行；默认完整模式仍要求三轮。准备报告没有产品通过率。适用人工检查未签认不算通过。MAN-007 按 Q-02 记为不适用，注明不提供 HTTPS 入口且不信任代理头，排除在通过数及通过率分母之外；Secure 四种组合由开发单元测试覆盖，QA 不另建 HTTPS 环境。完整入口产生自动化结果后，还需登记缺陷和人工结果；不能用零缺陷代替执行证据。
 
 缺陷模板见 `defects/TEMPLATE.md`。记录发现时间、优先级、关联需求/用例、候选、复现、预期、实际、证据、开发自测是否已发现及处理状态。报告摘要受版本控制，录屏、日志、HTML、临时编译产物与本地候选声明均忽略。
 
@@ -97,4 +97,4 @@ npm test --workspace qa
 
 人工登记可通过 `QA_MANUAL_RESULTS` 指向 JSON 文件导入，结构为 `{candidateCommit, results:[{id:"MAN-001", result:"通过", executedAt, executedBy, evidence:["证据路径"], notes}]}`。MAN-005 如确认扫描线索是安全占位，另填 `reviewedClues:[{path,line}]`；只认可同候选、逐条对应的复核。缺陷审阅由 `QA_DEFECT_REVIEW` 指向 `{candidateCommit,reviewedBy,reviewedAt,items:[{id,priority,status,evidence}]}`，`status` 为 `closed` 或经负责人确认的 `accepted`（仅 P2/P3）；无缺陷也须显式登记空数组。适用项缺少登记时报告不可放行。MAN-007 的不适用状态直接来自已裁定目录，无需另行签认，也不允许用未裁定的不适用状态绕过其他检查。
 
-Linux 安装验收容器使用 `--network=none`。Docker 验收保留 README 的 `compose up --build` 命令，通过本轮独立 override 限制构建 RUN 网络、禁止自动拉镜像、使用 internal 网络并清空模型配置；完整缓存必须在准备阶段建立。override 与实际命令属于环境证据，需和未经隔离的人工 README 检查区分。若本机 builder 不能保证基镜像解析也完全离线，应先解决隔离条件并登记受阻，不能把联网构建写作离线验收。
+Linux 安装验收容器使用 `--network=none`。Docker 验收保留 README 的 `compose up --build` 命令及运行时网络，只在本轮 override 中禁止自动拉镜像、清空模型配置并把模型地址固定到本地关闭端口；浏览器只访问本轮应用，不宣称运行容器全程强制断网。构建缓存必须提前准备。可用 `QA_DOCKER_BUILDER` 指定准备好的专用 builder，harness 验证其无网络连接且不是 host 网络；`QA_DOCKER_BASE_CONTEXT` 可提供同一 Node 镜像的本地 OCI 布局及 digest，避免基镜像标签解析访问外网。未设置专用 builder 时构建 RUN 使用 `network=none`。本轮 override、镜像哈希、隔离核验与实际命令均留证；离线构建前置不满足时记受阻，不能在验收中下载依赖。

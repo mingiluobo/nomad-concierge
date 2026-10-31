@@ -100,7 +100,7 @@ test('E2E-002 刷新恢复完整对话、档案、过程与计划', async ({ pag
   await page.reload();
   await ui.live();
   await ui.assertMessages(messagesBefore.items);
-  await expect(page.getByTestId(TID.profilePanel)).toHaveText(profileText);
+  await expect(page.getByTestId(TID.profilePanel)).toHaveText(profileText, { useInnerText: true });
   await expect(page.getByTestId(TID.processInfo)).toHaveText(processText);
   const after = await ui.detail(id);
   expect(after.conversation.profile).toEqual(before.conversation.profile);
@@ -112,7 +112,7 @@ test('E2E-002 刷新恢复完整对话、档案、过程与计划', async ({ pag
   const firstStep = await page.getByTestId(TID.planFirstStep).innerText();
   await page.reload();
   await ui.live();
-  await expect(page.getByTestId(TID.planFirstStep)).toHaveText(firstStep);
+  await expect(page.getByTestId(TID.planFirstStep)).toHaveText(firstStep, { useInnerText: true });
   expect(planResponseSchema.parse(await (await page.request.get(`/api/plans/${plan.id}`)).json()).plan).toEqual(plan);
   await testInfo.attach('persisted-snapshot', { body: JSON.stringify({ conversation: before, messages: messagesBefore, plan }, null, 2), contentType: 'application/json' });
 });
@@ -358,8 +358,9 @@ test('E2E-020 引擎偏好保存且下一轮使用选定规则引擎', async ({ 
   const engine = page.getByTestId(TID.engineSelect);
   const nativeSelect = await engine.evaluate(element => element.tagName === 'SELECT');
   if (nativeSelect) {
-    await expect(engine.getByRole('option', { name: 'DeepSeek' })).toBeDisabled();
-    await expect(engine.getByRole('option', { name: '本地模型' })).toBeDisabled();
+    // Inspect the native option, since isDisabled can retarget a wrapping label to its select.
+    await expect(engine.getByRole('option', { name: 'DeepSeek' })).toHaveJSProperty('disabled', true);
+    await expect(engine.getByRole('option', { name: '本地模型' })).toHaveJSProperty('disabled', true);
     await engine.selectOption('rules');
   } else {
     await engine.click();

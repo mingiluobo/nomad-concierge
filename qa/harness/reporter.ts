@@ -1,6 +1,6 @@
 import type { Reporter, TestCase, TestResult, FullResult, Suite } from '@playwright/test/reporter';
 import { mkdir, writeFile, copyFile } from 'node:fs/promises';
-import { basename, join, resolve } from 'node:path';
+import { basename, join, relative, resolve } from 'node:path';
 
 export interface CaseResult { id: string; title: string; result: string; duration: number; evidence: string[]; errors: string[]; priority?: string }
 export default class EvidenceReporter implements Reporter {
@@ -29,7 +29,9 @@ export default class EvidenceReporter implements Reporter {
       if (attachment.contentType.startsWith('video/') && process.env.QA_REPORT_ROOT && process.env.QA_RUN_DIR) {
         const videoDirectory = join(process.env.QA_REPORT_ROOT, 'videos');
         await mkdir(videoDirectory, { recursive: true });
-        const path = join(videoDirectory, `${basename(process.env.QA_RUN_DIR)}-r${process.env.QA_ROUND}-${row.id}-${row.evidence.length}.webm`);
+        const runLabel = relative(resolve(process.env.QA_REPORT_ROOT), resolve(process.env.QA_RUN_DIR))
+          .split(/[\\/]/).filter(Boolean).join('-').replace(/[^a-zA-Z0-9._-]/g, '_') || basename(process.env.QA_RUN_DIR);
+        const path = join(videoDirectory, `${runLabel}-r${process.env.QA_ROUND}-${row.id}-${row.evidence.length}.webm`);
         await copyFile(source, path);
         row.evidence.push(path);
       }

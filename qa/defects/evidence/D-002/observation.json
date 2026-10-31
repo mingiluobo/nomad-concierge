@@ -1,0 +1,69 @@
+{
+  "candidate": "50a1bdbf660bb942f661fe7175a1afe2c812007b",
+  "before": {
+    "id": "ab853499-96ae-44e6-9795-f0d50d5c326b",
+    "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+    "status": "running",
+    "stage": "understanding",
+    "engineRequested": "rules",
+    "engineUsed": null,
+    "fallbacks": [],
+    "errorCode": null,
+    "timings": {},
+    "promptVersion": null,
+    "retryOfTurnId": null,
+    "attempt": 1,
+    "version": 2,
+    "createdAt": "2026-10-31T10:36:20.287Z",
+    "startedAt": "2026-10-31T10:36:20.288Z",
+    "finishedAt": null
+  },
+  "queued": {
+    "id": "ab853499-96ae-44e6-9795-f0d50d5c326b",
+    "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+    "status": "queued",
+    "stage": "queued",
+    "engineRequested": "rules",
+    "engineUsed": null,
+    "fallbacks": [],
+    "errorCode": null,
+    "timings": {},
+    "promptVersion": null,
+    "retryOfTurnId": null,
+    "attempt": 1,
+    "version": 3,
+    "createdAt": "2026-10-31T10:36:20.287Z",
+    "startedAt": "2026-10-31T10:36:20.288Z",
+    "finishedAt": null
+  },
+  "closure": {
+    "code": 1012,
+    "reason": "Service restarting"
+  },
+  "after": {
+    "id": "ab853499-96ae-44e6-9795-f0d50d5c326b",
+    "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+    "status": "completed",
+    "stage": "done",
+    "engineRequested": "rules",
+    "engineUsed": "rules",
+    "fallbacks": [],
+    "errorCode": null,
+    "timings": {
+      "queuedMs": 92,
+      "understandingMs": 1205,
+      "decidingMs": 2,
+      "replyingMs": 0,
+      "totalMs": 1207
+    },
+    "promptVersion": null,
+    "retryOfTurnId": null,
+    "attempt": 1,
+    "version": 7,
+    "createdAt": "2026-10-31T10:36:20.287Z",
+    "startedAt": "2026-10-31T10:36:20.379Z",
+    "finishedAt": "2026-10-31T10:36:21.586Z"
+  },
+  "messageCount": 2,
+  "assistantMessageCount": 1
+}

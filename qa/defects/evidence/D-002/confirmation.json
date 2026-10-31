@@ -1,0 +1,920 @@
+{
+  "candidate": "50a1bdbf660bb942f661fe7175a1afe2c812007b",
+  "product": "35858ba665a0667fcb5016a5742c4553e67ed5d6",
+  "qaBase": "a017d5b7156a6196c972598ed7b48392fb1767a8",
+  "qaEvidencePatch": "API-074 instrumentation committed in 2dcc348; expectations unchanged",
+  "case": "API-074",
+  "result": "失败",
+  "observations": [
+    {
+      "name": "API-074-retry0-0-HTTP_201__api_conversations",
+      "body": {
+        "conversation": {
+          "id": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "title": "新的出海咨询",
+          "status": "collecting",
+          "enginePreference": "rules",
+          "lastSeq": 1,
+          "lastAssistantSeq": 0,
+          "messageCount": 1,
+          "lastMessagePreview": "我想搬到葡萄牙生活",
+          "planId": null,
+          "version": 2,
+          "createdAt": "2026-10-31T10:36:20.287Z",
+          "updatedAt": "2026-10-31T10:36:20.287Z",
+          "profile": {
+            "slots": {
+              "destination": {
+                "status": "missing"
+              },
+              "goals": {
+                "status": "missing"
+              },
+              "applicantNationality": {
+                "status": "missing"
+              },
+              "hasPartner": {
+                "status": "missing"
+              },
+              "partnerNationality": {
+                "status": "missing"
+              },
+              "childrenCount": {
+                "status": "missing"
+              },
+              "childrenAges": {
+                "status": "missing"
+              },
+              "currentResidence": {
+                "status": "missing"
+              },
+              "residenceStatus": {
+                "status": "missing"
+              },
+              "timeline": {
+                "status": "missing"
+              },
+              "incomeSource": {
+                "status": "missing"
+              },
+              "businessType": {
+                "status": "missing"
+              },
+              "incomeCountry": {
+                "status": "missing"
+              },
+              "schoolPreference": {
+                "status": "missing"
+              },
+              "hasHealthInsurance": {
+                "status": "missing"
+              }
+            },
+            "pendingSlots": []
+          },
+          "progress": {
+            "required": 8,
+            "answered": 0,
+            "missing": [
+              "destination",
+              "goals",
+              "applicantNationality",
+              "hasPartner",
+              "childrenCount",
+              "currentResidence",
+              "residenceStatus",
+              "timeline"
+            ],
+            "unsure": [],
+            "isComplete": false,
+            "canGenerateEarly": false
+          }
+        },
+        "message": {
+          "id": "5d8d8282-f4dd-4091-b9b1-140f44e2c693",
+          "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "seq": 1,
+          "content": "我想搬到葡萄牙生活",
+          "clientMessageId": "d1f2f88b-b9ca-4782-a8f7-ac9ad786a0f4",
+          "turnId": null,
+          "createdAt": "2026-10-31T10:36:20.287Z",
+          "role": "user",
+          "payload": null
+        },
+        "turn": {
+          "id": "ab853499-96ae-44e6-9795-f0d50d5c326b",
+          "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "status": "queued",
+          "stage": "queued",
+          "engineRequested": "rules",
+          "engineUsed": null,
+          "fallbacks": [],
+          "timings": {},
+          "errorCode": null,
+          "promptVersion": null,
+          "retryOfTurnId": null,
+          "attempt": 1,
+          "version": 1,
+          "createdAt": "2026-10-31T10:36:20.287Z",
+          "startedAt": null,
+          "finishedAt": null
+        }
+      }
+    },
+    {
+      "name": "API-074-retry0-1-HTTP_200__api_conversations_135a647b-e3e5-4058-bd5a-88fd46137e48",
+      "body": {
+        "conversation": {
+          "id": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "title": "新的出海咨询",
+          "status": "collecting",
+          "enginePreference": "rules",
+          "lastSeq": 1,
+          "lastAssistantSeq": 0,
+          "messageCount": 1,
+          "lastMessagePreview": "我想搬到葡萄牙生活",
+          "planId": null,
+          "version": 2,
+          "createdAt": "2026-10-31T10:36:20.287Z",
+          "updatedAt": "2026-10-31T10:36:20.287Z",
+          "profile": {
+            "slots": {
+              "destination": {
+                "status": "missing"
+              },
+              "goals": {
+                "status": "missing"
+              },
+              "applicantNationality": {
+                "status": "missing"
+              },
+              "hasPartner": {
+                "status": "missing"
+              },
+              "partnerNationality": {
+                "status": "missing"
+              },
+              "childrenCount": {
+                "status": "missing"
+              },
+              "childrenAges": {
+                "status": "missing"
+              },
+              "currentResidence": {
+                "status": "missing"
+              },
+              "residenceStatus": {
+                "status": "missing"
+              },
+              "timeline": {
+                "status": "missing"
+              },
+              "incomeSource": {
+                "status": "missing"
+              },
+              "businessType": {
+                "status": "missing"
+              },
+              "incomeCountry": {
+                "status": "missing"
+              },
+              "schoolPreference": {
+                "status": "missing"
+              },
+              "hasHealthInsurance": {
+                "status": "missing"
+              }
+            },
+            "pendingSlots": []
+          },
+          "progress": {
+            "required": 8,
+            "answered": 0,
+            "missing": [
+              "destination",
+              "goals",
+              "applicantNationality",
+              "hasPartner",
+              "childrenCount",
+              "currentResidence",
+              "residenceStatus",
+              "timeline"
+            ],
+            "unsure": [],
+            "isComplete": false,
+            "canGenerateEarly": false
+          }
+        },
+        "activeTurn": {
+          "id": "ab853499-96ae-44e6-9795-f0d50d5c326b",
+          "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "status": "running",
+          "stage": "understanding",
+          "engineRequested": "rules",
+          "engineUsed": null,
+          "fallbacks": [],
+          "timings": {},
+          "errorCode": null,
+          "promptVersion": null,
+          "retryOfTurnId": null,
+          "attempt": 1,
+          "version": 2,
+          "createdAt": "2026-10-31T10:36:20.287Z",
+          "startedAt": "2026-10-31T10:36:20.288Z",
+          "finishedAt": null
+        },
+        "latestTurn": {
+          "id": "ab853499-96ae-44e6-9795-f0d50d5c326b",
+          "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "status": "running",
+          "stage": "understanding",
+          "engineRequested": "rules",
+          "engineUsed": null,
+          "fallbacks": [],
+          "timings": {},
+          "errorCode": null,
+          "promptVersion": null,
+          "retryOfTurnId": null,
+          "attempt": 1,
+          "version": 2,
+          "createdAt": "2026-10-31T10:36:20.287Z",
+          "startedAt": "2026-10-31T10:36:20.288Z",
+          "finishedAt": null
+        },
+        "plan": null,
+        "readState": {
+          "lastReadSeq": 0
+        }
+      }
+    },
+    {
+      "name": "API-074-retry0-2-graceful-shutdown-events",
+      "body": [
+        {
+          "type": "ready",
+          "latestEventId": 0,
+          "userId": "f8ddba2b-162f-4086-8e59-ad58cfb83eb3"
+        },
+        {
+          "type": "event",
+          "id": 1,
+          "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "createdAt": "2026-10-31T10:36:20.287Z",
+          "eventType": "conversation.upserted",
+          "payload": {
+            "conversation": {
+              "id": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+              "title": "新的出海咨询",
+              "status": "collecting",
+              "enginePreference": "rules",
+              "lastSeq": 1,
+              "lastAssistantSeq": 0,
+              "messageCount": 1,
+              "lastMessagePreview": "我想搬到葡萄牙生活",
+              "planId": null,
+              "version": 2,
+              "createdAt": "2026-10-31T10:36:20.287Z",
+              "updatedAt": "2026-10-31T10:36:20.287Z",
+              "profile": {
+                "slots": {
+                  "destination": {
+                    "status": "missing"
+                  },
+                  "goals": {
+                    "status": "missing"
+                  },
+                  "applicantNationality": {
+                    "status": "missing"
+                  },
+                  "hasPartner": {
+                    "status": "missing"
+                  },
+                  "partnerNationality": {
+                    "status": "missing"
+                  },
+                  "childrenCount": {
+                    "status": "missing"
+                  },
+                  "childrenAges": {
+                    "status": "missing"
+                  },
+                  "currentResidence": {
+                    "status": "missing"
+                  },
+                  "residenceStatus": {
+                    "status": "missing"
+                  },
+                  "timeline": {
+                    "status": "missing"
+                  },
+                  "incomeSource": {
+                    "status": "missing"
+                  },
+                  "businessType": {
+                    "status": "missing"
+                  },
+                  "incomeCountry": {
+                    "status": "missing"
+                  },
+                  "schoolPreference": {
+                    "status": "missing"
+                  },
+                  "hasHealthInsurance": {
+                    "status": "missing"
+                  }
+                },
+                "pendingSlots": []
+              },
+              "progress": {
+                "required": 8,
+                "answered": 0,
+                "missing": [
+                  "destination",
+                  "goals",
+                  "applicantNationality",
+                  "hasPartner",
+                  "childrenCount",
+                  "currentResidence",
+                  "residenceStatus",
+                  "timeline"
+                ],
+                "unsure": [],
+                "isComplete": false,
+                "canGenerateEarly": false
+              }
+            }
+          }
+        },
+        {
+          "type": "event",
+          "id": 2,
+          "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "createdAt": "2026-10-31T10:36:20.287Z",
+          "eventType": "message.created",
+          "payload": {
+            "message": {
+              "id": "5d8d8282-f4dd-4091-b9b1-140f44e2c693",
+              "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+              "seq": 1,
+              "content": "我想搬到葡萄牙生活",
+              "clientMessageId": "d1f2f88b-b9ca-4782-a8f7-ac9ad786a0f4",
+              "turnId": null,
+              "createdAt": "2026-10-31T10:36:20.287Z",
+              "role": "user",
+              "payload": null
+            }
+          }
+        },
+        {
+          "type": "event",
+          "id": 3,
+          "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "createdAt": "2026-10-31T10:36:20.287Z",
+          "eventType": "turn.upserted",
+          "payload": {
+            "turn": {
+              "id": "ab853499-96ae-44e6-9795-f0d50d5c326b",
+              "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+              "status": "queued",
+              "stage": "queued",
+              "engineRequested": "rules",
+              "engineUsed": null,
+              "fallbacks": [],
+              "errorCode": null,
+              "timings": {},
+              "promptVersion": null,
+              "retryOfTurnId": null,
+              "attempt": 1,
+              "version": 1,
+              "createdAt": "2026-10-31T10:36:20.287Z",
+              "startedAt": null,
+              "finishedAt": null
+            }
+          }
+        },
+        {
+          "type": "event",
+          "id": 4,
+          "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "createdAt": "2026-10-31T10:36:20.288Z",
+          "eventType": "turn.upserted",
+          "payload": {
+            "turn": {
+              "id": "ab853499-96ae-44e6-9795-f0d50d5c326b",
+              "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+              "status": "running",
+              "stage": "understanding",
+              "engineRequested": "rules",
+              "engineUsed": null,
+              "fallbacks": [],
+              "errorCode": null,
+              "timings": {},
+              "promptVersion": null,
+              "retryOfTurnId": null,
+              "attempt": 1,
+              "version": 2,
+              "createdAt": "2026-10-31T10:36:20.287Z",
+              "startedAt": "2026-10-31T10:36:20.288Z",
+              "finishedAt": null
+            }
+          }
+        },
+        {
+          "type": "event",
+          "id": 5,
+          "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "createdAt": "2026-10-31T10:36:20.294Z",
+          "eventType": "turn.upserted",
+          "payload": {
+            "turn": {
+              "id": "ab853499-96ae-44e6-9795-f0d50d5c326b",
+              "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+              "status": "queued",
+              "stage": "queued",
+              "engineRequested": "rules",
+              "engineUsed": null,
+              "fallbacks": [],
+              "errorCode": null,
+              "timings": {},
+              "promptVersion": null,
+              "retryOfTurnId": null,
+              "attempt": 1,
+              "version": 3,
+              "createdAt": "2026-10-31T10:36:20.287Z",
+              "startedAt": "2026-10-31T10:36:20.288Z",
+              "finishedAt": null
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "API-074-retry0-3-HTTP_200__api_conversations_135a647b-e3e5-4058-bd5a-88fd46137e48",
+      "body": {
+        "conversation": {
+          "id": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "title": "葡萄牙 · 家庭情况待了解",
+          "status": "collecting",
+          "enginePreference": "rules",
+          "lastSeq": 2,
+          "lastAssistantSeq": 2,
+          "messageCount": 2,
+          "lastMessagePreview": "已记录：目的国 葡萄牙；诉求 居留\n\n还需要了解：你的国籍是哪个国家？ 有配偶或伴侣一起去吗？",
+          "planId": null,
+          "version": 3,
+          "createdAt": "2026-10-31T10:36:20.287Z",
+          "updatedAt": "2026-10-31T10:36:21.586Z",
+          "profile": {
+            "slots": {
+              "destination": {
+                "status": "known",
+                "value": "PT",
+                "sourceMessageId": "5d8d8282-f4dd-4091-b9b1-140f44e2c693",
+                "updatedAt": "2026-10-31T10:36:20.382Z"
+              },
+              "goals": {
+                "status": "known",
+                "value": [
+                  "residence"
+                ],
+                "sourceMessageId": "5d8d8282-f4dd-4091-b9b1-140f44e2c693",
+                "updatedAt": "2026-10-31T10:36:20.382Z"
+              },
+              "applicantNationality": {
+                "status": "missing"
+              },
+              "hasPartner": {
+                "status": "missing"
+              },
+              "partnerNationality": {
+                "status": "missing"
+              },
+              "childrenCount": {
+                "status": "missing"
+              },
+              "childrenAges": {
+                "status": "missing"
+              },
+              "currentResidence": {
+                "status": "missing"
+              },
+              "residenceStatus": {
+                "status": "missing"
+              },
+              "timeline": {
+                "status": "missing"
+              },
+              "incomeSource": {
+                "status": "missing"
+              },
+              "businessType": {
+                "status": "missing"
+              },
+              "incomeCountry": {
+                "status": "missing"
+              },
+              "schoolPreference": {
+                "status": "missing"
+              },
+              "hasHealthInsurance": {
+                "status": "missing"
+              }
+            },
+            "pendingSlots": [
+              "applicantNationality",
+              "hasPartner"
+            ]
+          },
+          "progress": {
+            "required": 9,
+            "answered": 2,
+            "missing": [
+              "applicantNationality",
+              "hasPartner",
+              "childrenCount",
+              "currentResidence",
+              "residenceStatus",
+              "timeline",
+              "incomeSource"
+            ],
+            "unsure": [],
+            "isComplete": false,
+            "canGenerateEarly": false
+          }
+        },
+        "activeTurn": null,
+        "latestTurn": {
+          "id": "ab853499-96ae-44e6-9795-f0d50d5c326b",
+          "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "status": "completed",
+          "stage": "done",
+          "engineRequested": "rules",
+          "engineUsed": "rules",
+          "fallbacks": [],
+          "timings": {
+            "queuedMs": 92,
+            "understandingMs": 1205,
+            "decidingMs": 2,
+            "replyingMs": 0,
+            "totalMs": 1207
+          },
+          "errorCode": null,
+          "promptVersion": null,
+          "retryOfTurnId": null,
+          "attempt": 1,
+          "version": 7,
+          "createdAt": "2026-10-31T10:36:20.287Z",
+          "startedAt": "2026-10-31T10:36:20.379Z",
+          "finishedAt": "2026-10-31T10:36:21.586Z"
+        },
+        "plan": null,
+        "readState": {
+          "lastReadSeq": 0
+        }
+      }
+    },
+    {
+      "name": "API-074-retry0-4-HTTP_200__api_conversations_135a647b-e3e5-4058-bd5a-88fd46137e48_messages",
+      "body": {
+        "items": [
+          {
+            "id": "5d8d8282-f4dd-4091-b9b1-140f44e2c693",
+            "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+            "seq": 1,
+            "content": "我想搬到葡萄牙生活",
+            "clientMessageId": "d1f2f88b-b9ca-4782-a8f7-ac9ad786a0f4",
+            "turnId": null,
+            "createdAt": "2026-10-31T10:36:20.287Z",
+            "role": "user",
+            "payload": null
+          },
+          {
+            "id": "bf86f381-5c84-4c35-b0b9-a3b30ef7f66d",
+            "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+            "seq": 2,
+            "content": "已记录：目的国 葡萄牙；诉求 居留\n\n还需要了解：你的国籍是哪个国家？ 有配偶或伴侣一起去吗？",
+            "clientMessageId": null,
+            "turnId": "ab853499-96ae-44e6-9795-f0d50d5c326b",
+            "createdAt": "2026-10-31T10:36:21.586Z",
+            "role": "assistant",
+            "payload": {
+              "recorded": [
+                {
+                  "slot": "destination",
+                  "label": "目的国",
+                  "display": "葡萄牙"
+                },
+                {
+                  "slot": "goals",
+                  "label": "诉求",
+                  "display": "居留"
+                }
+              ],
+              "corrections": [],
+              "notices": [],
+              "questions": [
+                {
+                  "slot": "applicantNationality",
+                  "text": "你的国籍是哪个国家？",
+                  "options": [
+                    {
+                      "label": "中国",
+                      "value": "CN"
+                    },
+                    {
+                      "label": "葡萄牙",
+                      "value": "PT"
+                    }
+                  ],
+                  "allowUnsure": false
+                },
+                {
+                  "slot": "hasPartner",
+                  "text": "有配偶或伴侣一起去吗？",
+                  "options": [
+                    {
+                      "label": "是",
+                      "value": true
+                    },
+                    {
+                      "label": "否",
+                      "value": false
+                    }
+                  ],
+                  "allowUnsure": false
+                }
+              ],
+              "progress": {
+                "required": 9,
+                "answered": 2,
+                "missing": [
+                  "applicantNationality",
+                  "hasPartner",
+                  "childrenCount",
+                  "currentResidence",
+                  "residenceStatus",
+                  "timeline",
+                  "incomeSource"
+                ],
+                "unsure": [],
+                "isComplete": false,
+                "canGenerateEarly": false
+              },
+              "process": {
+                "engineUsed": "rules",
+                "fallbacks": [],
+                "timings": {
+                  "queuedMs": 92,
+                  "understandingMs": 1205,
+                  "decidingMs": 2,
+                  "replyingMs": 0,
+                  "totalMs": 1207
+                },
+                "promptVersion": null
+              }
+            }
+          }
+        ],
+        "nextCursor": null
+      }
+    },
+    {
+      "name": "API-074-retry0-5-graceful-attempt-observation",
+      "body": {
+        "before": {
+          "id": "ab853499-96ae-44e6-9795-f0d50d5c326b",
+          "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "status": "running",
+          "stage": "understanding",
+          "engineRequested": "rules",
+          "engineUsed": null,
+          "fallbacks": [],
+          "errorCode": null,
+          "timings": {},
+          "promptVersion": null,
+          "retryOfTurnId": null,
+          "attempt": 1,
+          "version": 2,
+          "createdAt": "2026-10-31T10:36:20.287Z",
+          "startedAt": "2026-10-31T10:36:20.288Z",
+          "finishedAt": null
+        },
+        "queued": {
+          "id": "ab853499-96ae-44e6-9795-f0d50d5c326b",
+          "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "status": "queued",
+          "stage": "queued",
+          "engineRequested": "rules",
+          "engineUsed": null,
+          "fallbacks": [],
+          "errorCode": null,
+          "timings": {},
+          "promptVersion": null,
+          "retryOfTurnId": null,
+          "attempt": 1,
+          "version": 3,
+          "createdAt": "2026-10-31T10:36:20.287Z",
+          "startedAt": "2026-10-31T10:36:20.288Z",
+          "finishedAt": null
+        },
+        "closure": {
+          "code": 1012,
+          "reason": "Service restarting"
+        },
+        "after": {
+          "id": "ab853499-96ae-44e6-9795-f0d50d5c326b",
+          "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+          "status": "completed",
+          "stage": "done",
+          "engineRequested": "rules",
+          "engineUsed": "rules",
+          "fallbacks": [],
+          "errorCode": null,
+          "timings": {
+            "queuedMs": 92,
+            "understandingMs": 1205,
+            "decidingMs": 2,
+            "replyingMs": 0,
+            "totalMs": 1207
+          },
+          "promptVersion": null,
+          "retryOfTurnId": null,
+          "attempt": 1,
+          "version": 7,
+          "createdAt": "2026-10-31T10:36:20.287Z",
+          "startedAt": "2026-10-31T10:36:20.379Z",
+          "finishedAt": "2026-10-31T10:36:21.586Z"
+        },
+        "messageCount": 2,
+        "assistantMessageCount": 1,
+        "messages": [
+          {
+            "id": "5d8d8282-f4dd-4091-b9b1-140f44e2c693",
+            "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+            "seq": 1,
+            "content": "我想搬到葡萄牙生活",
+            "clientMessageId": "d1f2f88b-b9ca-4782-a8f7-ac9ad786a0f4",
+            "turnId": null,
+            "createdAt": "2026-10-31T10:36:20.287Z",
+            "role": "user",
+            "payload": null
+          },
+          {
+            "id": "bf86f381-5c84-4c35-b0b9-a3b30ef7f66d",
+            "conversationId": "135a647b-e3e5-4058-bd5a-88fd46137e48",
+            "seq": 2,
+            "content": "已记录：目的国 葡萄牙；诉求 居留\n\n还需要了解：你的国籍是哪个国家？ 有配偶或伴侣一起去吗？",
+            "clientMessageId": null,
+            "turnId": "ab853499-96ae-44e6-9795-f0d50d5c326b",
+            "createdAt": "2026-10-31T10:36:21.586Z",
+            "role": "assistant",
+            "payload": {
+              "recorded": [
+                {
+                  "slot": "destination",
+                  "label": "目的国",
+                  "display": "葡萄牙"
+                },
+                {
+                  "slot": "goals",
+                  "label": "诉求",
+                  "display": "居留"
+                }
+              ],
+              "corrections": [],
+              "notices": [],
+              "questions": [
+                {
+                  "slot": "applicantNationality",
+                  "text": "你的国籍是哪个国家？",
+                  "options": [
+                    {
+                      "label": "中国",
+                      "value": "CN"
+                    },
+                    {
+                      "label": "葡萄牙",
+                      "value": "PT"
+                    }
+                  ],
+                  "allowUnsure": false
+                },
+                {
+                  "slot": "hasPartner",
+                  "text": "有配偶或伴侣一起去吗？",
+                  "options": [
+                    {
+                      "label": "是",
+                      "value": true
+                    },
+                    {
+                      "label": "否",
+                      "value": false
+                    }
+                  ],
+                  "allowUnsure": false
+                }
+              ],
+              "progress": {
+                "required": 9,
+                "answered": 2,
+                "missing": [
+                  "applicantNationality",
+                  "hasPartner",
+                  "childrenCount",
+                  "currentResidence",
+                  "residenceStatus",
+                  "timeline",
+                  "incomeSource"
+                ],
+                "unsure": [],
+                "isComplete": false,
+                "canGenerateEarly": false
+              },
+              "process": {
+                "engineUsed": "rules",
+                "fallbacks": [],
+                "timings": {
+                  "queuedMs": 92,
+                  "understandingMs": 1205,
+                  "decidingMs": 2,
+                  "replyingMs": 0,
+                  "totalMs": 1207
+                },
+                "promptVersion": null
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "owned-instance-580cddd825951f4b02a835b0b16c6505bb3729b5.json",
+      "body": {
+        "baseURL": "http://127.0.0.1:53366",
+        "processes": [
+          {
+            "pid": 77488,
+            "args": [
+              "--disable-warning=ExperimentalWarning",
+              "--env-file-if-exists=.env",
+              "dist/server.js",
+              "--production"
+            ],
+            "node": "v24.22.1",
+            "at": "2026-10-31T10:36:20.077Z"
+          },
+          {
+            "pid": 77494,
+            "args": [
+              "--disable-warning=ExperimentalWarning",
+              "--env-file-if-exists=.env",
+              "dist/server.js",
+              "--production"
+            ],
+            "node": "v24.22.1",
+            "at": "2026-10-31T10:36:20.299Z"
+          }
+        ],
+        "config": {
+          "LOCAL_LLM_MODEL": "",
+          "LLM_BASE_URL": "http://127.0.0.1:53364/v1",
+          "LOCAL_LLM_BASE_URL": "http://127.0.0.1:53365/v1",
+          "SERVE_WEB_DIST": "true",
+          "LLM_MODEL": "qa-model",
+          "DEMO_DELAY_MS": "1200",
+          "PORT": "53366",
+          "WEB_ORIGIN": "http://127.0.0.1:53366",
+          "DATABASE_PATH": "/var/folders/j9/y00351wx0f717s6xgxrw8jgh0000gn/T/nc-qa-instance-4VFmvj/qa.sqlite"
+        },
+        "purpose": "candidate-acceptance",
+        "candidate": "50a1bdbf660bb942f661fe7175a1afe2c812007b"
+      }
+    },
+    {
+      "name": "fake-requests-1aee0b33978b93b0d7f2674963556032f5a4334e.json",
+      "body": {
+        "remote": [],
+        "local": []
+      }
+    },
+    {
+      "name": "api-process-2db91a73e97c41ba7fe1f41b414caa338ef3bba4.log",
+      "body": "\nstart pid=77488 command=node --disable-warning=ExperimentalWarning --env-file-if-exists=.env dist/server.js --production\n.env not found. Continuing without it.\nNomad Concierge API listening on http://localhost:53366\n\nexit code=0 signal=null\n\nstart pid=77494 command=node --disable-warning=ExperimentalWarning --env-file-if-exists=.env dist/server.js --production\n.env not found. Continuing without it.\nNomad Concierge API listening on http://localhost:53366\n\nexit code=0 signal=null\n"
+    }
+  ],
+  "artifacts": [
+    "qa/reports/2026-10-31T10-32-56.247Z-5795ad5a/api-confirmation/round-1/attachments/API-074-retry0-0-HTTP_201__api_conversations",
+    "qa/reports/2026-10-31T10-32-56.247Z-5795ad5a/api-confirmation/round-1/attachments/API-074-retry0-1-HTTP_200__api_conversations_135a647b-e3e5-4058-bd5a-88fd46137e48",
+    "qa/reports/2026-10-31T10-32-56.247Z-5795ad5a/api-confirmation/round-1/attachments/API-074-retry0-2-graceful-shutdown-events",
+    "qa/reports/2026-10-31T10-32-56.247Z-5795ad5a/api-confirmation/round-1/attachments/API-074-retry0-3-HTTP_200__api_conversations_135a647b-e3e5-4058-bd5a-88fd46137e48",
+    "qa/reports/2026-10-31T10-32-56.247Z-5795ad5a/api-confirmation/round-1/attachments/API-074-retry0-4-HTTP_200__api_conversations_135a647b-e3e5-4058-bd5a-88fd46137e48_messages",
+    "qa/reports/2026-10-31T10-32-56.247Z-5795ad5a/api-confirmation/round-1/attachments/API-074-retry0-5-graceful-attempt-observation",
+    "qa/reports/2026-10-31T10-32-56.247Z-5795ad5a/api-confirmation/round-1/artifacts/api-turns-observable-delayed-tasks-API-074-SIGTERM-优雅停机续跑-api/error-context.md",
+    "qa/reports/2026-10-31T10-32-56.247Z-5795ad5a/api-confirmation/round-1/artifacts/api-turns-observable-delayed-tasks-API-074-SIGTERM-优雅停机续跑-api/attachments/owned-instance-580cddd825951f4b02a835b0b16c6505bb3729b5.json",
+    "qa/reports/2026-10-31T10-32-56.247Z-5795ad5a/api-confirmation/round-1/artifacts/api-turns-observable-delayed-tasks-API-074-SIGTERM-优雅停机续跑-api/attachments/fake-requests-1aee0b33978b93b0d7f2674963556032f5a4334e.json",
+    "qa/reports/2026-10-31T10-32-56.247Z-5795ad5a/api-confirmation/round-1/artifacts/api-turns-observable-delayed-tasks-API-074-SIGTERM-优雅停机续跑-api/attachments/api-process-2db91a73e97c41ba7fe1f41b414caa338ef3bba4.log",
+    "qa/reports/2026-10-31T10-32-56.247Z-5795ad5a/api-confirmation/round-1/artifacts/api-turns-observable-delayed-tasks-API-074-SIGTERM-优雅停机续跑-api/trace.zip"
+  ],
+  "traceSha256": "a82a9ecf3c4a76e876671c46533e927c8ac5951e28bb68acf2618c3d89d0d4cf"
+}

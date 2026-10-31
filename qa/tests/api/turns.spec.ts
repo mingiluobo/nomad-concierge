@@ -132,13 +132,27 @@ test.describe('observable delayed tasks', () => {
             await app.stop('SIGTERM');
             const queued = await socket.waitFor(event => event.type === 'event' && event.eventType === 'turn.upserted' && event.payload.turn.id === made.turn.id && event.payload.turn.status === 'queued', { after });
             expect(queued.type).toBe('event');
-            expect((await socket.waitClose()).code).toBe(1012);
+            const closure = await socket.waitClose();
+            expect(closure.code).toBe(1012);
             await test.info().attach('graceful-shutdown-events', { body: JSON.stringify(socket.messages, null, 2), contentType: 'application/json' });
             await app.start();
             const state = await settle(api.request, made.conversation.id);
+            const history = await messages(api.request, made.conversation.id);
+            await test.info().attach('graceful-attempt-observation', {
+                body: JSON.stringify({
+                    before: before.activeTurn,
+                    queued: queued.type === 'event' && queued.eventType === 'turn.upserted' ? queued.payload.turn : null,
+                    closure,
+                    after: state.latestTurn,
+                    messageCount: history.items.length,
+                    assistantMessageCount: history.items.filter(message => message.role === 'assistant').length,
+                    messages: history.items,
+                }, null, 2),
+                contentType: 'application/json',
+            });
             expect(state.latestTurn!.id).toBe(made.turn.id);
             expect(state.latestTurn!.attempt).toBe(before.activeTurn!.attempt + 1);
-            expect((await messages(api.request, made.conversation.id)).items.filter(m => m.role === 'assistant')).toHaveLength(1);
+            expect(history.items.filter(message => message.role === 'assistant')).toHaveLength(1);
         }
         finally {
             await socket.close();

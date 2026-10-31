@@ -40,7 +40,7 @@ async function execute(): Promise<void> {
   if (!basename(prepared.directory).startsWith('nc-qa-candidate-') || await readFile(join(prepared.directory, '.owned-by-nc-qa'), 'utf8') !== prepared.marker || prepared.root !== join(prepared.directory, 'candidate')) throw new Error('Invalid owned candidate directory');
   await verifySnapshot(prepared.root, prepared.info);
   const runDirectory = join(reportRoot, prepared.runId);
-  const environment = Object.fromEntries(Object.entries(process.env).filter(([key, value]) => /^QA_(NODE22_BIN|NODE24_BIN|ENV_RECIPE|LINUX_NPM_CACHE|SUBMISSION_ARCHIVE|MANUAL_RESULTS|DEFECT_REVIEW)$/.test(key) && value));
+  const environment = Object.fromEntries(Object.entries(process.env).filter(([key, value]) => /^QA_(NODE22_BIN|NODE24_BIN|ENV_RECIPE|LINUX_NPM_CACHE|DOCKER_BUILDER|DOCKER_BASE_CONTEXT|SUBMISSION_ARCHIVE|MANUAL_RESULTS|DEFECT_REVIEW)$/.test(key) && value));
   const env = cleanEnv({ ...environment, QA_READ_OVERFLOW_POLICY: 'clamp', QA_EXECUTION_AUTHORIZED: 'candidate', QA_BUILD_ROOT: prepared.root, QA_CANDIDATE_COMMIT: prepared.info.candidateCommit, QA_RUN_DIR: runDirectory, QA_REPORT_ROOT: reportRoot, npm_config_offline: 'true' });
   let failures = 0;
   let operationalError: string | undefined;

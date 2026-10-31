@@ -22,7 +22,7 @@ export function matrix(result: (id: string) => string = preparationResult): stri
 export async function writeDocuments(): Promise<void> {
   const counts = ['api', 'e2e', 'ws', 'env', 'manual'].map(type => `${type}: ${cases.filter(row => row.type === type).length}`).join('；');
   const lines = [
-    '# Nomad Concierge 黑盒测试计划', '', '阶段：准备，等待候选交接。所有适用项均未执行；MAN-007 按 Q-02 裁定为不适用。编译与发现检查不代表产品验证。契约：SPEC v1.3 及 2026-10-31 的 Q-01～Q-03 裁定。', '',
+    '# Nomad Concierge 黑盒测试计划', '', '本文件保留准备阶段的设计与状态基线；当前候选的实际执行结果见 [执行报告](reports/summary.md)。', '', '阶段：准备，等待候选交接。所有适用项均未执行；MAN-007 按 Q-02 裁定为不适用。编译与发现检查不代表产品验证。契约：SPEC v1.3 及 2026-10-31 的 Q-01～Q-03 裁定。', '',
     `用例清单：${counts}。每个编号对应一个 Playwright 测试，manual 对应可登记的人工检查。参数化子断言不重复计数。`, '',
     '## 范围与执行前置', '',
     '- 只依据需求、SPEC、共享 DTO/schema/测试 ID 和 README 操作部分；期望值不调用产品业务函数。',
@@ -37,6 +37,6 @@ export async function writeDocuments(): Promise<void> {
     '发布判定：必测项实际通过、业务连续三轮、环境一轮且无 P0/P1 缺陷；P2/P3 由负责人登记处理结论。准备阶段不作发布判定。', '',
   ];
   await writeFile(resolve('test-plan.md'), lines.join('\n'));
-  await writeFile(resolve('traceability.md'), `# Nomad Concierge 需求追踪矩阵\n\n状态：准备，适用项全部未执行；MAN-007 按 Q-02 裁定为不适用（交付不提供 HTTPS 入口且不信任代理头，Secure 四种组合由开发单元测试覆盖）。H 为九项硬性要求；F 为二十四组功能；X 为十六项跨模块规则；S 为四组提交要求；B 为 SPEC 第 18 节二十五行边界。共 ${requirements.length} 条需求，均有具体断言或人工步骤。关联数量表示设计覆盖，不表示验证通过。B-24/B-25 是内部故障的开发证据移交，不计为 QA 黑盒自动化已验证。\n\n${matrix()}\n`);
+  await writeFile(resolve('traceability.md'), `# Nomad Concierge 需求追踪矩阵\n\n本文件保留准备阶段的设计覆盖基线；当前候选的逐项执行结果见 [执行报告](reports/summary.md) 中的完整追踪矩阵。\n\n状态：准备，适用项全部未执行；MAN-007 按 Q-02 裁定为不适用（交付不提供 HTTPS 入口且不信任代理头，Secure 四种组合由开发单元测试覆盖）。H 为九项硬性要求；F 为二十四组功能；X 为十六项跨模块规则；S 为四组提交要求；B 为 SPEC 第 18 节二十五行边界。共 ${requirements.length} 条需求，均有具体断言或人工步骤。关联数量表示设计覆盖，不表示验证通过。B-24/B-25 是内部故障的开发证据移交，不计为 QA 黑盒自动化已验证。\n\n${matrix()}\n`);
 }
 if (process.argv[1]?.endsWith('/documents.js')) await writeDocuments();
