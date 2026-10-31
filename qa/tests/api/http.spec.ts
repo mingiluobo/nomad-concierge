@@ -78,11 +78,19 @@ test.describe('observable active tasks', () => {
         const b = await create(api.request, '我想去智利生活');
         expect(a.message.seq).toBe(1);
         expect(a.message.role).toBe('user');
+        // The list contract does not require default rows for unread conversations.
+        // Persist explicit read states before asserting their presence in the list.
+        for (const made of [a, b]) {
+            const read = await parsed(await api.request.post(`/api/conversations/${made.conversation.id}/read`, { data: { seq: 1 } }), readResponseSchema);
+            expect(read.lastReadSeq).toBe(1);
+        }
         const list = await parsed(await api.request.get('/api/conversations?status=collecting'), conversationListResponseSchema);
         expect(list.items.map(item => item.id)).toEqual(expect.arrayContaining([a.conversation.id, b.conversation.id]));
         expect(list.items.map(item => item.updatedAt)).toEqual(list.items.map(item => item.updatedAt).sort().reverse());
         expect(list.activeTurns.map(turn => turn.conversationId)).toEqual(expect.arrayContaining([a.conversation.id, b.conversation.id]));
         expect(list.readStates.map(item => item.conversationId)).toEqual(expect.arrayContaining([a.conversation.id, b.conversation.id]));
+        for (const conversationId of [a.conversation.id, b.conversation.id])
+            expect(list.readStates.find(item => item.conversationId === conversationId)?.lastReadSeq).toBe(1);
         expect((await detail(api.request, a.conversation.id)).conversation.id).toBe(a.conversation.id);
     });
     test(title('API-008'), async ({ api }) => {
