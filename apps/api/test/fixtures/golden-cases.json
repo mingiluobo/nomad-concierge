@@ -5514,5 +5514,254 @@
       "short-answer"
     ],
     "reviewed": true
+  },
+  {
+    "id": "G071",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "known",
+            "value": "PT"
+          },
+          "goals": {
+            "status": "known",
+            "value": [
+              "residence"
+            ]
+          },
+          "applicantNationality": {
+            "status": "known",
+            "value": "CN"
+          },
+          "hasPartner": {
+            "status": "known",
+            "value": false
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "known",
+            "value": 0
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "known",
+            "value": "CN"
+          },
+          "residenceStatus": {
+            "status": "known",
+            "value": "citizen"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": [
+          "timeline",
+          "incomeSource"
+        ]
+      },
+      "pendingSlots": [
+        "timeline",
+        "incomeSource"
+      ],
+      "text": "2"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "pending-question-context",
+      "unassigned-number"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G072",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "known",
+            "value": "PT"
+          },
+          "goals": {
+            "status": "known",
+            "value": [
+              "residence"
+            ]
+          },
+          "applicantNationality": {
+            "status": "known",
+            "value": "CN"
+          },
+          "hasPartner": {
+            "status": "known",
+            "value": false
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "known",
+            "value": 0
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "known",
+            "value": "CN"
+          },
+          "residenceStatus": {
+            "status": "known",
+            "value": "citizen"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": [
+          "timeline",
+          "incomeSource"
+        ]
+      },
+      "pendingSlots": [
+        "timeline",
+        "incomeSource"
+      ],
+      "text": "嗯"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "pending-question-context",
+      "unassigned-short-answer"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G073",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "known",
+            "value": "PT"
+          },
+          "goals": {
+            "status": "known",
+            "value": [
+              "residence"
+            ]
+          },
+          "applicantNationality": {
+            "status": "known",
+            "value": "CN"
+          },
+          "hasPartner": {
+            "status": "known",
+            "value": false
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "known",
+            "value": 0
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "known",
+            "value": "CN"
+          },
+          "residenceStatus": {
+            "status": "known",
+            "value": "citizen"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": [
+          "timeline",
+          "incomeSource"
+        ]
+      },
+      "pendingSlots": [
+        "timeline",
+        "incomeSource"
+      ],
+      "text": "今天午饭吃什么"
+    },
+    "expected": {
+      "intent": "off_topic",
+      "updates": [],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "pending-question-context",
+      "unrelated-question"
+    ],
+    "reviewed": false
   }
 ]
