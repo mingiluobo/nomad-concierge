@@ -1,0 +1,22 @@
+services:
+  app:
+    build: .
+    init: true
+    ports:
+      - "3001:3001"
+    env_file:
+      - path: apps/api/.env
+        required: false
+    environment:
+      NODE_ENV: production
+      SERVE_WEB_DIST: "true"
+      PORT: "3001"
+      DATABASE_PATH: /data/nomad.sqlite
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - nomad-data:/data
+    stop_grace_period: 15s
+
+volumes:
+  nomad-data:

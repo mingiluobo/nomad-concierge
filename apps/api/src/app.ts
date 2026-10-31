@@ -1,17 +1,18 @@
 import { randomUUID } from 'node:crypto';
+import { join } from 'node:path';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import type { ErrorRequestHandler, Express, RequestHandler, Router } from 'express';
 import type { AppDatabase } from './db/database.js';
 
-export interface AppOptions { database: AppDatabase; webOrigins?: string[]; router?: Router; errorHandler?: ErrorRequestHandler }
+export interface AppOptions { database: AppDatabase; webOrigins?: string[]; router?: Router; errorHandler?: ErrorRequestHandler; webDistPath?: string }
 const requestId: RequestHandler = (request, response, next) => {
   response.locals.requestId = request.header('x-request-id') ?? randomUUID();
   response.setHeader('x-request-id', response.locals.requestId as string);
   next();
 };
-export function createApp({ database, webOrigins = ['http://localhost:5173'], router, errorHandler }: AppOptions): Express {
+export function createApp({ database, webOrigins = ['http://localhost:5173'], router, errorHandler, webDistPath }: AppOptions): Express {
   const app = express();
   app.disable('x-powered-by');
   app.use(requestId);
@@ -22,6 +23,18 @@ export function createApp({ database, webOrigins = ['http://localhost:5173'], ro
     response.json({ service: 'nomad-concierge-api', status: 'ok', database: database.ping() ? 'connected' : 'unavailable', timestamp: new Date().toISOString() });
   });
   if (router) app.use(router);
+  if (webDistPath) {
+    const files = express.static(webDistPath);
+    app.use((request, response, next) => {
+      const reserved = ['/api', '/ws'].some(prefix => request.path === prefix || request.path.startsWith(`${prefix}/`));
+      if (reserved) { next(); return; }
+      files(request, response, (error?: unknown) => {
+        if (error) { next(error); return; }
+        if (request.method !== 'GET') { next(); return; }
+        response.sendFile(join(webDistPath, 'index.html'), error => { if (error) next(error); });
+      });
+    });
+  }
   app.use((_request, response) => {
     response.status(404).json({ error: { code: 'NOT_FOUND', message: 'The requested resource was not found.', requestId: response.locals.requestId } });
   });

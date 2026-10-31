@@ -1,9 +1,16 @@
 name: CI
 on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      LLM_API_KEY: ''
+      LOCAL_LLM_MODEL: ''
     strategy:
+      fail-fast: false
       matrix:
         node: ['22.13.0', '24']
     steps:
