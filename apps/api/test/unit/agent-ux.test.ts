@@ -43,7 +43,8 @@ describe('UX05 professional questions and country roles', () => {
 });
 
 describe('UX04 requested scope and background facts', () => {
-  it.each(['只想了解税务，已经有医疗保险', '已经有医疗保险，只想了解税务', '只想了解税务而且已经有医疗保险'])('keeps the requested scope in %s', async text => {
+  it.each(['只想了解税务，已经有医疗保险', '已经有医疗保险，只想了解税务', '只想了解税务而且已经有医疗保险',
+    '只想了解税务，我有医疗保险', '只想了解税务，我有医保', '只想了解税务但我有医疗保险', '只想了解税务我已经买了医疗保险'])('keeps the requested scope in %s', async text => {
     const result = await interpret(text);
     expect(result.intent).toBe('provide_info');
     expect(result.updates.filter(update => update.slot === 'goals')).toEqual([{ slot: 'goals', value: ['tax'], op: 'set' }]);
@@ -69,6 +70,11 @@ describe('UX04 requested scope and background facts', () => {
     const result = await interpret(text);
     const goal = text.includes('医疗') ? 'healthcare' : text.includes('学校') ? 'education' : 'company';
     expect(result.updates).toContainEqual({ slot: 'goals', value: [goal], op: 'add' });
+  });
+  it.each([['只想了解税务及医疗保险', 'set'], ['想了解税务及医疗保险', 'add'], ['只想了解税务和已有的医疗保险情况', 'set']])('keeps coordinated requests separate from background clauses: %s', async (text, op) => {
+    const result = await interpret(text);
+    expect(result.updates.filter(update => update.slot === 'goals')).toEqual([{ slot: 'goals', value: ['tax', 'healthcare'], op }]);
+    if (text.includes('已有')) expect(result.updates).toContainEqual({ slot: 'hasHealthInsurance', value: true });
   });
 });
 
