@@ -17,6 +17,7 @@ describe('UX05 professional questions and country roles', () => {
   });
   it.each([
     ['我该缴多少税', 'tax_amount', 'tax'], ['我需要缴纳多少税款', 'tax_amount', 'tax'],
+    ['我能享受税收优惠吗？', 'tax_amount', 'tax'], ['我有资格减税吗？', 'tax_amount', 'tax'], ['我的收入符合免税条件吗？', 'tax_amount', 'tax'],
     ['我能注册公司吗', 'company_setup', 'company'], ['开公司需要什么资格', 'company_setup', 'company'],
   ])('recognizes %s without answering the professional question', async (text, professionalTopic, goal) => {
     expect(await interpret(text)).toEqual({ intent: 'ask_professional', professionalTopic, updates: [{ slot: 'goals', value: [goal], op: 'add' }], unsure: [] });
@@ -39,6 +40,8 @@ describe('UX05 professional questions and country roles', () => {
   it('keeps ordinary intentions informational and unrelated application questions off-topic', async () => {
     expect(await interpret('我想申请签证')).toEqual({ intent: 'provide_info', updates: [{ slot: 'goals', value: ['residence'], op: 'add' }], unsure: [] });
     expect(await interpret('我可以申请信用卡吗')).toEqual({ intent: 'off_topic', updates: [], unsure: [] });
+    expect(await interpret('我想了解税收优惠')).toEqual({ intent: 'provide_info', updates: [{ slot: 'goals', value: ['tax'], op: 'add' }], unsure: [] });
+    expect(await interpret('我想申请减税')).toEqual({ intent: 'provide_info', updates: [{ slot: 'goals', value: ['tax'], op: 'add' }], unsure: [] });
   });
 });
 

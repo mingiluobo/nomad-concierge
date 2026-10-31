@@ -46,6 +46,15 @@ describe('UX05 real professional replies', () => {
     expect(reply.payload?.recorded.length).toBeGreaterThan(0);
     if (text.includes('葡萄牙')) expect(detail.conversation.profile.slots.destination).toMatchObject({ status: 'known', value: 'PT' });
   });
+  it('uses tax conditions for a relief eligibility question while preserving income facts', async () => {
+    const agent = await application(); const { detail, reply } = await start(agent, '我是自由职业者，我能享受税收优惠吗？');
+    expect(detail.conversation.profile.slots.incomeSource).toMatchObject({ status: 'known', value: 'freelancer' });
+    expect(reply.payload?.notices.map(notice => notice.kind)).toEqual(['professional']);
+    expect(reply.payload?.notices[0]?.conditions).toContainEqual({ label: '主要收入来源', known: true, display: '自由职业' });
+    expect(reply.payload?.notices[0]?.conditions).toContainEqual({ label: '主要收入来源国', known: false, display: '待了解' });
+    expect(reply.content).toContain('没办法给出结论');
+    expect(reply.content).toContain('还需要了解');
+  });
 });
 
 describe('UX04 real scope and fact applicability', () => {
