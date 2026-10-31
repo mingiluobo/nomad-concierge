@@ -31,6 +31,11 @@ function professionalTopic(text: string, profile: Profile): ProfessionalTopic | 
   }
   return undefined;
 }
+function isBackgroundFact(goal: Goal, text: string): boolean {
+  const factSlots: Record<Goal, SlotKey[]> = { residence: ['residenceStatus'], company: ['businessType', 'incomeSource'], education: ['schoolPreference'], healthcare: ['hasHealthInsurance'], tax: [] };
+  return enumWords.some(entry => factSlots[goal].includes(entry.slot) && entry.values.some(([, expression]) => expression.test(text)))
+    || goal === 'tax' && /收入|工资|客户/.test(text);
+}
 function interpretMessage(text: string, input: InterpretInput, droppedUpdates: InterpretResult['droppedUpdates']): Interpretation {
   const updates: SlotUpdate[] = [];
   const unsure = new Set<SlotKey>();
@@ -82,15 +87,21 @@ function interpretMessage(text: string, input: InterpretInput, droppedUpdates: I
       const ages = [...clause.matchAll(new RegExp(`(${numberPattern})\\s*岁`, 'g'))].map(match => chineseNumber(match[1]!)).filter((value): value is number => value !== null);
       if (ages.length) { add('childrenAges', ages); if (!explicitCount) add('childrenCount', ages.length); }
     }
-    const operations = new Map<SlotUpdate['op'], Goal[]>();
-    for (const [goal, expression] of goalWords) {
-      const hit = expression.exec(clause);
-      if (!hit) continue;
-      const prefix = clause.slice(0, hit.index);
-      const op = /只想|只要|只(?:了解|开)|改成|替换成/.test(clause) ? 'set' : /(?:不|没)(?:开|要|需要|考虑|想|了解|办|再|注册){0,3}$/.test(prefix) ? 'remove' : 'add';
-      operations.set(op, [...(operations.get(op) ?? []), goal]);
+    for (const part of clause.split(/(?=而且|并且|另外|同时|但是|已经|已有)/).filter(Boolean)) {
+      const operations = new Map<SlotUpdate['op'], Goal[]>();
+      const explicitRequest = /了解|咨询|建议|方案|帮助|申请|办理|(?:想|计划|打算|准备|要|需要).{0,8}(?:开|注册|创业|做生意)|搬到|移居|定居/.test(part);
+      const topic = professionalTopic(part, input.profile);
+      for (const [goal, expression] of goalWords) {
+        const hit = expression.exec(part);
+        if (!hit) continue;
+        const prefix = part.slice(0, hit.index);
+        const op = /只想|只要|仅(?:想|要|需|了解)|只(?:了解|开)|改成|替换成/.test(part) ? 'set' : /(?:不|没)(?:开|要|需要|考虑|想|了解|办|再|注册){0,3}$/.test(prefix) ? 'remove' : 'add';
+        const professionalRequest = goal === 'residence' && topic === 'visa_eligibility' || goal === 'company' && topic === 'company_setup' || goal === 'tax' && topic === 'tax_amount';
+        if (op === 'add' && isBackgroundFact(goal, part) && !explicitRequest && !professionalRequest) continue;
+        operations.set(op, [...(operations.get(op) ?? []), goal]);
+      }
+      for (const [op, value] of operations) add('goals', value, op);
     }
-    for (const [op, value] of operations) add('goals', value, op);
     for (const entry of enumWords) {
       const matches = entry.values.flatMap(([value, expression]) => [...clause.matchAll(new RegExp(expression.source, 'g'))].map(match => ({ value, start: match.index, end: match.index + match[0].length })));
       // A negative phrase can contain a positive one, for example 没有保险 / 有保险.
