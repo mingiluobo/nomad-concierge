@@ -677,7 +677,7 @@ class InterpreterError extends Error { reason: FailureReason }
 
 **提示词 `prompt.ts`**
 
-- 导出 `PROMPT_VERSION = 'v3'`，每轮记录到任务上。
+- 导出 `PROMPT_VERSION = 'v4'`，每轮记录到任务上。
 - 系统提示词要点（字段说明由槽位注册表的 `llmHint` 和枚举**自动生成**，不要手写重复）：
   - 你只做信息抽取，不回答问题，不给建议，只输出一个 JSON 对象
   - 输出格式即 `Interpretation`，字段和枚举如下……
