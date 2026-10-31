@@ -123,7 +123,14 @@ function interpretMessage(text: string, input: InterpretInput, droppedUpdates: I
   }
   const topic = professionalTopic(text, input.profile);
   const related = /出国|出海|移民|签证|目的国|居留|葡萄牙|税|学校|孩子|配偶|公司|医疗|出发|启程|动身|时间/.test(text);
-  const intent = topic ? 'ask_professional' : updates.length || unsure.size || unsureWords.test(text) || related ? 'provide_info' : 'off_topic';
+  const answer = text.trim();
+  // An unassigned short answer can answer a pending question without supplying a slot value.
+  const shortAnswer = input.pendingSlots.length > 0 && (
+    /^\d+(?:\.\d+)?$/.test(answer)
+    || /^[\u4e00-\u9fff]{1,2}$/.test(answer) && !/[吗么呢谁哪啥何]/.test(answer)
+      && !(answer.length === 2 && /^(?:请|帮|给|来|讲|说|写|画|唱|查|找|搜|看|吃|喝|玩|做|买|卖)/.test(answer))
+  );
+  const intent = topic ? 'ask_professional' : updates.length || unsure.size || unsureWords.test(text) || related || shortAnswer ? 'provide_info' : 'off_topic';
   const combined: SlotUpdate[] = [];
   let lastGoals: SlotUpdate | undefined;
   for (const update of updates) {
