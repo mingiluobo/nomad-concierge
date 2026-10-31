@@ -228,7 +228,7 @@ DEMO_DELAY_MS=1500 npm run dev
 
 ## CI
 
-`.github/workflows/ci.yml` 在 push 和 pull request 时运行，环境为 `ubuntu-latest`，Node 矩阵为精确的 `22.13.0` 和 `24`：`npm ci` → `npm run check` → `npm test` → `npm run build`。不运行浏览器端到端测试，不需要真实模型配置。11-01，提交 `ed58798` 的两组检查均通过，见 [CI 运行记录](https://github.com/mingiluobo/nomad-concierge/actions/runs/41226949091)；其他提交的结果以各自的运行记录为准。
+`.github/workflows/ci.yml` 在 push 和 pull request 时运行，环境为 `ubuntu-latest`，Node 矩阵为精确的 `22.13.0` 和 `24`：`npm ci` → `npm run check` → `npm test` → `npm run build`。不运行浏览器端到端测试，不需要真实模型配置。最终提交 `c9ab1e0` 的两组检查均通过，见 [CI 运行记录](https://github.com/mingiluobo/nomad-concierge/actions/runs/41230021581)。
 
 ## 技术选型
 
