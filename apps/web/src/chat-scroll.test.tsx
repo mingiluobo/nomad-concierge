@@ -17,16 +17,20 @@ const scrollTo = vi.fn(function (this: HTMLElement, options: ScrollToOptions) { 
 const originalScrollTo = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollTo');
 beforeEach(() => {
   height = 1200; top = 0; frames = []; scrollTo.mockClear();
-  vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(function () { return this.classList.contains('message-scroll') ? height : 0; });
-  vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function () { return this.classList.contains('message-scroll') ? 400 : 0; });
+  vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(function (this: HTMLElement) { return this.classList.contains('message-scroll') ? height : 0; });
+  vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function (this: HTMLElement) { return this.classList.contains('message-scroll') ? 400 : 0; });
   vi.spyOn(HTMLElement.prototype, 'scrollTop', 'get').mockImplementation(() => top);
   vi.spyOn(HTMLElement.prototype, 'scrollTop', 'set').mockImplementation(value => { top = Math.max(0, Math.min(value, height - 400)); });
+  vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function (this: HTMLElement) {
+    const messages = [...(this.parentElement?.children ?? [])].filter(node => node.classList.contains('message'));
+    return Math.max(0, messages.indexOf(this)) * 200;
+  });
   Object.defineProperty(HTMLElement.prototype, 'scrollTo', { configurable: true, writable: true, value: scrollTo });
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { frames.push(callback); return frames.length; });
 });
 afterEach(() => {
   cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); localStorage.clear();
-  if (originalScrollTo) Object.defineProperty(HTMLElement.prototype, 'scrollTo', originalScrollTo); else delete HTMLElement.prototype.scrollTo;
+  if (originalScrollTo) Object.defineProperty(HTMLElement.prototype, 'scrollTo', originalScrollTo); else Reflect.deleteProperty(HTMLElement.prototype, 'scrollTo');
 });
 async function setup(nextCursor: number | null = null) {
   const sockets: FakeSocket[] = [];
@@ -66,6 +70,8 @@ describe('conversation scroll intent', () => {
     sendText();
     expect(smoothCalls()).toEqual([[{ top: 1400, behavior: 'smooth' }]]);
     const id = send.mock.calls[0]![2];
+    chat.receive(message(5, id));
+    expect(smoothCalls()).toHaveLength(1);
     await act(async () => gate.resolve({ message: message(5, id), turn: null }));
     expect(smoothCalls()).toHaveLength(1);
   });
@@ -90,6 +96,11 @@ describe('conversation scroll intent', () => {
     chat.receive(isAssistant ? assistant(5) : message(5, 'from-another-tab'));
     expect(top).toBe(100); expect(smoothCalls()).toHaveLength(0);
   });
+  it('uses the existing strict 80 pixel near-bottom threshold', async () => {
+    const chat = await setup(); chat.position(720); height = 1400;
+    chat.receive(assistant(5));
+    expect(top).toBe(720); expect(smoothCalls()).toHaveLength(0);
+  });
   it('keeps following during downward animation, but stops immediately on an upward user scroll', async () => {
     vi.spyOn(api, 'send').mockReturnValue(new Promise(() => undefined));
     const chat = await setup(); chat.position(100); height = 1400; sendText();
@@ -112,6 +123,49 @@ describe('conversation scroll intent', () => {
     height += 400;
     act(() => frames.splice(0).forEach(callback => callback(0)));
     expect(top).toBe(500); expect(smoothCalls()).toHaveLength(0);
+  });
+  it('anchors at the reading position when the history response arrives, not where the request began', async () => {
+    const chat = await setup(3); chat.position(100);
+    const gate = deferred<Awaited<ReturnType<typeof api.messages>>>();
+    vi.mocked(api.messages).mockReturnValueOnce(gate.promise);
+    fireEvent.click(screen.getByTestId(TID.loadOlder));
+    chat.position(250);
+    await act(async () => gate.resolve({ items: [message(1), assistant(2)], nextCursor: null }));
+    height += 400;
+    act(() => frames.splice(0).forEach(callback => callback(0)));
+    expect(top).toBe(650); expect(smoothCalls()).toHaveLength(0);
+  });
+  it('does not let a pending history anchor override a new send from this tab', async () => {
+    vi.spyOn(api, 'send').mockReturnValue(new Promise(() => undefined));
+    const chat = await setup(3); chat.position(100);
+    const gate = deferred<Awaited<ReturnType<typeof api.messages>>>();
+    vi.mocked(api.messages).mockReturnValueOnce(gate.promise);
+    fireEvent.click(screen.getByTestId(TID.loadOlder));
+    await act(async () => gate.resolve({ items: [message(1), assistant(2)], nextCursor: null }));
+    height += 400; sendText(); top = 300;
+    act(() => frames.splice(0).forEach(callback => callback(0)));
+    expect(top).toBe(300); expect(smoothCalls()).toHaveLength(1);
+  });
+  it('does not include a concurrent bottom append in the prepended-history offset', async () => {
+    const chat = await setup(3); chat.position(100);
+    const gate = deferred<Awaited<ReturnType<typeof api.messages>>>();
+    vi.mocked(api.messages).mockReturnValueOnce(gate.promise);
+    fireEvent.click(screen.getByTestId(TID.loadOlder));
+    await act(async () => gate.resolve({ items: [message(1), assistant(2)], nextCursor: null }));
+    height += 400;
+    chat.receive(assistant(5)); height += 200;
+    act(() => frames.splice(0).forEach(callback => callback(0)));
+    expect(top).toBe(500); expect(smoothCalls()).toHaveLength(0);
+  });
+  it('does not overwrite a user scroll between the history render and anchor frame', async () => {
+    const chat = await setup(3); chat.position(100);
+    const gate = deferred<Awaited<ReturnType<typeof api.messages>>>();
+    vi.mocked(api.messages).mockReturnValueOnce(gate.promise);
+    fireEvent.click(screen.getByTestId(TID.loadOlder));
+    await act(async () => gate.resolve({ items: [message(1), assistant(2)], nextCursor: null }));
+    height += 400; chat.position(250);
+    act(() => frames.splice(0).forEach(callback => callback(0)));
+    expect(top).toBe(250); expect(smoothCalls()).toHaveLength(0);
   });
   it('positions a different consultation at its end and ignores the previous page anchor callback', async () => {
     const chat = await setup(3); chat.position(100);
