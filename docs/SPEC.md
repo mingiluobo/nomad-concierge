@@ -250,6 +250,7 @@ interface SlotDef<T> {
   allowUnsure: boolean;                  // 是否允许"不确定"
   question: string;                      // 追问文案
   options?: { label: string; value: T }[]; // 快捷选项
+  inputLabels?: string[];                // 仅聚焦输入框的入口文字，不作为槽位值发送
   format: (v: T) => string;              // 界面展示
   llmHint: string;                       // 提示词里对该字段的说明
   aliases: string[];                     // 用户提到这一项时的常见说法，例如 timeline：时间、什么时候；规则引擎用来判断"不确定"指的是哪一项
@@ -277,6 +278,7 @@ interface SlotDef<T> {
 说明：
 - `countries.ts` 收录约 40 个常见国家：代码、中文名、常见别名（中文、英文、"葡国"、"中国籍""中国人"这类说法）、是否属于欧盟 / 欧洲经济区 / 瑞士（用于 `nationalityGroup`）。
 - "不确定"选项统一追加在支持它的槽位的快捷选项末尾，值为特殊标记 `{ unsure: true }`。
+- “其他（请输入）”“其他欧盟国家（请输入）”“3 个及以上（请输入）”由注册表的 `inputLabels` 提供。前端按问题的 `slot` 读取，点击仅聚焦自由文本输入框并提示对应槽位，不发送结构化答案、不写入占位值；HTTP `questions` 结构保持不变。
 
 ### 5.2 档案（`packages/shared/src/profile.ts`）
 
@@ -341,7 +343,7 @@ interface Interpretation {
 
 **诉求的显示**：`goals` 的 `add` 只记入 `recorded`（不算修正）；`remove` 和 `set` 记入 `corrected`，`from` / `to` 为变化前后的集合（例如"居留、开公司 → 居留"）。
 
-**一致性检查（合并之后执行 `reconcile(before, after)`，`before` 为本轮开始时的档案，用来判断哪些值在这一轮变了）**：
+**一致性检查（合并之后执行 `reconcile(before, after, providedSlots)`，`before` 为本轮开始时的档案，用来判断哪些值在这一轮变了）**：
 - 修改一个槽位可能让另一个已知值失效，只处理两对明确的依赖：
   - `childrenAges` 为 known、`childrenCount` 为 known 且年龄个数与人数不同 → `childrenAges` 改回 missing。
   - 这一轮 `currentResidence` 从一个已知值**改成了另一个值**（第一次填写不算），而同一轮没有给出 `residenceStatus` → `residenceStatus` 改回 missing（身份是"在当前居住国的身份"，国家变了旧身份不再成立）。
@@ -352,7 +354,9 @@ interface Interpretation {
   - 其余都算**适用**。诉求相关的槽位即使当前诉求不要求追问，用户主动说了也照样有效（例如只选了税务、但说了收入来源是自由职业）。
   - `requiredWhen` 只决定要不要追问和完整度；档案摘要、专业条件和计划使用**适用和待定**的槽位，明确不适用的保留为历史、不参与。重新变为适用时，按当前状态继续使用（再经过上面的失效检查）。
 
-返回 `{ profile, recorded: SlotKey[], corrected: {slot, from, to}[], invalidated: SlotKey[] }`，供回复模板使用。
+返回 `{ profile, recorded: SlotKey[], corrected: {slot, from, to}[], invalidated: SlotKey[], droppedUpdates: {slot, reason}[], providedSlots: SlotKey[] }`，供回复模板和本轮一致性检查使用。
+
+`providedSlots` 记录本次输入中通过槽位取值校验、操作合法的 `updates` 所明确提供的槽位，包含与现值相同的更新；`unsure` 不算明确新值。执行器对各文本段和快捷答案段的 `providedSlots` 取并集，作为必传第三参数传给 `reconcile`。当前居住国变化时，只有这个并集中没有 `residenceStatus` 才使旧身份失效。例如原为中国公民，本轮明确改为居住在葡萄牙并再次明确公民身份，即使身份值同为 `citizen` 也保留；不能仅以值是否变化推断本轮是否给过身份。
 
 **快捷选项的结构化答案**：用户消息 `payload.answers` 中的 `{slot, value}` 直接作为 `SlotUpdate` 合并；`{ unsure: true }` 只对它所属的那个槽位记为 unsure。**带 `payload.answers` 的消息，`content`（选项文字）只用于展示，整条消息不参与文本理解**，避免选项文字被再次理解、误填到其他槽位。点快捷选项时前端直接发送，不与自由文本混在同一条消息里。
 

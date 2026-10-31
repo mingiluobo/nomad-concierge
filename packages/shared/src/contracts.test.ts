@@ -26,6 +26,41 @@ describe('shared contract', () => {
     expect(slots.partnerNationality.requiredWhen(profile)).toBe(true);
     expect(slots.schoolPreference.requiredWhen(profile)).toBe(true);
     expect(slots.incomeSource.requiredWhen(profile)).toBe(false);
+    expect(slots.destination.inputLabels).toEqual(['其他（请输入）']);
+    expect(slots.applicantNationality.inputLabels).toEqual(['其他欧盟国家（请输入）', '其他（请输入）']);
+    expect(slots.childrenCount.inputLabels).toEqual(['3 个及以上（请输入）']);
+  });
+
+  it.each([
+    ['destination', 'PT', 'ZZ'], ['goals', ['residence'], []], ['applicantNationality', 'CN', 'Chinese'],
+    ['hasPartner', false, 'false'], ['partnerNationality', 'PT', 123], ['childrenCount', 2, 2.5],
+    ['childrenAges', [6, 9], [-1]], ['currentResidence', 'CN', 'cn'], ['residenceStatus', 'citizen', 'resident'],
+    ['timeline', 'lt3m', 'tomorrow'], ['incomeSource', 'freelancer', 'salary'], ['businessType', 'software', 'mining'],
+    ['incomeCountry', 'US', 'XX'], ['schoolPreference', 'public', 'private'], ['hasHealthInsurance', true, 1],
+  ] as const)('validates legal and illegal values for %s', (key, valid, invalid) => {
+    expect(slots[key].valueSchema.safeParse(valid).success).toBe(true);
+    expect(slots[key].valueSchema.safeParse(invalid).success).toBe(false);
+  });
+
+  it('covers every requiredWhen condition without inferring missing parent values', () => {
+    const profile = createEmptyProfile();
+    const alwaysRequired = ['destination', 'goals', 'applicantNationality', 'hasPartner', 'childrenCount', 'currentResidence', 'residenceStatus', 'timeline'] as const;
+    const conditional = ['partnerNationality', 'childrenAges', 'incomeSource', 'businessType', 'incomeCountry', 'schoolPreference', 'hasHealthInsurance'] as const;
+    for (const key of alwaysRequired) expect(slots[key].requiredWhen(profile)).toBe(true);
+    for (const key of conditional) expect(slots[key].requiredWhen(profile)).toBe(false);
+    profile.slots.hasPartner = { status: 'known', value: false };
+    profile.slots.childrenCount = { status: 'known', value: 0 };
+    profile.slots.goals = { status: 'known', value: ['residence', 'company', 'tax', 'education', 'healthcare'] };
+    expect(slots.partnerNationality.requiredWhen(profile)).toBe(false);
+    expect(slots.childrenAges.requiredWhen(profile)).toBe(false);
+    expect(slots.schoolPreference.requiredWhen(profile)).toBe(false);
+    for (const key of ['incomeSource', 'businessType', 'incomeCountry', 'hasHealthInsurance'] as const) expect(slots[key].requiredWhen(profile)).toBe(true);
+    profile.slots.hasPartner = { status: 'known', value: true };
+    profile.slots.childrenCount = { status: 'known', value: 1 };
+    for (const key of conditional) expect(slots[key].requiredWhen(profile)).toBe(true);
+    profile.slots.goals = { status: 'known', value: ['tax'] };
+    expect(slots.incomeCountry.requiredWhen(profile)).toBe(true);
+    for (const key of ['incomeSource', 'businessType', 'schoolPreference', 'hasHealthInsurance'] as const) expect(slots[key].requiredWhen(profile)).toBe(false);
   });
 
   it('validates slot values independently of interpretation structure', () => {

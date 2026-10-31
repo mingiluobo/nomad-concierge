@@ -34,6 +34,7 @@ export interface MergeResult {
   corrected: { slot: SlotKey; from: unknown; to: unknown }[];
   invalidated: SlotKey[];
   droppedUpdates: { slot: string; reason: string }[];
+  providedSlots: SlotKey[];
 }
 export interface ReplyInput {
   mergeResult: MergeResult;
@@ -44,7 +45,7 @@ export interface ReplyInput {
 }
 export interface Domain {
   mergeInterpretation(profile: Profile, interpretation: Interpretation, sourceMessageId: string, now: string): MergeResult;
-  reconcile(before: Profile, after: Profile): MergeResult;
+  reconcile(before: Profile, after: Profile, providedSlots: readonly SlotKey[]): MergeResult;
   progress(profile: Profile): Progress;
   nextQuestions(profile: Profile): AssistantPayload['questions'];
   composeReply(input: ReplyInput): Omit<AssistantPayload, 'process'>;
