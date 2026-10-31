@@ -381,7 +381,7 @@
       "LLM_MODEL": "qa-model",
       "PORT": "65015",
       "WEB_ORIGIN": "http://127.0.0.1:65015",
-      "DATABASE_PATH": "/var/folders/j9/y00351wx0f717s6xgxrw8jgh0000gn/T/nc-qa-instance-XqE08Q/qa.sqlite"
+      "DATABASE_PATH": "临时目录/nc-qa-instance-XqE08Q/qa.sqlite"
     },
     "purpose": "candidate-acceptance",
     "candidate": "50a1bdbf660bb942f661fe7175a1afe2c812007b"

@@ -184,7 +184,7 @@ test.describe('local model answer context', () => {
         const before = await detail(api.request, cid);
         await hinted(api.request, cid, '日本', 'applicantNationality');
         const state = await settle(api.request, cid);
-        expect(state.latestTurn).toMatchObject({ engineUsed: 'local', promptVersion: 'v3', fallbacks: [] });
+        expect(state.latestTurn).toMatchObject({ engineUsed: 'local', promptVersion: 'v4', fallbacks: [] });
         expect(modelCalls(app.fakeLocal)).toHaveLength(1);
         const context = promptContext(modelCalls(app.fakeLocal)[0]!.body);
         expectPendingQuestions(context, ['applicantNationality']);

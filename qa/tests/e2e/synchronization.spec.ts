@@ -167,6 +167,7 @@ test('E2E-016 计划详情页首次连接和整体重同步内容完整', async 
   const traffic = await ui.create();
   await page.goto(`/plans/${plan.id}`);
   await ui.live();
+  await expect(page.getByTestId(TID.planDisclaimer)).toBeVisible();
   const content = await page.getByTestId(TID.planFirstStep).innerText();
   expect(content.length).toBeGreaterThan(0);
   const previous = gate.resyncCount;
@@ -179,6 +180,7 @@ test('E2E-016 计划详情页首次连接和整体重同步内容完整', async 
   await expect(page.getByTestId(TID.planKnown)).toContainText('中国');
   await expect(page.getByTestId(TID.planUnknown)).toContainText('当前居住国');
   await expect(page.getByTestId(TID.planBoundary)).not.toBeEmpty();
+  await expect(page.getByTestId(TID.planDisclaimer)).toBeVisible();
   await expect(page.getByTestId(TID.planDisclaimer)).toContainText('不能替代持牌专业人士');
   for (const phase of plan.content.phases) for (const step of phase.steps) {
     await expect(page.getByTestId(TID.planStep(step.id))).toContainText(step.title);

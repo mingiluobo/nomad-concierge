@@ -26,6 +26,7 @@ async function prepare(): Promise<void> {
   try {
     await writeFile(join(directory, '.owned-by-nc-qa'), marker);
     await freshClone(source, info.candidateCommit, root, join(runDirectory, 'prepare.log'));
+    if (info.reviewedQaCommit) await command('git', ['restore', '--source', info.reviewedQaCommit, '--staged', '--worktree', '--', 'qa/'], root, join(runDirectory, 'prepare.log'));
     await verifySnapshot(root, info);
     await command('npm', ['ci'], root, join(runDirectory, 'prepare.log'));
     await command('npm', ['run', 'compile', '--workspace', 'qa'], root, join(runDirectory, 'prepare.log'));
