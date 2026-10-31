@@ -1,5 +1,7 @@
 # Interpretation evaluation
 
+评估快照范围：下方三引擎实测对应产品提交 `3da5f25`、提示词 v4 和当时的 68 条用例。其后补充的国家别名、追问短回答处理及 G069–G073 不在该次真实模型评估范围内；当前标准集为 73 条，不能把下方指标当作 73 条用例的新一轮实测结果。历史 v1/v2/v3/v4 记录与原始指标保留不变。
+
 Run time: 2026-10-31T12:15:47.480Z
 Dataset SHA-256: aa77d3aa1ec79be3c472af24a98cd6518d2e11caedc5fb38e672038026a13e22
 Dataset: 68 cases; tags: ages, all-unsure, ambiguous-unsure, append-goals, arabic-number, assignment, background-fact, boundary, business, chinese-number, company-setup, correction, country-role, explicit-request, holdout, income, insurance, invalid-country, key, llm-only, mixed-information, multi-slot, negation, no-children, no-nationality-inference, not-professional-question, off-topic, ordinary-intention, preserve-unmentioned, professional, prompt-injection, question-variant, relative-duration, relevant-unrecognized, replace-goals, residence-status, rules, school, shared-nationality, short-answer, solo, targeted-unsure, tax-amount, timeline, unsupported-destination, unsure, unsure-forbidden, ux-professional, ux-scope, ux-time, visa-eligibility; key cases reviewed: 26/26
