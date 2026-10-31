@@ -1,208 +1,191 @@
 # Nomad Concierge 黑盒测试计划
 
-本文件记录修复候选的设计基线；候选已交接，以下状态在实际执行后回填。历史结果仍单独保留，不套用新候选。
+候选 `eb2cecbd30571f870876374d429b05ea4eca4a1f`，实际执行 QA `77bfd882b108b1e03f55ebe97b3e822d0570c0ea`。本候选按负责人调整执行受影响用例及完整业务一轮，环境项复用注明旧候选来源。契约复核见 [候选清单](checklists/candidate-eb2cecbd.md)，实际证据及未完成项见 [执行报告](reports/summary.md)。
 
-阶段：候选 eb2cecbd30571f870876374d429b05ea4eca4a1f 已复核，准备执行。依据候选 SPEC v1.3 及 Q-01～Q-03 裁定，详见 [候选清单](checklists/candidate-eb2cecbd.md)。负责人要求受影响用例加完整业务一轮，环境按影响分析沿用39c6bd8。
-
-用例清单：api: 108；e2e: 38；ws: 22；env: 6；manual: 7。每个编号对应一个 Playwright 测试，manual 对应可登记的人工检查。参数化子断言不重复计数。
-
-## 范围与执行前置
-
-- 只依据需求、SPEC、共享 DTO/schema/测试 ID 和 README 操作部分；期望值不调用产品业务函数。
-- 候选由集成负责人组装并声明 WP6 已完成；记录产品、QA、候选提交及 SPEC/README/锁文件版本。新增用例不能套用旧候选声明启动；须等待新候选交接，复核 SPEC 差异并在匹配该候选 shared 的副本重新编译。
-- 每用例使用独占 API 进程、动态端口、临时数据库和本地假模型；浏览器使用完整版 Chromium。所有 E2E 开启 video 和 trace，核心六场景为 E2E-001 至 E2E-006。
-- 完整入口：默认业务套件三轮、环境一轮；本修复候选按负责人调整为受影响回归加完整业务一轮，环境复用单列。macOS Node 22.13.0/24、干净 Linux、Docker 串行检查。只按最终 README 转录的命令配方运行；未提供配方或资源记受阻。
-- 真实模型和内部提交钩子不纳入黑盒自动化；内部状态转换全表、忽略中断后的迟到返回及事务回滚移交开发测试证据。
-- 通过、失败、受阻、未执行、跳过、不稳定分别记录；不适用项须有明确裁定和原因，单独列出，不计通过率分母或通过数。适用人工项须同候选登记。
-
-## 用例
+用例：api 108；ws 22；e2e 38；env 6；manual 7。每编号一个测试或人工检查；参数化子断言不重复计数。
 
 | 编号 | 标题 | 优先级 | 类型 | 需求来源 | 断言内容 | 状态 |
 | --- | --- | --- | --- | --- | --- | --- |
-| API-001 | 登录归一化、同名恢复与 Cookie 属性 | P0 | api | SPEC-11.3, SPEC-19 | 去首尾空格和大小写变化恢复同一 user.id；令牌变化；Cookie 具有 HttpOnly、SameSite=Lax、Path=/、Max-Age；HTTP 登录即使伪造 HTTPS 代理头也不设置 Secure。 | 未执行 |
-| API-002 | 用户名边界校验 | P1 | api | SPEC-11.3 | 空白、1 字符、33 字符返回 422 VALIDATION_ERROR；2 和 32 字符成功。 | 未执行 |
-| API-003 | 所有受保护路由拒绝匿名访问 | P0 | api | SPEC-11.1, SPEC-19 | 每个受保护 HTTP 路由无 Cookie 均返回 401 UNAUTHENTICATED。 | 未执行 |
-| API-004 | 退出删除令牌并清除 Cookie | P0 | api | SPEC-11.3 | logout 返回 204、清 Cookie；原令牌访问 me 返回 401。 | 未执行 |
-| API-005 | 令牌上限淘汰最早令牌 | P0 | api | SPEC-11.3, F-limits | TOKENS_PER_USER=2 时第三次登录使最早令牌失效，后两枚仍可用。 | 未执行 |
-| API-006 | 健康、未知路由和 JSON 错误 | P1 | api | SPEC-11.3, SPEC-11.4 | health 无需登录返回 200；未知 API 返回 404；坏 JSON 返回 400 BAD_REQUEST 且错误有 requestId。 | 未执行 |
-| API-007 | 创建、列表、详情和活动任务快照 | P0 | api | SPEC-11.3, F-multi-session | 创建返回 201、首消息 seq=1；列表按更新时间倒序，含 readStates 和 activeTurns；详情与列表一致。 | 未执行 |
-| API-008 | 新建咨询并发幂等重放 | P0 | api | SPEC-10.1, X-06, B-05 | 相同 clientMessageId 并发创建返回同一 conversation/message/turn；列表只有一项；改变内容重放仍原会话。 | 未执行 |
-| API-009 | 全部资源归属与跨用户重放隔离 | P0 | api | SPEC-11.1, X-16, B-22 | 用户 B 对 A 的会话、消息、任务、已读、计划及真实 clientMessageId 重放均 404；A 消息及档案不变。 | 未执行 |
-| API-010 | 任务必须属于 URL 所指会话 | P0 | api | SPEC-9.4 | 同一用户用会话 X URL 停止或重试 Y 任务均 404，Y 状态不变。 | 未执行 |
-| API-011 | 消息、分页、偏好、已读和计划入参校验 | P1 | api | SPEC-11.3, B-01 | 空消息、非法快捷值、非法偏好、负已读、越界分页参数、非法计划参数均 422；无新增消息。 | 未执行 |
-| API-012 | 发送消息并发幂等 | P0 | api | SPEC-9.4, B-05, B-06 | 相同 clientMessageId 并发发送只产生一个消息 id、一个新任务、连续唯一 seq。 | 未执行 |
-| API-013 | 游标分页与并发新增 | P0 | api | SPEC-11.3, F-pagination | 超过 75 条消息按 30 条分页，页内升序、跨页无重漏；翻页时新增消息不改变旧页边界。 | 未执行 |
-| API-014 | 已读单调且不超过最大消息序号 | P1 | api | SPEC-9.4, F-unread | 较小 seq 不回退；seq 大于 lastSeq 时返回 200 并夹到 lastSeq；列表与详情的持久化已读状态同步且不超界。 | 未执行 |
-| API-015 | 会话级引擎偏好与下一轮生效 | P1 | api | SPEC-8.6, SPEC-11.3, F-engine-selector | PATCH 更新 preference 并提高 version，后续任务 engineRequested 正确；其他会话不变。 | 未执行 |
-| API-016 | 提前生成三项硬门槛 | P0 | api | SPEC-9.4, H-08 | 缺国籍时 422 PROFILE_INSUFFICIENT，details.missing 包含国籍，无计划及 completed 状态。 | 未执行 |
-| API-017 | 不完整确认与提前生成幂等 | P0 | api | SPEC-9.4, H-04 | 三门槛已知但未完整时返回 PROFILE_INCOMPLETE；确认后 201 generatedEarly，重放 200 同一计划。 | 未执行 |
-| API-018 | 完整计划结构与专业边界 | P0 | api | SPEC-14.3, H-04, H-05, H-08 | 完整计划含第一步、三阶段、材料、依赖、已知/未知/待确认、专业边界及示例免责声明；依赖存在且排序在前。 | 未执行 |
-| API-019 | 进程重启恢复对话档案和计划 | P0 | api | H-06, SPEC-6, F-persistence | 同数据库重启后消息、profile、已读和计划正文与重启前完全一致。 | 未执行 |
-| API-020 | 未覆盖国家用通用计划 | P1 | api | SPEC-14.3, B-18 | 智利计划 destination=CL、coverage=generic，含行动步骤和专业声明，内容区别于葡萄牙计划。 | 未执行 |
-| API-021 | 计划列表和详情只含本人计划 | P0 | api | SPEC-11.3, SPEC-19 | plans 列表和 detail 返回本人生成的同一计划；另一用户列表为空，直接取计划 404。 | 未执行 |
-| API-022 | 完成会话不可写但旧消息重放成功 | P0 | api | SPEC-9.4 | 完成后新消息和 PATCH 为 CONVERSATION_COMPLETED；旧 clientMessageId 重放 200 原消息；取消已结束任务 200；重试 409。 | 未执行 |
-| API-023 | 消息长度边界含去空白 | P1 | api | B-01, B-02, F-limits | 设置上限 20，20 字符成功，21 字符创建及发送返回 MESSAGE_TOO_LONG，纯空白返回 VALIDATION_ERROR。 | 未执行 |
-| API-024 | 会话总数含已完成且重放优先 | P1 | api | B-04, F-limits | 上限 2 时收集中和已完成共计，第三次创建 422；上限后旧创建 id 重放仍 200。 | 未执行 |
-| API-025 | 消息上限为助手回复预留一条 | P0 | api | X-08, B-03, F-limits | 上限 4 时序号 3 的用户消息可接受并生成序号 4 的助手回复；后续发送拒绝，旧消息重放仍 200。 | 未执行 |
-| API-026 | 题面多信息输入不推断国籍和居住地 | P0 | api | H-01, H-03, SPEC-21.1 | 题面输入抽出 PT、配偶、明年及四诉求；国籍/居住国/身份 missing，孩子人数不猜；下一问含国籍。 | 未执行 |
-| API-027 | 部分回答保留其他有效信息 | P0 | api | H-02, SPEC-5.4 | 补充一个槽位后，所有其他已知槽位状态和值完全不变；已明确项不再追问，问题最多两项。 | 未执行 |
-| API-028 | 第二个国家快捷选项仅更新所属槽位 | P0 | api | X-01, SPEC-5.4 | 同时缺国籍和居住国时点击居住国中国，只填 currentResidence，国籍保持 missing；process.engineUsed=null。 | 未执行 |
-| API-029 | 修改人数使不匹配年龄失效 | P0 | api | X-02, B-15 | 人数 2→1 后 ages missing、previousValue=[6,9]，下一问重问年龄；其他槽位保留。 | 未执行 |
-| API-030 | 指向不确定和同句有效信息 | P0 | api | X-04, B-14 | 时间没想好且自由职业同时输入，只把 timeline 设 unsure，收入来源 known；后续不再追问时间，计划待确认含时间。 | 未执行 |
-| API-031 | 多项追问时无指向不确定不误填 | P0 | api | B-14, SPEC-8.2 | 有两项可不确定问题时说不知道不改变二者；都不知道只把这两项设 unsure。 | 未执行 |
-| API-032 | 已知值与不允许不确定字段保护 | P0 | api | B-16, SPEC-5.4 | known timeline 收 unsure 保持 known；国籍等禁止 unsure 的快捷输入不把字段置 unsure。 | 未执行 |
-| API-033 | 诉求追加否定与明确替换 | P0 | api | X-05, H-02, SPEC-5.4 | 追加税务保留居留公司；否定公司仅移除公司；明确只要税务整体替换；删除最后诉求被忽略。 | 未执行 |
-| API-034 | 改口保存来源和旧值 | P0 | api | B-17, H-02 | 配偶 CN→PT 保留 previousValue=CN、corrected=true、sourceMessageId 为修正消息，回复 corrections 包含该项。 | 未执行 |
-| API-035 | 中文人数及年龄列表解析 | P1 | api | H-01, SPEC-8.2 | 两名孩子及 6/9 岁同时输入得到人数 2 和年龄 [6,9]；国籍、目的国与当前居住国按语境区分。 | 未执行 |
-| API-036 | 短回答依赖当前追问 | P1 | api | H-01, SPEC-21.1 | 问国籍时中国填本人国籍；问孩子人数时两个填 2，不覆写目的国。 | 未执行 |
-| API-037 | 当前居住国变化重新问身份 | P0 | api | X-14, SPEC-5.4 | 已知 CN/citizen 改成 PT 后身份 missing、previousValue=citizen，下一问含身份。 | 未执行 |
-| API-038 | 同轮显式身份和重复居住国不失效 | P0 | api | SPEC-5.4 | 同时修改居住国并显式给相同 citizen 保留身份；再次提交相同居住国也保留身份。 | 未执行 |
-| API-039 | 明确不适用与待定区分 | P1 | api | SPEC-14.3, SPEC-5.4 | 无配偶无孩子时计划摘要排除旧配偶国籍/年龄/学校；上级未知时提前计划保留条件步骤并列待确认。 | 未执行 |
-| API-040 | 主动提供的非必问信息进入摘要 | P0 | api | X-15, H-08 | 仅税务诉求也保留主动收入来源，在专业条件和计划 known 摘要中出现。 | 未执行 |
-| API-041 | 无关内容和相关未知内容引导 | P1 | api | F-intents, SPEC-15 | 无关输入发 off_topic 且 profile 不变；相关但无新信息发 not_understood 并继续追问。 | 未执行 |
-| API-042 | 专业问法保留信息并展示条件 | P0 | api | H-05, F-intents, SPEC-5.5 | 三类专业问题含局限/持牌说明、条件已知与未知；同句国籍更新保留，仍继续追问。 | 未执行 |
-| API-043 | 未覆盖国家继续追问并提示资料范围 | P1 | api | B-18, SPEC-15 | 智利被识别为 CL，出现 unsupported_destination 且 questions 非空。 | 未执行 |
-| API-044 | 词典外国家与未覆盖资料区别 | P1 | api | B-19, SPEC-8.2 | 词典外国家不写入 destination，发 not_understood 并重问目的国。 | 未执行 |
-| API-045 | 规则输入注入不产生非法目的国 | P0 | api | B-13, SPEC-19 | 要求改规则并把目的国设火星不改变有效 PT、不生成任意回复命令。 | 未执行 |
-| API-046 | 远程合法 JSON 被采用 | P1 | api | SPEC-8.3 | 假远程被实际调用，更新目标槽位；engineUsed=remote、promptVersion=v4，timings 非负。 | 未执行 |
-| API-047 | 带代码围栏 JSON 可接受 | P1 | api | SPEC-8.3 | 围栏包裹合法 Interpretation 被正常合并，engineUsed=remote，无 invalid_output 回退。 | 未执行 |
-| API-048 | 坏 JSON 回退规则 | P0 | api | B-11, F-fallback | 远程坏 JSON 产生 invalid_output 记录并由 rules 完成，规则抽出的 PT 仍保留。 | 未执行 |
-| API-049 | 结构非法输出回退 | P1 | api | B-11, SPEC-8.3 | 缺少 updates 或 off_topic 含 updates 输出均回退，非法数据不污染 profile。 | 未执行 |
-| API-050 | 合法结构非法值仅丢弃该项 | P0 | api | B-12, SPEC-5.3 | 远程 valid PT + 非法年龄/国籍输出只保留 PT，engineUsed 仍 remote、不整体回退。 | 未执行 |
-| API-051 | 401、429、500 分类为 unavailable | P1 | api | B-11, SPEC-8.3 | 各 HTTP 故障均记录 remote unavailable，任务仍由规则完成。 | 未执行 |
-| API-052 | 假模型不响应触发 timeout 回退 | P1 | api | B-11, SPEC-8.7 | 远程挂起被引擎超时终止，fallback reason=timeout，任务 completed。 | 未执行 |
-| API-053 | auto 远程失败后选本地 | P1 | api | F-fallback, SPEC-8.6 | remote 坏 JSON 后调用 local，engineUsed=local，档案取本地指定值。 | 未执行 |
-| API-054 | auto 两级失败后选规则 | P1 | api | F-fallback, SPEC-8.6 | 远程超时、本地坏 JSON 依次留下两个回退原因，最终 rules 完成。 | 未执行 |
-| API-055 | 指定本地偏好不调用远程 | P1 | api | SPEC-8.6 | local 偏好只请求本地；本地失败后直接 rules，远程请求数不增加。 | 未执行 |
-| API-056 | 规则偏好不调用任一模型 | P0 | api | H-09, SPEC-8.6 | 两级配置均存在时 rules 任务成功且两个 fake 的 completions 请求数保持零。 | 未执行 |
-| API-057 | 连续失败熔断并跳过请求 | P1 | api | F-breaker, SPEC-8.4 | 阈值 2 后 engines 显示 circuit_open；下一轮不请求远程且 fallbacks 为 circuit_open。 | 未执行 |
-| API-058 | 冷却半开成功恢复 | P1 | api | SPEC-8.4 | 用真实请求有界探测冷却后放行，一次成功远程请求关闭熔断，后续远程仍可用。 | 未执行 |
-| API-059 | 半开失败重新熔断 | P1 | api | SPEC-8.4 | 冷却后再次失败只放行一次并重新打开，后续回退不再访问 fake。 | 未执行 |
-| API-060 | 用户停止不计入熔断失败 | P1 | api | SPEC-8.4 | 挂起模型调用时停止，然后恢复合法模型；阈值 1 仍可用且下一轮 remote 成功。 | 未执行 |
-| API-061 | 本地模型缺失不可用 | P1 | api | SPEC-8.5 | models 列表不含配置名后重启，engines 为 model_missing；local 偏好回退 unavailable。 | 未执行 |
-| API-062 | 模型请求协议与追问上下文 v4 | P1 | api | SPEC-8.3, UX-01 | 请求 model、temperature=0、max_tokens=800、response_format 正确；任务及回复过程 promptVersion=v4；用户 JSON 含 newMessages、pendingSlots、profile、recentMessages，pendingQuestions 同序包含注册表问题、选项和 allowUnsure。 | 未执行 |
-| API-063 | 纯快捷轮次没有理解调用 | P0 | api | X-13, SPEC-9.2 | 快捷答案完成后两个模型请求计数不变；engineUsed 和 promptVersion 为 null。 | 未执行 |
-| API-064 | 模型输出注入文本不成为回复 | P0 | api | B-13, SPEC-19 | 合法解释中的额外指令/非法槽位值不执行，助手内容不含攻击哨兵，合法槽位照常生效。 | 未执行 |
-| API-065 | 无 Key 基线引擎状态可复现 | P0 | api | H-09, H-01, SPEC-8.5 | remote/local not_configured、rules available；auto 仍完成主输入，process 记录回退。 | 未执行 |
-| API-066 | 停止、幂等停止和重试 | P0 | api | F-turn-lifecycle, SPEC-9.4 | running 停止变 cancelled、重复停止 200；重试新 id、retryOfTurnId 正确；终态后只有一条有效助手回复。 | 未执行 |
-| API-067 | 补充取代旧任务并合并未处理消息 | P0 | api | B-07, SPEC-9.4 | running 时补充得到新 turn；取消旧终态读取 superseded；最终两次输入都进 profile，旧 turn 无助手回复。 | 未执行 |
-| API-068 | 未处理修正阻止计划 | P0 | api | X-03, B-09 | 取消修正后计划 409 UNPROCESSED_MESSAGES，details.count>0；重试后计划反映修正。 | 未执行 |
-| API-069 | 进行中不能生成计划 | P0 | api | B-08, SPEC-9.4 | running 时计划 409 TURN_IN_PROGRESS；会话仍 collecting。 | 未执行 |
-| API-070 | 重试只针对最新失败或取消任务 | P1 | api | SPEC-9.4 | 已有 active 时返回同一 turn 200；旧取消任务在后续任务完成后重试为 TURN_NOT_RETRYABLE。 | 未执行 |
-| API-071 | 生成计划与发送消息竞争 | P0 | api | B-10 | 并发计划/消息最多一方写入成功，另一方 409；终态计划与消息状态一致。 | 未执行 |
-| API-072 | 文本快捷文本真实先后合并 | P0 | api | X-10, SPEC-5.4 | 延迟窗口内文本 CN→快捷 PT→文本时间，最终配偶 PT 且来源快捷消息、时间为明年；反向顺序最终 CN。 | 未执行 |
-| API-073 | 实际 API 进程 SIGKILL 恢复 | P0 | api | B-20, SPEC-9.5 | running 时杀实际进程并同库启动，同一 turn id、attempt+1，最终仅一条助手回复。 | 未执行 |
-| API-074 | SIGTERM 优雅停机续跑 | P0 | api | B-20, SPEC-7.2, SPEC-9.5 | running 时 SIGTERM 观察 queued 事件及 1012 关闭后同库启动，queued 与完成时 attempt 均不变，原任务仅一条回复。 | 未执行 |
-| API-075 | 重复崩溃达到恢复次数上限 | P1 | api | B-20, SPEC-9.5 | 同一任务在 attempt 1、2、3 时崩溃，第 4 次启动 failed/RECOVERY_LIMIT，不写助手回复。 | 未执行 |
-| API-076 | 整轮超时与后续重试 | P1 | api | SPEC-9.3, F-timeout | 合规超时配置下延迟超过整轮期限，failed/TURN_TIMEOUT；重试返回新 id 且指向原任务。 | 未执行 |
-| API-077 | 排队任务可停止和重试 | P1 | api | SPEC-7.2, SPEC-9.4 | 并发度 1 时第二会话 queued；停止 queued 得 cancelled；重试重新排队并最终完成。 | 未执行 |
-| API-078 | 并发会话独立与单会话序号 | P0 | api | B-06, SPEC-9.1 | 多会话同时处理，各档案只含自身输入；同会话并发消息 seq 唯一连续且最后回复包含全部输入。 | 未执行 |
-| API-079 | 并发生成计划唯一 | P0 | api | SPEC-9.4 | 两个并发生成请求返回同一计划 id、只一个列表项、会话绑定该计划。 | 未执行 |
-| API-080 | 连续补充和重试遵守消息上限 | P0 | api | X-08, B-03, SPEC-9.4 | 低上限连续补充预留助手位置；超过上限拒绝；取消重试不新增用户消息，最终计数不超过上限。 | 未执行 |
-| API-081 | 请求体 64KB 上限不产生写入 | P0 | api | SPEC-11.1, SPEC-19, F-security | 超过 64KB 的 JSON 请求返回 4xx；即使 content 很短，也不会创建会话或消息。 | 未执行 |
-| API-082 | 同目的国不同诉求产生不同计划 | P0 | api | H-01, H-02, H-08, SPEC-14.3 | 同为葡萄牙且基础档案相同，仅税务与居留/公司诉求的计划步骤集合不同，各步骤 goal 只来自对应诉求或 general。 | 未执行 |
-| API-083 | 回答提示拒绝非法槽位 | P1 | api | SPEC-5.4, SPEC-11.2, UX-01 | answeringSlot 未知、空字符串、null 或数字均 422 VALIDATION_ERROR；会话、消息和档案无写入。 | 未执行 |
-| API-084 | 回答提示要求非空文本 | P1 | api | SPEC-5.4, SPEC-11.2, UX-01 | answeringSlot 配合空或纯空白 content 均 422 VALIDATION_ERROR；没有新增消息或任务。 | 未执行 |
-| API-085 | 回答提示与快捷答案互斥 | P1 | api | SPEC-5.4, SPEC-11.2, UX-01 | answeringSlot 与 answers 混用，包括空 answers，均 422 VALIDATION_ERROR；不更新档案。 | 未执行 |
-| API-086 | 国家短回答归属指定槽位 | P0 | api | SPEC-5.4, SPEC-8.2, UX-01 | 日本配合五个国家槽位 hint 分别更新指定项、记录来源，其他国家槽位保持原状。 | 未执行 |
-| API-087 | 显式事实优先于回答提示 | P0 | api | SPEC-5.4, SPEC-8.2, UX-01 | 居住国、本人国籍及签证目的国有显式上下文时写入实际槽位，不强塞到不同的回答提示槽位。 | 未执行 |
-| API-088 | 回答提示遵守不确定限制 | P0 | api | SPEC-5.1, SPEC-5.4, SPEC-8.2, UX-01 | 无指向的不知道在 timeline hint 下只标记时间 unsure；国籍 hint 不允许 unsure，国籍继续 missing。 | 未执行 |
-| API-089 | 回答提示 HTTP 往返和重启持久化 | P0 | api | SPEC-5.4, SPEC-11.2, F-persistence, UX-01 | 发送响应、消息列表和同库重启后的原始消息完全保留 answeringSlot、content、clientMessageId；档案归属不变。 | 未执行 |
-| API-090 | 回答提示幂等重发保留原消息 | P0 | api | SPEC-5.4, SPEC-9.4, B-05, UX-01 | 并发同 clientMessageId 只生成同一个消息和任务；完成后用不同内容/hint 重放仍返回原消息，提示与档案不被替换。 | 未执行 |
-| API-091 | 取消后任务重试保留回答提示 | P0 | api | SPEC-5.4, SPEC-9.4, UX-01 | 取消未完成的 hinted 输入后重试，新任务继续按原 hint 解释、来源仍原消息；不重复用户消息且仅一条新任务回复。 | 未执行 |
-| API-092 | 本地模型收到收窄的回答上下文 | P0 | api | SPEC-5.4, SPEC-8.3, UX-01 | hint 消息只传指定 pendingSlots，pendingQuestions 与注册表同序一致，模型使用 v4；假模型无更新时 hint 自身不写档案，同槽位换文本仍得到相同 pendingQuestions。 | 未执行 |
-| API-093 | 回答提示隔离相邻普通文本段 | P0 | api | SPEC-5.4, SPEC-8.3, UX-01 | 在独占执行器排队屏障内合并普通文本、hint、两个普通文本；本地模型恰好收到三段，仅中段 pendingSlots 收窄，前后普通段保持正常追问上下文。 | 未执行 |
-| API-094 | 相邻回答提示和快捷答案按段处理 | P0 | api | SPEC-5.4, SPEC-8.3, X-10, X-13, UX-01 | 连续两个 hint 分别调用本地模型，后段 profile 包含前段事实；快捷段不调用模型，各槽位 sourceMessageId 对应自己的段。 | 未执行 |
-| API-095 | 模型追问选项只提供解释上下文 | P1 | api | SPEC-5.1, SPEC-8.3, UX-01 | 问题同 pendingSlots 顺序，包含注册表明确给出的静态选项及正确的 allowUnsure；不强制 Prompt 复用 UI 动态选项。空模型更新不把选项或 hint 变为新事实，保留原 known/unsure。 | 未执行 |
-| API-096 | 签证资格问法变体均回应专业边界 | P0 | api | SPEC-5.5, SPEC-8.2, SPEC-15, H-05, UX-05 | 八种资格问法含专业局限、演示/时效说明、持牌要求和签证条件；同句本人国籍保留、仍继续追问。 | 未执行 |
-| API-097 | 专业主题由当前问题决定 | P0 | api | SPEC-5.5, SPEC-8.2, SPEC-15, UX-05 | 历史诉求或同句公司背景不抢占当前签证/税务/开公司问题的主题；条件列表属于当前主题，显式事实仍保留。 | 未执行 |
-| API-098 | 申请签证的国家只归目的国 | P0 | api | SPEC-8.2, SPEC-5.5, UX-05 | 中国本人/配偶国籍或收入来源与葡萄牙签证同句时，目的国 PT；已明确中国信息仍 CN，未说的国家项不被填为 PT。 | 未执行 |
-| API-099 | 申请签证意愿不当作专业判断 | P1 | api | SPEC-8.2, SPEC-15, UX-05 | 想申请签证只记录居留意愿及显式目的国，继续追问，没有 professional 或 off_topic 提示。 | 未执行 |
-| API-100 | 背景事实不扩大已有诉求 | P0 | api | SPEC-5.4, SPEC-8.2, UX-04 | 仅税务咨询主动补充保险、公司业务、学校偏好时，事实进入适用槽位但 goals 保持仅 tax。 | 未执行 |
-| API-101 | 诉求整体替换不被同句背景反加 | P0 | api | SPEC-5.4, SPEC-8.2, UX-04 | 只想/只要/改成税务替换既有五类诉求，同句保险、业务及学校事实保留但不把被移除诉求加回；回复显示诉求修正。 | 未执行 |
-| API-102 | 固定相对时间映射覆盖十二种表达 | P0 | api | SPEC-8.2, UX-03 | 下周、两个月后、三个月内/后、四个月后、半年后、一年后/以后及原明年/下个月/尽快/半年内固定映射到对应枚举；不再追问已知时间。 | 未执行 |
-| API-103 | 第三次尝试优雅停机不耗恢复次数 | P0 | api | SPEC-7.2, SPEC-9.5, B-20 | 两次崩溃恢复达到 attempt=3 后 SIGTERM，queued 事件及再次启动完成均仍为 3；不触发 RECOVERY_LIMIT，仅一条助手回复。 | 未执行 |
-| API-104 | 新增国家别称映射及上下文归属 | P1 | api | SPEC-5.1, SPEC-8.2 | 47 条新增别称经公开 API 识别为既定国家代码与展示名；另覆盖本人/配偶国籍、居住国、收入国、签证目的国五种显式上下文，其他国家槽位不变。 | 未执行 |
-| API-105 | 排除国家短称碰词并保留标准国名 | P1 | api | SPEC-5.1, SPEC-8.2 | 参加国际会议、大马士革、加国、大马均不被识别为国家；加拿大和马来西亚仍按待答目的国正确归属。 | 未执行 |
-| API-106 | 追问中的无法归属短答不猜档案 | P1 | api | SPEC-8.2, SPEC-15, F-questions, F-intents | 国家槽位追问中输入 2、嗯、好的走 not_understood 而非 off_topic；档案及 pendingSlots 不变，无新增事实、修正或 unsure，继续原追问。 | 未执行 |
-| API-107 | 无追问时不启用短答相关兜底 | P1 | api | SPEC-8.2, SPEC-15, F-intents | 完整档案 pendingSlots 为空时输入 2、嗯、好的保持 off_topic；不出现 not_understood、不修改档案、不产生追问。 | 未执行 |
-| API-108 | 明确无关请求与可归属短答保留原行为 | P1 | api | SPEC-8.2, SPEC-15, F-questions, F-intents | 有追问时午饭、唱歌、吃啥仍 off_topic 且档案不变；随后中国、一个人、两个按当前问题分别记录国籍、同行与孩子人数，已有目的国保留。 | 未执行 |
-| E2E-001 | 登录、示例、快捷回答、修正与完整计划 | P0 | e2e | H-01, H-02, H-03, H-04, H-05, H-08, H-09, SPEC-13.5, UX-06 | 示例卡只填入不发送；中文示例不推断国籍、居住国或身份；快捷回答填入已明确值；修正配偶国籍后其他全部槽位保持原值；完整计划包含第一步、已知、未知、待确认、步骤原因、专业边界和免责声明；工作台免责声明条在空状态、咨询中及结束后可见，完整计划页免责声明可见且保留原文字校验；完成后输入框替换为提示条。 | 未执行 |
-| E2E-002 | 刷新恢复完整对话、档案、过程与计划 | P0 | e2e | H-04, H-06, SPEC-13.3 | 刷新前后每条消息内容、数量、连续序号、档案值和状态、过程记录文本一致；计划入口仍有效，刷新计划页后第一步和服务端完整计划内容完全一致。 | 未执行 |
-| E2E-003 | 多标签消息同步与跨会话未读消除 | P1 | e2e | SPEC-10.6, SPEC-13.4 | 同一会话两个页面逐条显示相同消息且每个 seq 仅一次；另一个会话回复后两个标签都有红点；聚焦打开该会话后两边红点均消失，服务端 lastReadSeq 等于 lastAssistantSeq。 | 未执行 |
-| E2E-004 | 停止、重试与运行中的补充 | P1 | e2e | SPEC-7.2, SPEC-9.4, SPEC-13.5, B-07 | 理解阶段停止后 UI 显示已中断；重试生成新任务并指向原任务；回复中补充产生更新任务，初始目的国与补充国籍/孩子人数同时保存；最终只有一条助手回复，取消和被替代的任务没有回复。 | 未执行 |
-| E2E-005 | 专业问题的条件与局限、无关内容的引导 | P0 | e2e | H-05, H-08, SPEC-5.5, SPEC-15 | 签证问题显示持牌专业人士说明、已知国籍与待了解条件；无关问题显示出海计划引导，前后所有档案槽位和追问状态保持一致。 | 未执行 |
-| E2E-006 | 坏 JSON 回退至规则并显示过程 | P1 | e2e | H-09, SPEC-8.6, SPEC-13.5, B-11 | 本地假服务实际收到请求；远程返回坏 JSON 后助手 process 为 rules 且记录 remote/invalid_output；界面折叠摘要显示已回退到规则，展开显示来源、原因和耗时；用户明确国籍仍正确保存。 | 未执行 |
-| E2E-007 | 提前生成确认、未知项与通用国家清单 | P1 | e2e | H-04, H-05, H-08, SPEC-13.5, B-18 | 智利显示通用资料提示；提前生成对话框列出缺项和结束后不能补充，取消不生成计划；确认后 generatedEarly=true、coverage=generic，未知居住国和专业边界可见，计划页免责声明可见且保留原文字校验；计划列表明确标注通用准备清单。 | 未执行 |
-| E2E-008 | 快捷答案只更新所属槽位，过程显示快捷回答 | P1 | e2e | X-01, X-13, SPEC-5.4 | 同时追问两个国籍时点本人国籍只更新本人，配偶和居住国保持 missing；该轮 engineUsed=null，过程记录显示快捷回答。 | 未执行 |
-| E2E-009 | 只有最新助手消息的快捷选项可操作 | P1 | e2e | SPEC-13.5 | 产生新助手回复后上一条国籍快捷选项不可操作（禁用或不再呈现），最新回复的快捷选项仍可操作，防止历史选项覆盖当前档案。 | 未执行 |
-| E2E-010 | 发送失败重试复用标识且只建一个咨询 | P1 | e2e | X-06, SPEC-13.5, SPEC-13.6, B-05 | 首次创建请求网络失败后显示重试；重试沿用原 clientMessageId；服务端只有一个会话、一条用户首消息，成功后发送中占位消失。 | 未执行 |
-| E2E-011 | 路由保护、咨询不存在与退出登录 | P0 | e2e | SPEC-13.1, SPEC-13.6, SPEC-19 | 未登录访问计划页跳转登录；不存在咨询显示明确错误；退出后 /me 返回 401；同名不同大小写重新登录能恢复原咨询。 | 未执行 |
-| E2E-012 | 游标分页与同时新增消息不重不漏 | P1 | e2e | SPEC-11.3, SPEC-12.3, SPEC-13.5 | 36 条历史初次只显示最新 30 条；转发并暂扣真实翻页响应时再新增 2 条，放行后 38 条逐条出现且各一次、DOM seq 顺序严格升序、没有更多页。 | 未执行 |
-| E2E-013 | 初次同步的旧快照不覆盖较新任务和档案事件 | P1 | e2e | X-09, SPEC-12.3, SPEC-13.3 | 当前连接 ready 到达后才请求详情；暂扣 activeTurn=null 的真实旧快照，期间新任务运行；旧响应放行后仍显示进行中任务；最终国籍为新值且旧档案不覆盖实时修正。 | 未执行 |
-| E2E-014 | 超过一千事件后会话页完整重同步 | P1 | e2e | X-09, SPEC-12.2, SPEC-13.3, B-21 | 断线期间通过公开偏好修改产生超过 1000 次版本增长；重连实际收到服务端 resync_required；连接恢复 live 后所有消息、档案修正与服务端快照一致。 | 未执行 |
-| E2E-015 | 整体重同步恢复我的计划列表 | P1 | e2e | X-09, SPEC-13.3, UX-07 | 停留我的计划页断线并真实累积超过 1000 事件，期间新增计划；重同步拉取真实计划快照时计数显示省略号；放行后旧计划和新计划均出现且各一次、计数为 2，通用清单标注保留。 | 未执行 |
-| E2E-016 | 计划详情页首次连接和整体重同步内容完整 | P1 | e2e | X-09, SPEC-13.3 | 计划页免责声明首次载入及整体重同步后均可见，保留原文字校验；直接打开计划详情可读第一步；真实超过 1000 事件触发重同步后第一步不变，已知、未知、边界、免责声明和每个步骤仍齐全。 | 未执行 |
-| E2E-017 | 断线期间其他标签切换身份后不混用数据 | P0 | e2e | X-11, SPEC-13.3, SPEC-19 | A 标签断线，B 标签退出并登录另一用户；A 重连接到新 ready.userId 后旧用户会话消失，新用户会话和日本/智利档案可见，旧资源访问返回 404。 | 未执行 |
-| E2E-018 | 重同步前迟到的旧翻页响应不污染数据和游标 | P1 | e2e | X-12, SPEC-13.3 | 暂扣真实旧翻页响应后通过真实事件积压触发整体重同步；放行旧响应并处理新回复后最早页仍未混入；重新翻页最终全部 40 条逐条恰好一次且游标结束。 | 未执行 |
-| E2E-019 | 空白、超长、消息满额与咨询上限提示 | P1 | e2e | X-08, SPEC-13.5, B-01, B-02, B-03, B-04 | 空白和超过配置字数时不能发送；消息上限 4 时两轮最终恰好 4 条，输入框替换成满额提示；超过 1 个咨询时明确提示且服务端数量仍为 1。 | 未执行 |
-| E2E-020 | 引擎偏好保存且下一轮使用选定规则引擎 | P1 | e2e | H-09, SPEC-8.5, SPEC-13.5 | 无 Key 时远程和本地选项禁用；选择 rules 后服务端偏好为 rules；下一轮 process 为 rules 且无回退；刷新后选择仍保存。 | 未执行 |
-| E2E-021 | 其他输入携带所属问题提示且不污染下一条普通文本 | P1 | e2e | UX-01, SPEC-5.4, SPEC-11.2, SPEC-13.5 | 两个国家问题同时待回答时，点击国籍的其他输入新增所属提示，日本只更新国籍且目的国仍缺失；真实请求和消息保留 answeringSlot，下一条普通文本清除；同一用例子断言覆盖目的国、当前居住国和收入国入口。 | 未执行 |
-| E2E-022 | 提示文本发送失败后重试保留原标识和所属问题 | P1 | e2e | UX-01, SPEC-13.5 | 首个真实发送请求中断后显示重试；重试请求完整保留内容、clientMessageId 和 answeringSlot，最终仅一条对应持久化消息，本人国籍为日本。 | 未执行 |
-| E2E-023 | 快捷回答、咨询切换和账号切换均清除作答提示 | P1 | e2e | UX-01, SPEC-13.5, X-11 | 点其他输入后改选快捷答案、客户端切换到另一咨询再返回、退出切换账号，随后真实文本请求均不带旧 answeringSlot；未回答的国籍不被误更新。 | 未执行 |
-| E2E-024 | 完整资料生成须确认且取消不发生成请求 | P1 | e2e | UX-06, SPEC-13.5 | 完整资料点击生成后显示结束咨询警示与继续补充/生成计划按钮；取消无 plan POST，仍 collecting 且无计划；确认仅发一个 allowIncomplete=false 请求并完成咨询。 | 未执行 |
-| E2E-025 | 计划计数跨各页面、刷新和多标签保持完整 | P1 | e2e | UX-07, SPEC-13.3, SPEC-13.5 | 空白新咨询页、进行中咨询、已完成咨询、计划列表和计划详情直接进入及刷新均显示完整计数；新增真实计划后另一标签同步递增。 | 未执行 |
-| E2E-026 | 计划快照加载显示省略号且旧快照不覆盖新增事件 | P1 | e2e | UX-07, SPEC-12.3, SPEC-13.3, SPEC-13.5 | 暂扣仅有一计划的真实 GET 响应时计数显示省略号；真实生成第二计划，再用后续真实咨询事件的侧栏展示确认浏览器处理边界；释放旧响应后两卡各一次且计数为 2。额外新快照或不可观察处理边界记受阻，不能冒充乱序验证。 | 未执行 |
-| E2E-027 | 真实计划卡片区分完整度、资料数量和精确到秒的时间 | P2 | e2e | UX-09, SPEC-11.2, SPEC-13.5 | 真实税务提前计划和完整计划的列表卡分别标注完整度，已知/待了解数量等于已保存内容数组长度；真实生成时间可见到秒且可区分；列表无需逐卡请求详情。缺可选字段的旧格式兼容另需开发证据。 | 未执行 |
-| E2E-028 | 真实空计划阶段显示暂无事项提示 | P2 | e2e | UX-11, SPEC-13.5 | 公开接口生成税务单诉求计划，按真实保存内容确认空阶段；每个空阶段内显示暂无事项、非空阶段不误标为空，提示总数等于空阶段数，标题与真实步骤完整。若真实数据没有空阶段则前置受阻，不将其判为产品失败。 | 未执行 |
-| E2E-029 | 首次和后续新咨询均显示开始新的咨询 | P2 | e2e | UX-13, SPEC-13.5 | 首次登录空状态、已有咨询后点新建、已有计划后的空页刷新均显示开始新的咨询，示例卡仍可见。 | 未执行 |
-| E2E-030 | 主动引擎选择刷新和新建沿用且浏览旧咨询不覆盖 | P2 | e2e | UX-14, SPEC-13.5 | 主动选择规则后刷新及新建沿用 rules；浏览自身偏好 auto 的旧咨询不改新建默认；在已有咨询主动切换 auto 会 PATCH 并更新后续新建偏好。 | 未执行 |
-| E2E-031 | 引擎选择按账号隔离且首次自动能回退规则 | P2 | e2e | UX-14, SPEC-8.5, SPEC-13.5 | 首次账号默认 auto，主动规则选择在退出重新登录及刷新后保留；另一新账号仍 auto 且没有配置模型时实际使用 rules；再次切换账号仍隔离。非法存储值回到自动另需开发证据，不猜存储键。 | 未执行 |
-| E2E-032 | 本标签远离底部发送仍平滑滚动到底部 | P1 | e2e | FIX-scroll, SPEC-13.5 | 本人发送真实用户消息，助手事件单独延迟；从远离底部的位置经过至少两个中间动画帧到达消息底部，释放真实助手回复后继续跟随。 | 未执行 |
-| E2E-033 | 其他标签消息和助手回复仅在距底部小于80px时跟随 | P1 | e2e | FIX-scroll, SPEC-13.5, F-multi-tab | 分别在距底部40px和远离底部时接收另一标签真实用户消息及助手回复；近处平滑跟随到底，远处同一消息相对视口位置保持不变。 | 未执行 |
-| E2E-034 | 顶部自动翻页prepend后保持原消息阅读锚点 | P1 | e2e | FIX-scroll, SPEC-13.5, F-pagination | 顶部滚动实际触发before分页；释放真实旧消息响应后消息齐全无重复，同一阅读锚点相对视口偏移保持在2px以内，不跳到底部。 | 未执行 |
-| E2E-035 | 切换咨询后旧翻页异步响应不改变新咨询定位 | P1 | e2e | FIX-scroll, SPEC-13.5, X-12, F-pagination | 延迟旧咨询真实分页响应，切换到新咨询并向上阅读；释放旧响应后及新咨询真实事件处理完成后，新咨询消息及阅读锚点保持不变，不出现瞬时旧定位。 | 未执行 |
-| E2E-036 | 未配置模型时正常规则摘要、展开历史不可用说明且数据不变 | P1 | e2e | FIX-process-summary, SPEC-13.5, SPEC-8.5, SPEC-8.6 | 无模型配置的auto链保留remote/local unavailable持久记录；当前状态均not_configured时折叠显示正常规则及耗时，展开注明当前未配置、历史不可用；无模型调用且存储过程不变。 | 未执行 |
-| E2E-037 | 已配置模型调用失败和超时均保留回退提示 | P1 | e2e | FIX-process-summary, SPEC-13.5, F-fallback | 真实假服务HTTP500及超时分别产生unavailable与timeout，当前remote可用；摘要仍显示已回退到规则，展开对应原因，无未配置说明，保存的过程数据不变。 | 未执行 |
-| E2E-038 | 当前引擎状态缺失仍提示回退，真实状态到达后只改变摘要 | P1 | e2e | FIX-process-summary, SPEC-13.5 | 新标签延迟真实engines响应但读取真实历史消息，当前状态未知时仍提示回退；释放真实not_configured状态后转为正常规则摘要，持久process不变；前置不可观察时明确记受阻。 | 未执行 |
-| WS-001 | 缺少 Cookie 的升级被拒绝 | P0 | ws | SPEC-12.1, SPEC-19 | 允许的 Origin、无令牌时握手 HTTP 401，不能建立连接。 | 未执行 |
-| WS-002 | 无效令牌的升级被拒绝 | P0 | ws | SPEC-12.1, SPEC-19 | 伪造 nc_token 时握手 HTTP 401。 | 未执行 |
-| WS-003 | 跨站和缺少 Origin 被拒绝 | P0 | ws | SPEC-12.1, SPEC-19, B-23 | 有效令牌配非法 Origin 或无 Origin 时均为 HTTP 403。 | 未执行 |
-| WS-004 | 首次连接 ready 后获取完整快照 | P0 | ws | SPEC-12.2, X-09, H-06 | null 游标先返回带正确 userId 的 ready，不补发旧事件；随后 REST 对话、消息、档案与计划均完整。 | 未执行 |
-| WS-005 | 业务事件携带已持久化完整实体 | P0 | ws | SPEC-12.3, SPEC-7.2 | 创建后收到会话、用户与助手消息、任务完成事件；消息 ID/seq 与 REST 一致，会话含档案，任务各阶段 version 严格递增，事件 ID 无重复且递增。 | 未执行 |
-| WS-006 | 断线期间事件按序完整补发 | P0 | ws | SPEC-12.2, B-21 | 断线后产生的事件与同时在线见证连接逐个一致；补发 ID 大于游标并升序，ready 之后新事件仍收到。 | 未执行 |
-| WS-007 | 正好一千条待补发事件不触发全量同步 | P1 | ws | SPEC-12.2 | 通过一千次公开偏好修改产生恰好一千条事件，重连全部补发且没有 resync_required。 | 未执行 |
-| WS-008 | 超过一千条事件触发全量同步 | P0 | ws | SPEC-12.2, X-09, B-21 | 公开操作实际产生一千零一条事件；重连先 resync_required 后 ready，不逐条补发旧事件；REST 恢复完整会话和计划。 | 未执行 |
-| WS-009 | 不同用户之间不广播或补发事件 | P0 | ws | SPEC-12.2, SPEC-19 | 用户 B 完成创建与回复后，用户 A 实时流与从 0 补发均无 B 的会话/消息/任务；检查包含完成信号及有界负向观察。 | 未执行 |
-| WS-010 | 退出关闭该令牌的全部连接 | P0 | ws | SPEC-12.1, SPEC-11.3, X-07 | 同一令牌的两个连接均以 4401 关闭，旧令牌再握手 401；同用户其他令牌仍可获取新事件，旧连接不再收到事件。 | 未执行 |
-| WS-011 | 令牌上限淘汰最早令牌并关闭连接 | P0 | ws | SPEC-11.3, SPEC-12.1 | 上限为 2 时第三次登录关闭第一个令牌连接（4401），第二个仍存活；最早令牌握手 401，新令牌能接收事件。 | 未执行 |
-| WS-012 | 计划与已读事件和 REST 一致 | P1 | ws | SPEC-12.3, SPEC-10.6 | plan.created 对应持久化计划，conversation.upserted 标 completed/planId；read_state.updated 为相同会话和序号，REST 同值。 | 未执行 |
-| WS-013 | 并发发送的实时序号与存储一致 | P0 | ws | SPEC-12.3, SPEC-11.3, B-06 | 两条同时发送的用户消息均存在且 seq 唯一连续，事件 ID/消息 seq 与 REST 一致，无消息丢失或重复。 | 未执行 |
-| WS-014 | 未来游标不补发旧事件但继续接收实时变化 | P1 | ws | SPEC-12.2 | 大于当前最大 ID 的游标收到 ready 且无历史补发，之后公开创建仍收到事件。 | 未执行 |
-| WS-015 | 超过四 KB 的客户端帧以 1009 关闭 | P1 | ws | SPEC-12.1 | 发送超过 4096 字节的客户端消息后连接以关闭码 1009 关闭；会话 REST 状态保持不变。 | 未执行 |
-| WS-016 | 服务端 ping 与正常 pong 保活 | P1 | ws | SPEC-12.1 | 接收到连续两次服务端 ping，间隔约 25 秒；自动 pong 的连接保持可接收业务事件。 | 未执行 |
-| WS-017 | 连续未 pong 的连接被关闭 | P1 | ws | SPEC-12.1 | 禁用自动 pong 后接收到至少两次 ping，并在随后心跳检测中关闭连接。 | 未执行 |
-| WS-018 | 显式允许列表与生产同源均能连接 | P1 | ws | SPEC-12.1, SPEC-16 | WEB_ORIGIN 中的两个来源以及服务自身同源均能升级并返回正确 ready.userId。 | 未执行 |
-| WS-019 | 损坏 JSON 和结构非法的客户端消息被忽略 | P1 | ws | SPEC-17 | 损坏 JSON、缺字段、错误 type、游标类型或范围非法、错误顶层类型均被忽略；每条非法帧之后以合法 resume/ready 确认连接继续工作，未关闭、无异常业务事件，会话与消息快照不变。 | 未执行 |
-| WS-020 | 文本回答提示在实时与补发消息中保留 | P0 | ws | UX-01, SPEC-5.4, SPEC-11.2, SPEC-12.2, SPEC-12.3 | 通过 HTTP 发送带 answeringSlot 的非空文本，POST 消息、GET 持久化消息、实时 message.created 及 ready 完成屏障前的补发事件保留相同提示；完整消息和事件逐项一致，事件 ID 恰好出现一次。 | 未执行 |
-| WS-021 | 不完整计划摘要统计与已保存内容一致 | P1 | ws | UX-09, SPEC-9.4, SPEC-11.2, SPEC-11.3, SPEC-12.3 | 通过真实 HTTP 建立达门槛但不完整档案并确认提前生成；POST、GET 计划详情、GET 列表、会话详情和 plan.created 的 generatedEarly/knownCount/unknownCount 均精确来自已保存 PlanContent，完整摘要一致且内容重复读取不变。 | 未执行 |
-| WS-022 | 完整计划摘要统计与已保存内容一致 | P1 | ws | UX-09, SPEC-9.4, SPEC-11.2, SPEC-11.3, SPEC-12.3 | 通过真实 HTTP 建立完整档案并以 allowIncomplete=false 生成；POST、GET 计划详情、GET 列表、会话详情和 plan.created 的 generatedEarly=false 及 knownCount/unknownCount 均精确来自已保存 PlanContent，完整摘要一致且内容重复读取不变。 | 未执行 |
-| ENV-001 | macOS Node 22.13.0 全新克隆安装与运行 | P0 | env | H-07, H-09, S-01, F-environment, SPEC-24 | 精确 Node 22.13.0；仅按最终 README 安装、初始化、检查、测试、构建、启动；公开 API 完成收集并生成含已知信息、步骤和专业边界的计划。 | 未执行 |
-| ENV-002 | macOS Node 24 全新克隆安装与运行 | P0 | env | H-07, H-09, S-01, F-environment, SPEC-24 | Node 主版本 24；从独立克隆按同版 README 完成安装、初始化、检查、测试、构建、启动和主流程。 | 未执行 |
-| ENV-003 | 无编译工具的干净 Linux Node 环境 | P0 | env | H-07, S-01, F-environment, SPEC-2, SPEC-24 | node:24-bookworm-slim 无 python3/make/g++/gcc；全新克隆按 README 安装、检查、测试、构建、启动及主流程成功；浏览器系统库单独登记。 | 未执行 |
-| ENV-004 | README Docker 路径与数据卷恢复 | P0 | env | H-06, H-07, H-09, S-01, F-docker, SPEC-24.2 | 确认 3001 空闲；独立 compose 项目及卷按 README 启动；生成计划后重启容器，同用户 GET 的计划与重启前逐字段相同；只清理本轮资源。 | 未执行 |
-| ENV-005 | 提交文件与最终包卫生 | P0 | env | S-02, SPEC-19 | git ls-files 和指定最终交付包不含依赖目录、构建产物、数据库、环境文件；可疑密钥只登记路径/行号并交人工判断，不输出值。 | 未执行 |
-| ENV-006 | 生产静态页面和深链接回退 | P1 | env | F-production, SPEC-24.1 | 生产模式 /、/login、/c/unknown、/plans 返回 HTML；未知 /api 路由返回 404 JSON 而非 SPA HTML。 | 未执行 |
-| MAN-001 | README 操作说明与本地验收可读性 | P0 | manual | H-07, S-01, UX-15, SPEC-24.4 | 逐项核对已验证系统/版本、支持范围、安装、初始化、启动、测试及无 Key 验收步骤；每个命令能定位到同版 README。自定义端口的启动与重启示例中 PORT、VITE_PORT、API_URL、WEB_ORIGIN 及访问地址须相互一致，按文档保留同一组配置，不能由 QA 补写缺失命令。 | 未执行 |
+| API-001 | 登录归一化、同名恢复与 Cookie 属性 | P0 | api | SPEC-11.3, SPEC-19 | 去首尾空格和大小写变化恢复同一 user.id；令牌变化；Cookie 具有 HttpOnly、SameSite=Lax、Path=/、Max-Age；HTTP 登录即使伪造 HTTPS 代理头也不设置 Secure。 | 通过 |
+| API-002 | 用户名边界校验 | P1 | api | SPEC-11.3 | 空白、1 字符、33 字符返回 422 VALIDATION_ERROR；2 和 32 字符成功。 | 通过 |
+| API-003 | 所有受保护路由拒绝匿名访问 | P0 | api | SPEC-11.1, SPEC-19 | 每个受保护 HTTP 路由无 Cookie 均返回 401 UNAUTHENTICATED。 | 通过 |
+| API-004 | 退出删除令牌并清除 Cookie | P0 | api | SPEC-11.3 | logout 返回 204、清 Cookie；原令牌访问 me 返回 401。 | 通过 |
+| API-005 | 令牌上限淘汰最早令牌 | P0 | api | SPEC-11.3, F-limits | TOKENS_PER_USER=2 时第三次登录使最早令牌失效，后两枚仍可用。 | 通过 |
+| API-006 | 健康、未知路由和 JSON 错误 | P1 | api | SPEC-11.3, SPEC-11.4 | health 无需登录返回 200；未知 API 返回 404；坏 JSON 返回 400 BAD_REQUEST 且错误有 requestId。 | 通过 |
+| API-007 | 创建、列表、详情和活动任务快照 | P0 | api | SPEC-11.3, F-multi-session | 创建返回 201、首消息 seq=1；列表按更新时间倒序，含 readStates 和 activeTurns；详情与列表一致。 | 通过 |
+| API-008 | 新建咨询并发幂等重放 | P0 | api | SPEC-10.1, X-06, B-05 | 相同 clientMessageId 并发创建返回同一 conversation/message/turn；列表只有一项；改变内容重放仍原会话。 | 通过 |
+| API-009 | 全部资源归属与跨用户重放隔离 | P0 | api | SPEC-11.1, X-16, B-22 | 用户 B 对 A 的会话、消息、任务、已读、计划及真实 clientMessageId 重放均 404；A 消息及档案不变。 | 通过 |
+| API-010 | 任务必须属于 URL 所指会话 | P0 | api | SPEC-9.4 | 同一用户用会话 X URL 停止或重试 Y 任务均 404，Y 状态不变。 | 通过 |
+| API-011 | 消息、分页、偏好、已读和计划入参校验 | P1 | api | SPEC-11.3, B-01 | 空消息、非法快捷值、非法偏好、负已读、越界分页参数、非法计划参数均 422；无新增消息。 | 通过 |
+| API-012 | 发送消息并发幂等 | P0 | api | SPEC-9.4, B-05, B-06 | 相同 clientMessageId 并发发送只产生一个消息 id、一个新任务、连续唯一 seq。 | 通过 |
+| API-013 | 游标分页与并发新增 | P0 | api | SPEC-11.3, F-pagination | 超过 75 条消息按 30 条分页，页内升序、跨页无重漏；翻页时新增消息不改变旧页边界。 | 通过 |
+| API-014 | 已读单调且不超过最大消息序号 | P1 | api | SPEC-9.4, F-unread | 较小 seq 不回退；seq 大于 lastSeq 时返回 200 并夹到 lastSeq；列表与详情的持久化已读状态同步且不超界。 | 通过 |
+| API-015 | 会话级引擎偏好与下一轮生效 | P1 | api | SPEC-8.6, SPEC-11.3, F-engine-selector | PATCH 更新 preference 并提高 version，后续任务 engineRequested 正确；其他会话不变。 | 通过 |
+| API-016 | 提前生成三项硬门槛 | P0 | api | SPEC-9.4, H-08 | 缺国籍时 422 PROFILE_INSUFFICIENT，details.missing 包含国籍，无计划及 completed 状态。 | 通过 |
+| API-017 | 不完整确认与提前生成幂等 | P0 | api | SPEC-9.4, H-04 | 三门槛已知但未完整时返回 PROFILE_INCOMPLETE；确认后 201 generatedEarly，重放 200 同一计划。 | 通过 |
+| API-018 | 完整计划结构与专业边界 | P0 | api | SPEC-14.3, H-04, H-05, H-08 | 完整计划含第一步、三阶段、材料、依赖、已知/未知/待确认、专业边界及示例免责声明；依赖存在且排序在前。 | 通过 |
+| API-019 | 进程重启恢复对话档案和计划 | P0 | api | H-06, SPEC-6, F-persistence | 同数据库重启后消息、profile、已读和计划正文与重启前完全一致。 | 通过 |
+| API-020 | 未覆盖国家用通用计划 | P1 | api | SPEC-14.3, B-18 | 智利计划 destination=CL、coverage=generic，含行动步骤和专业声明，内容区别于葡萄牙计划。 | 通过 |
+| API-021 | 计划列表和详情只含本人计划 | P0 | api | SPEC-11.3, SPEC-19 | plans 列表和 detail 返回本人生成的同一计划；另一用户列表为空，直接取计划 404。 | 通过 |
+| API-022 | 完成会话不可写但旧消息重放成功 | P0 | api | SPEC-9.4 | 完成后新消息和 PATCH 为 CONVERSATION_COMPLETED；旧 clientMessageId 重放 200 原消息；取消已结束任务 200；重试 409。 | 通过 |
+| API-023 | 消息长度边界含去空白 | P1 | api | B-01, B-02, F-limits | 设置上限 20，20 字符成功，21 字符创建及发送返回 MESSAGE_TOO_LONG，纯空白返回 VALIDATION_ERROR。 | 通过 |
+| API-024 | 会话总数含已完成且重放优先 | P1 | api | B-04, F-limits | 上限 2 时收集中和已完成共计，第三次创建 422；上限后旧创建 id 重放仍 200。 | 通过 |
+| API-025 | 消息上限为助手回复预留一条 | P0 | api | X-08, B-03, F-limits | 上限 4 时序号 3 的用户消息可接受并生成序号 4 的助手回复；后续发送拒绝，旧消息重放仍 200。 | 通过 |
+| API-026 | 题面多信息输入不推断国籍和居住地 | P0 | api | H-01, H-03, SPEC-21.1 | 题面输入抽出 PT、配偶、明年及四诉求；国籍/居住国/身份 missing，孩子人数不猜；下一问含国籍。 | 通过 |
+| API-027 | 部分回答保留其他有效信息 | P0 | api | H-02, SPEC-5.4 | 补充一个槽位后，所有其他已知槽位状态和值完全不变；已明确项不再追问，问题最多两项。 | 通过 |
+| API-028 | 第二个国家快捷选项仅更新所属槽位 | P0 | api | X-01, SPEC-5.4 | 同时缺国籍和居住国时点击居住国中国，只填 currentResidence，国籍保持 missing；process.engineUsed=null。 | 通过 |
+| API-029 | 修改人数使不匹配年龄失效 | P0 | api | X-02, B-15 | 人数 2→1 后 ages missing、previousValue=[6,9]，下一问重问年龄；其他槽位保留。 | 通过 |
+| API-030 | 指向不确定和同句有效信息 | P0 | api | X-04, B-14 | 时间没想好且自由职业同时输入，只把 timeline 设 unsure，收入来源 known；后续不再追问时间，计划待确认含时间。 | 通过 |
+| API-031 | 多项追问时无指向不确定不误填 | P0 | api | B-14, SPEC-8.2 | 有两项可不确定问题时说不知道不改变二者；都不知道只把这两项设 unsure。 | 通过 |
+| API-032 | 已知值与不允许不确定字段保护 | P0 | api | B-16, SPEC-5.4 | known timeline 收 unsure 保持 known；国籍等禁止 unsure 的快捷输入不把字段置 unsure。 | 通过 |
+| API-033 | 诉求追加否定与明确替换 | P0 | api | X-05, H-02, SPEC-5.4 | 追加税务保留居留公司；否定公司仅移除公司；明确只要税务整体替换；删除最后诉求被忽略。 | 通过 |
+| API-034 | 改口保存来源和旧值 | P0 | api | B-17, H-02 | 配偶 CN→PT 保留 previousValue=CN、corrected=true、sourceMessageId 为修正消息，回复 corrections 包含该项。 | 通过 |
+| API-035 | 中文人数及年龄列表解析 | P1 | api | H-01, SPEC-8.2 | 两名孩子及 6/9 岁同时输入得到人数 2 和年龄 [6,9]；国籍、目的国与当前居住国按语境区分。 | 通过 |
+| API-036 | 短回答依赖当前追问 | P1 | api | H-01, SPEC-21.1 | 问国籍时中国填本人国籍；问孩子人数时两个填 2，不覆写目的国。 | 通过 |
+| API-037 | 当前居住国变化重新问身份 | P0 | api | X-14, SPEC-5.4 | 已知 CN/citizen 改成 PT 后身份 missing、previousValue=citizen，下一问含身份。 | 通过 |
+| API-038 | 同轮显式身份和重复居住国不失效 | P0 | api | SPEC-5.4 | 同时修改居住国并显式给相同 citizen 保留身份；再次提交相同居住国也保留身份。 | 通过 |
+| API-039 | 明确不适用与待定区分 | P1 | api | SPEC-14.3, SPEC-5.4 | 无配偶无孩子时计划摘要排除旧配偶国籍/年龄/学校；上级未知时提前计划保留条件步骤并列待确认。 | 通过 |
+| API-040 | 主动提供的非必问信息进入摘要 | P0 | api | X-15, H-08 | 仅税务诉求也保留主动收入来源，在专业条件和计划 known 摘要中出现。 | 通过 |
+| API-041 | 无关内容和相关未知内容引导 | P1 | api | F-intents, SPEC-15 | 无关输入发 off_topic 且 profile 不变；相关但无新信息发 not_understood 并继续追问。 | 通过 |
+| API-042 | 专业问法保留信息并展示条件 | P0 | api | H-05, F-intents, SPEC-5.5 | 三类专业问题含局限/持牌说明、条件已知与未知；同句国籍更新保留，仍继续追问。 | 通过 |
+| API-043 | 未覆盖国家继续追问并提示资料范围 | P1 | api | B-18, SPEC-15 | 智利被识别为 CL，出现 unsupported_destination 且 questions 非空。 | 通过 |
+| API-044 | 词典外国家与未覆盖资料区别 | P1 | api | B-19, SPEC-8.2 | 词典外国家不写入 destination，发 not_understood 并重问目的国。 | 通过 |
+| API-045 | 规则输入注入不产生非法目的国 | P0 | api | B-13, SPEC-19 | 要求改规则并把目的国设火星不改变有效 PT、不生成任意回复命令。 | 通过 |
+| API-046 | 远程合法 JSON 被采用 | P1 | api | SPEC-8.3 | 假远程被实际调用，更新目标槽位；engineUsed=remote、promptVersion=v4，timings 非负。 | 通过 |
+| API-047 | 带代码围栏 JSON 可接受 | P1 | api | SPEC-8.3 | 围栏包裹合法 Interpretation 被正常合并，engineUsed=remote，无 invalid_output 回退。 | 通过 |
+| API-048 | 坏 JSON 回退规则 | P0 | api | B-11, F-fallback | 远程坏 JSON 产生 invalid_output 记录并由 rules 完成，规则抽出的 PT 仍保留。 | 通过 |
+| API-049 | 结构非法输出回退 | P1 | api | B-11, SPEC-8.3 | 缺少 updates 或 off_topic 含 updates 输出均回退，非法数据不污染 profile。 | 通过 |
+| API-050 | 合法结构非法值仅丢弃该项 | P0 | api | B-12, SPEC-5.3 | 远程 valid PT + 非法年龄/国籍输出只保留 PT，engineUsed 仍 remote、不整体回退。 | 通过 |
+| API-051 | 401、429、500 分类为 unavailable | P1 | api | B-11, SPEC-8.3 | 各 HTTP 故障均记录 remote unavailable，任务仍由规则完成。 | 通过 |
+| API-052 | 假模型不响应触发 timeout 回退 | P1 | api | B-11, SPEC-8.7 | 远程挂起被引擎超时终止，fallback reason=timeout，任务 completed。 | 通过 |
+| API-053 | auto 远程失败后选本地 | P1 | api | F-fallback, SPEC-8.6 | remote 坏 JSON 后调用 local，engineUsed=local，档案取本地指定值。 | 通过 |
+| API-054 | auto 两级失败后选规则 | P1 | api | F-fallback, SPEC-8.6 | 远程超时、本地坏 JSON 依次留下两个回退原因，最终 rules 完成。 | 通过 |
+| API-055 | 指定本地偏好不调用远程 | P1 | api | SPEC-8.6 | local 偏好只请求本地；本地失败后直接 rules，远程请求数不增加。 | 通过 |
+| API-056 | 规则偏好不调用任一模型 | P0 | api | H-09, SPEC-8.6 | 两级配置均存在时 rules 任务成功且两个 fake 的 completions 请求数保持零。 | 通过 |
+| API-057 | 连续失败熔断并跳过请求 | P1 | api | F-breaker, SPEC-8.4 | 阈值 2 后 engines 显示 circuit_open；下一轮不请求远程且 fallbacks 为 circuit_open。 | 通过 |
+| API-058 | 冷却半开成功恢复 | P1 | api | SPEC-8.4 | 用真实请求有界探测冷却后放行，一次成功远程请求关闭熔断，后续远程仍可用。 | 通过 |
+| API-059 | 半开失败重新熔断 | P1 | api | SPEC-8.4 | 冷却后再次失败只放行一次并重新打开，后续回退不再访问 fake。 | 通过 |
+| API-060 | 用户停止不计入熔断失败 | P1 | api | SPEC-8.4 | 挂起模型调用时停止，然后恢复合法模型；阈值 1 仍可用且下一轮 remote 成功。 | 通过 |
+| API-061 | 本地模型缺失不可用 | P1 | api | SPEC-8.5 | models 列表不含配置名后重启，engines 为 model_missing；local 偏好回退 unavailable。 | 通过 |
+| API-062 | 模型请求协议与追问上下文 v4 | P1 | api | SPEC-8.3, UX-01 | 请求 model、temperature=0、max_tokens=800、response_format 正确；任务及回复过程 promptVersion=v4；用户 JSON 含 newMessages、pendingSlots、profile、recentMessages，pendingQuestions 同序包含注册表问题、选项和 allowUnsure。 | 通过 |
+| API-063 | 纯快捷轮次没有理解调用 | P0 | api | X-13, SPEC-9.2 | 快捷答案完成后两个模型请求计数不变；engineUsed 和 promptVersion 为 null。 | 通过 |
+| API-064 | 模型输出注入文本不成为回复 | P0 | api | B-13, SPEC-19 | 合法解释中的额外指令/非法槽位值不执行，助手内容不含攻击哨兵，合法槽位照常生效。 | 通过 |
+| API-065 | 无 Key 基线引擎状态可复现 | P0 | api | H-09, H-01, SPEC-8.5 | remote/local not_configured、rules available；auto 仍完成主输入，process 记录回退。 | 通过 |
+| API-066 | 停止、幂等停止和重试 | P0 | api | F-turn-lifecycle, SPEC-9.4 | running 停止变 cancelled、重复停止 200；重试新 id、retryOfTurnId 正确；终态后只有一条有效助手回复。 | 通过 |
+| API-067 | 补充取代旧任务并合并未处理消息 | P0 | api | B-07, SPEC-9.4 | running 时补充得到新 turn；取消旧终态读取 superseded；最终两次输入都进 profile，旧 turn 无助手回复。 | 通过 |
+| API-068 | 未处理修正阻止计划 | P0 | api | X-03, B-09 | 取消修正后计划 409 UNPROCESSED_MESSAGES，details.count>0；重试后计划反映修正。 | 通过 |
+| API-069 | 进行中不能生成计划 | P0 | api | B-08, SPEC-9.4 | running 时计划 409 TURN_IN_PROGRESS；会话仍 collecting。 | 通过 |
+| API-070 | 重试只针对最新失败或取消任务 | P1 | api | SPEC-9.4 | 已有 active 时返回同一 turn 200；旧取消任务在后续任务完成后重试为 TURN_NOT_RETRYABLE。 | 通过 |
+| API-071 | 生成计划与发送消息竞争 | P0 | api | B-10 | 并发计划/消息最多一方写入成功，另一方 409；终态计划与消息状态一致。 | 通过 |
+| API-072 | 文本快捷文本真实先后合并 | P0 | api | X-10, SPEC-5.4 | 延迟窗口内文本 CN→快捷 PT→文本时间，最终配偶 PT 且来源快捷消息、时间为明年；反向顺序最终 CN。 | 通过 |
+| API-073 | 实际 API 进程 SIGKILL 恢复 | P0 | api | B-20, SPEC-9.5 | running 时杀实际进程并同库启动，同一 turn id、attempt+1，最终仅一条助手回复。 | 通过 |
+| API-074 | SIGTERM 优雅停机续跑 | P0 | api | B-20, SPEC-7.2, SPEC-9.5 | running 时 SIGTERM 观察 queued 事件及 1012 关闭后同库启动，queued 与完成时 attempt 均不变，原任务仅一条回复。 | 通过 |
+| API-075 | 重复崩溃达到恢复次数上限 | P1 | api | B-20, SPEC-9.5 | 同一任务在 attempt 1、2、3 时崩溃，第 4 次启动 failed/RECOVERY_LIMIT，不写助手回复。 | 通过 |
+| API-076 | 整轮超时与后续重试 | P1 | api | SPEC-9.3, F-timeout | 合规超时配置下延迟超过整轮期限，failed/TURN_TIMEOUT；重试返回新 id 且指向原任务。 | 通过 |
+| API-077 | 排队任务可停止和重试 | P1 | api | SPEC-7.2, SPEC-9.4 | 并发度 1 时第二会话 queued；停止 queued 得 cancelled；重试重新排队并最终完成。 | 通过 |
+| API-078 | 并发会话独立与单会话序号 | P0 | api | B-06, SPEC-9.1 | 多会话同时处理，各档案只含自身输入；同会话并发消息 seq 唯一连续且最后回复包含全部输入。 | 通过 |
+| API-079 | 并发生成计划唯一 | P0 | api | SPEC-9.4 | 两个并发生成请求返回同一计划 id、只一个列表项、会话绑定该计划。 | 通过 |
+| API-080 | 连续补充和重试遵守消息上限 | P0 | api | X-08, B-03, SPEC-9.4 | 低上限连续补充预留助手位置；超过上限拒绝；取消重试不新增用户消息，最终计数不超过上限。 | 通过 |
+| API-081 | 请求体 64KB 上限不产生写入 | P0 | api | SPEC-11.1, SPEC-19, F-security | 超过 64KB 的 JSON 请求返回 4xx；即使 content 很短，也不会创建会话或消息。 | 通过 |
+| API-082 | 同目的国不同诉求产生不同计划 | P0 | api | H-01, H-02, H-08, SPEC-14.3 | 同为葡萄牙且基础档案相同，仅税务与居留/公司诉求的计划步骤集合不同，各步骤 goal 只来自对应诉求或 general。 | 通过 |
+| API-083 | 回答提示拒绝非法槽位 | P1 | api | SPEC-5.4, SPEC-11.2, UX-01 | answeringSlot 未知、空字符串、null 或数字均 422 VALIDATION_ERROR；会话、消息和档案无写入。 | 通过 |
+| API-084 | 回答提示要求非空文本 | P1 | api | SPEC-5.4, SPEC-11.2, UX-01 | answeringSlot 配合空或纯空白 content 均 422 VALIDATION_ERROR；没有新增消息或任务。 | 通过 |
+| API-085 | 回答提示与快捷答案互斥 | P1 | api | SPEC-5.4, SPEC-11.2, UX-01 | answeringSlot 与 answers 混用，包括空 answers，均 422 VALIDATION_ERROR；不更新档案。 | 通过 |
+| API-086 | 国家短回答归属指定槽位 | P0 | api | SPEC-5.4, SPEC-8.2, UX-01 | 日本配合五个国家槽位 hint 分别更新指定项、记录来源，其他国家槽位保持原状。 | 通过 |
+| API-087 | 显式事实优先于回答提示 | P0 | api | SPEC-5.4, SPEC-8.2, UX-01 | 居住国、本人国籍及签证目的国有显式上下文时写入实际槽位，不强塞到不同的回答提示槽位。 | 通过 |
+| API-088 | 回答提示遵守不确定限制 | P0 | api | SPEC-5.1, SPEC-5.4, SPEC-8.2, UX-01 | 无指向的不知道在 timeline hint 下只标记时间 unsure；国籍 hint 不允许 unsure，国籍继续 missing。 | 通过 |
+| API-089 | 回答提示 HTTP 往返和重启持久化 | P0 | api | SPEC-5.4, SPEC-11.2, F-persistence, UX-01 | 发送响应、消息列表和同库重启后的原始消息完全保留 answeringSlot、content、clientMessageId；档案归属不变。 | 通过 |
+| API-090 | 回答提示幂等重发保留原消息 | P0 | api | SPEC-5.4, SPEC-9.4, B-05, UX-01 | 并发同 clientMessageId 只生成同一个消息和任务；完成后用不同内容/hint 重放仍返回原消息，提示与档案不被替换。 | 通过 |
+| API-091 | 取消后任务重试保留回答提示 | P0 | api | SPEC-5.4, SPEC-9.4, UX-01 | 取消未完成的 hinted 输入后重试，新任务继续按原 hint 解释、来源仍原消息；不重复用户消息且仅一条新任务回复。 | 通过 |
+| API-092 | 本地模型收到收窄的回答上下文 | P0 | api | SPEC-5.4, SPEC-8.3, UX-01 | hint 消息只传指定 pendingSlots，pendingQuestions 与注册表同序一致，模型使用 v4；假模型无更新时 hint 自身不写档案，同槽位换文本仍得到相同 pendingQuestions。 | 通过 |
+| API-093 | 回答提示隔离相邻普通文本段 | P0 | api | SPEC-5.4, SPEC-8.3, UX-01 | 在独占执行器排队屏障内合并普通文本、hint、两个普通文本；本地模型恰好收到三段，仅中段 pendingSlots 收窄，前后普通段保持正常追问上下文。 | 通过 |
+| API-094 | 相邻回答提示和快捷答案按段处理 | P0 | api | SPEC-5.4, SPEC-8.3, X-10, X-13, UX-01 | 连续两个 hint 分别调用本地模型，后段 profile 包含前段事实；快捷段不调用模型，各槽位 sourceMessageId 对应自己的段。 | 通过 |
+| API-095 | 模型追问选项只提供解释上下文 | P1 | api | SPEC-5.1, SPEC-8.3, UX-01 | 问题同 pendingSlots 顺序，包含注册表明确给出的静态选项及正确的 allowUnsure；不强制 Prompt 复用 UI 动态选项。空模型更新不把选项或 hint 变为新事实，保留原 known/unsure。 | 通过 |
+| API-096 | 签证资格问法变体均回应专业边界 | P0 | api | SPEC-5.5, SPEC-8.2, SPEC-15, H-05, UX-05 | 八种资格问法含专业局限、演示/时效说明、持牌要求和签证条件；同句本人国籍保留、仍继续追问。 | 通过 |
+| API-097 | 专业主题由当前问题决定 | P0 | api | SPEC-5.5, SPEC-8.2, SPEC-15, UX-05 | 历史诉求或同句公司背景不抢占当前签证/税务/开公司问题的主题；条件列表属于当前主题，显式事实仍保留。 | 通过 |
+| API-098 | 申请签证的国家只归目的国 | P0 | api | SPEC-8.2, SPEC-5.5, UX-05 | 中国本人/配偶国籍或收入来源与葡萄牙签证同句时，目的国 PT；已明确中国信息仍 CN，未说的国家项不被填为 PT。 | 通过 |
+| API-099 | 申请签证意愿不当作专业判断 | P1 | api | SPEC-8.2, SPEC-15, UX-05 | 想申请签证只记录居留意愿及显式目的国，继续追问，没有 professional 或 off_topic 提示。 | 通过 |
+| API-100 | 背景事实不扩大已有诉求 | P0 | api | SPEC-5.4, SPEC-8.2, UX-04 | 仅税务咨询主动补充保险、公司业务、学校偏好时，事实进入适用槽位但 goals 保持仅 tax。 | 通过 |
+| API-101 | 诉求整体替换不被同句背景反加 | P0 | api | SPEC-5.4, SPEC-8.2, UX-04 | 只想/只要/改成税务替换既有五类诉求，同句保险、业务及学校事实保留但不把被移除诉求加回；回复显示诉求修正。 | 通过 |
+| API-102 | 固定相对时间映射覆盖十二种表达 | P0 | api | SPEC-8.2, UX-03 | 下周、两个月后、三个月内/后、四个月后、半年后、一年后/以后及原明年/下个月/尽快/半年内固定映射到对应枚举；不再追问已知时间。 | 通过 |
+| API-103 | 第三次尝试优雅停机不耗恢复次数 | P0 | api | SPEC-7.2, SPEC-9.5, B-20 | 两次崩溃恢复达到 attempt=3 后 SIGTERM，queued 事件及再次启动完成均仍为 3；不触发 RECOVERY_LIMIT，仅一条助手回复。 | 通过 |
+| API-104 | 新增国家别称映射及上下文归属 | P1 | api | SPEC-5.1, SPEC-8.2 | 47 条新增别称经公开 API 识别为既定国家代码与展示名；另覆盖本人/配偶国籍、居住国、收入国、签证目的国五种显式上下文，其他国家槽位不变。 | 通过 |
+| API-105 | 排除国家短称碰词并保留标准国名 | P1 | api | SPEC-5.1, SPEC-8.2 | 参加国际会议、大马士革、加国、大马均不被识别为国家；加拿大和马来西亚仍按待答目的国正确归属。 | 通过 |
+| API-106 | 追问中的无法归属短答不猜档案 | P1 | api | SPEC-8.2, SPEC-15, F-questions, F-intents | 国家槽位追问中输入 2、嗯、好的走 not_understood 而非 off_topic；档案及 pendingSlots 不变，无新增事实、修正或 unsure，继续原追问。 | 通过 |
+| API-107 | 无追问时不启用短答相关兜底 | P1 | api | SPEC-8.2, SPEC-15, F-intents | 完整档案 pendingSlots 为空时输入 2、嗯、好的保持 off_topic；不出现 not_understood、不修改档案、不产生追问。 | 通过 |
+| API-108 | 明确无关请求与可归属短答保留原行为 | P1 | api | SPEC-8.2, SPEC-15, F-questions, F-intents | 有追问时午饭、唱歌、吃啥仍 off_topic 且档案不变；随后中国、一个人、两个按当前问题分别记录国籍、同行与孩子人数，已有目的国保留。 | 通过 |
+| E2E-001 | 登录、示例、快捷回答、修正与完整计划 | P0 | e2e | H-01, H-02, H-03, H-04, H-05, H-08, H-09, SPEC-13.5, UX-06 | 示例卡只填入不发送；中文示例不推断国籍、居住国或身份；快捷回答填入已明确值；修正配偶国籍后其他全部槽位保持原值；完整计划包含第一步、已知、未知、待确认、步骤原因、专业边界和免责声明；工作台免责声明条在空状态、咨询中及结束后可见，完整计划页免责声明可见且保留原文字校验；完成后输入框替换为提示条。 | 通过 |
+| E2E-002 | 刷新恢复完整对话、档案、过程与计划 | P0 | e2e | H-04, H-06, SPEC-13.3 | 刷新前后每条消息内容、数量、连续序号、档案值和状态、过程记录文本一致；计划入口仍有效，刷新计划页后第一步和服务端完整计划内容完全一致。 | 通过 |
+| E2E-003 | 多标签消息同步与跨会话未读消除 | P1 | e2e | SPEC-10.6, SPEC-13.4 | 同一会话两个页面逐条显示相同消息且每个 seq 仅一次；另一个会话回复后两个标签都有红点；聚焦打开该会话后两边红点均消失，服务端 lastReadSeq 等于 lastAssistantSeq。 | 通过 |
+| E2E-004 | 停止、重试与运行中的补充 | P1 | e2e | SPEC-7.2, SPEC-9.4, SPEC-13.5, B-07 | 理解阶段停止后 UI 显示已中断；重试生成新任务并指向原任务；回复中补充产生更新任务，初始目的国与补充国籍/孩子人数同时保存；最终只有一条助手回复，取消和被替代的任务没有回复。 | 通过 |
+| E2E-005 | 专业问题的条件与局限、无关内容的引导 | P0 | e2e | H-05, H-08, SPEC-5.5, SPEC-15 | 签证问题显示持牌专业人士说明、已知国籍与待了解条件；无关问题显示出海计划引导，前后所有档案槽位和追问状态保持一致。 | 通过 |
+| E2E-006 | 坏 JSON 回退至规则并显示过程 | P1 | e2e | H-09, SPEC-8.6, SPEC-13.5, B-11 | 本地假服务实际收到请求；远程返回坏 JSON 后助手 process 为 rules 且记录 remote/invalid_output；界面折叠摘要显示已回退到规则，展开显示来源、原因和耗时；用户明确国籍仍正确保存。 | 通过 |
+| E2E-007 | 提前生成确认、未知项与通用国家清单 | P1 | e2e | H-04, H-05, H-08, SPEC-13.5, B-18 | 智利显示通用资料提示；提前生成对话框列出缺项和结束后不能补充，取消不生成计划；确认后 generatedEarly=true、coverage=generic，未知居住国和专业边界可见，计划页免责声明可见且保留原文字校验；计划列表明确标注通用准备清单。 | 通过 |
+| E2E-008 | 快捷答案只更新所属槽位，过程显示快捷回答 | P1 | e2e | X-01, X-13, SPEC-5.4 | 同时追问两个国籍时点本人国籍只更新本人，配偶和居住国保持 missing；该轮 engineUsed=null，过程记录显示快捷回答。 | 通过 |
+| E2E-009 | 只有最新助手消息的快捷选项可操作 | P1 | e2e | SPEC-13.5 | 产生新助手回复后上一条国籍快捷选项不可操作（禁用或不再呈现），最新回复的快捷选项仍可操作，防止历史选项覆盖当前档案。 | 通过 |
+| E2E-010 | 发送失败重试复用标识且只建一个咨询 | P1 | e2e | X-06, SPEC-13.5, SPEC-13.6, B-05 | 首次创建请求网络失败后显示重试；重试沿用原 clientMessageId；服务端只有一个会话、一条用户首消息，成功后发送中占位消失。 | 通过 |
+| E2E-011 | 路由保护、咨询不存在与退出登录 | P0 | e2e | SPEC-13.1, SPEC-13.6, SPEC-19 | 未登录访问计划页跳转登录；不存在咨询显示明确错误；退出后 /me 返回 401；同名不同大小写重新登录能恢复原咨询。 | 通过 |
+| E2E-012 | 游标分页与同时新增消息不重不漏 | P1 | e2e | SPEC-11.3, SPEC-12.3, SPEC-13.5 | 36 条历史初次只显示最新 30 条；转发并暂扣真实翻页响应时再新增 2 条，放行后 38 条逐条出现且各一次、DOM seq 顺序严格升序、没有更多页。 | 通过 |
+| E2E-013 | 初次同步的旧快照不覆盖较新任务和档案事件 | P1 | e2e | X-09, SPEC-12.3, SPEC-13.3 | 当前连接 ready 到达后才请求详情；暂扣 activeTurn=null 的真实旧快照，期间新任务运行；旧响应放行后仍显示进行中任务；最终国籍为新值且旧档案不覆盖实时修正。 | 通过 |
+| E2E-014 | 超过一千事件后会话页完整重同步 | P1 | e2e | X-09, SPEC-12.2, SPEC-13.3, B-21 | 断线期间通过公开偏好修改产生超过 1000 次版本增长；重连实际收到服务端 resync_required；连接恢复 live 后所有消息、档案修正与服务端快照一致。 | 通过 |
+| E2E-015 | 整体重同步恢复我的计划列表 | P1 | e2e | X-09, SPEC-13.3, UX-07 | 停留我的计划页断线并真实累积超过 1000 事件，期间新增计划；重同步拉取真实计划快照时计数显示省略号；放行后旧计划和新计划均出现且各一次、计数为 2，通用清单标注保留。 | 通过 |
+| E2E-016 | 计划详情页首次连接和整体重同步内容完整 | P1 | e2e | X-09, SPEC-13.3 | 计划页免责声明首次载入及整体重同步后均可见，保留原文字校验；直接打开计划详情可读第一步；真实超过 1000 事件触发重同步后第一步不变，已知、未知、边界、免责声明和每个步骤仍齐全。 | 通过 |
+| E2E-017 | 断线期间其他标签切换身份后不混用数据 | P0 | e2e | X-11, SPEC-13.3, SPEC-19 | A 标签断线，B 标签退出并登录另一用户；A 重连接到新 ready.userId 后旧用户会话消失，新用户会话和日本/智利档案可见，旧资源访问返回 404。 | 通过 |
+| E2E-018 | 重同步前迟到的旧翻页响应不污染数据和游标 | P1 | e2e | X-12, SPEC-13.3 | 暂扣真实旧翻页响应后通过真实事件积压触发整体重同步；放行旧响应并处理新回复后最早页仍未混入；重新翻页最终全部 40 条逐条恰好一次且游标结束。 | 通过 |
+| E2E-019 | 空白、超长、消息满额与咨询上限提示 | P1 | e2e | X-08, SPEC-13.5, B-01, B-02, B-03, B-04 | 空白和超过配置字数时不能发送；消息上限 4 时两轮最终恰好 4 条，输入框替换成满额提示；超过 1 个咨询时明确提示且服务端数量仍为 1。 | 通过 |
+| E2E-020 | 引擎偏好保存且下一轮使用选定规则引擎 | P1 | e2e | H-09, SPEC-8.5, SPEC-13.5 | 无 Key 时远程和本地选项禁用；选择 rules 后服务端偏好为 rules；下一轮 process 为 rules 且无回退；刷新后选择仍保存。 | 通过 |
+| E2E-021 | 其他输入携带所属问题提示且不污染下一条普通文本 | P1 | e2e | UX-01, SPEC-5.4, SPEC-11.2, SPEC-13.5 | 两个国家问题同时待回答时，点击国籍的其他输入新增所属提示，日本只更新国籍且目的国仍缺失；真实请求和消息保留 answeringSlot，下一条普通文本清除；同一用例子断言覆盖目的国、当前居住国和收入国入口。 | 通过 |
+| E2E-022 | 提示文本发送失败后重试保留原标识和所属问题 | P1 | e2e | UX-01, SPEC-13.5 | 首个真实发送请求中断后显示重试；重试请求完整保留内容、clientMessageId 和 answeringSlot，最终仅一条对应持久化消息，本人国籍为日本。 | 通过 |
+| E2E-023 | 快捷回答、咨询切换和账号切换均清除作答提示 | P1 | e2e | UX-01, SPEC-13.5, X-11 | 点其他输入后改选快捷答案、客户端切换到另一咨询再返回、退出切换账号，随后真实文本请求均不带旧 answeringSlot；未回答的国籍不被误更新。 | 通过 |
+| E2E-024 | 完整资料生成须确认且取消不发生成请求 | P1 | e2e | UX-06, SPEC-13.5 | 完整资料点击生成后显示结束咨询警示与继续补充/生成计划按钮；取消无 plan POST，仍 collecting 且无计划；确认仅发一个 allowIncomplete=false 请求并完成咨询。 | 通过 |
+| E2E-025 | 计划计数跨各页面、刷新和多标签保持完整 | P1 | e2e | UX-07, SPEC-13.3, SPEC-13.5 | 空白新咨询页、进行中咨询、已完成咨询、计划列表和计划详情直接进入及刷新均显示完整计数；新增真实计划后另一标签同步递增。 | 通过 |
+| E2E-026 | 计划快照加载显示省略号且旧快照不覆盖新增事件 | P1 | e2e | UX-07, SPEC-12.3, SPEC-13.3, SPEC-13.5 | 暂扣仅有一计划的真实 GET 响应时计数显示省略号；真实生成第二计划，再用后续真实咨询事件的侧栏展示确认浏览器处理边界；释放旧响应后两卡各一次且计数为 2。额外新快照或不可观察处理边界记受阻，不能冒充乱序验证。 | 通过 |
+| E2E-027 | 真实计划卡片区分完整度、资料数量和精确到秒的时间 | P2 | e2e | UX-09, SPEC-11.2, SPEC-13.5 | 真实税务提前计划和完整计划的列表卡分别标注完整度，已知/待了解数量等于已保存内容数组长度；真实生成时间可见到秒且可区分；列表无需逐卡请求详情。缺可选字段的旧格式兼容另需开发证据。 | 通过 |
+| E2E-028 | 真实空计划阶段显示暂无事项提示 | P2 | e2e | UX-11, SPEC-13.5 | 公开接口生成税务单诉求计划，按真实保存内容确认空阶段；每个空阶段内显示暂无事项、非空阶段不误标为空，提示总数等于空阶段数，标题与真实步骤完整。若真实数据没有空阶段则前置受阻，不将其判为产品失败。 | 通过 |
+| E2E-029 | 首次和后续新咨询均显示开始新的咨询 | P2 | e2e | UX-13, SPEC-13.5 | 首次登录空状态、已有咨询后点新建、已有计划后的空页刷新均显示开始新的咨询，示例卡仍可见。 | 通过 |
+| E2E-030 | 主动引擎选择刷新和新建沿用且浏览旧咨询不覆盖 | P2 | e2e | UX-14, SPEC-13.5 | 主动选择规则后刷新及新建沿用 rules；浏览自身偏好 auto 的旧咨询不改新建默认；在已有咨询主动切换 auto 会 PATCH 并更新后续新建偏好。 | 通过 |
+| E2E-031 | 引擎选择按账号隔离且首次自动能回退规则 | P2 | e2e | UX-14, SPEC-8.5, SPEC-13.5 | 首次账号默认 auto，主动规则选择在退出重新登录及刷新后保留；另一新账号仍 auto 且没有配置模型时实际使用 rules；再次切换账号仍隔离。非法存储值回到自动另需开发证据，不猜存储键。 | 通过 |
+| E2E-032 | 本标签远离底部发送仍平滑滚动到底部 | P1 | e2e | FIX-scroll, SPEC-13.5 | 本人发送真实用户消息，助手事件单独延迟；从远离底部的位置经过至少两个中间动画帧到达消息底部，释放真实助手回复后继续跟随。 | 通过 |
+| E2E-033 | 其他标签消息和助手回复仅在距底部小于80px时跟随 | P1 | e2e | FIX-scroll, SPEC-13.5, F-multi-tab | 分别在距底部40px和远离底部时接收另一标签真实用户消息及助手回复；近处平滑跟随到底，远处同一消息相对视口位置保持不变。 | 通过 |
+| E2E-034 | 顶部自动翻页prepend后保持原消息阅读锚点 | P1 | e2e | FIX-scroll, SPEC-13.5, F-pagination | 顶部滚动实际触发before分页；释放真实旧消息响应后消息齐全无重复，同一阅读锚点相对视口偏移保持在2px以内，不跳到底部。 | 通过 |
+| E2E-035 | 切换咨询后旧翻页异步响应不改变新咨询定位 | P1 | e2e | FIX-scroll, SPEC-13.5, X-12, F-pagination | 延迟旧咨询真实分页响应，切换到新咨询并向上阅读；释放旧响应后及新咨询真实事件处理完成后，新咨询消息及阅读锚点保持不变，不出现瞬时旧定位。 | 通过 |
+| E2E-036 | 未配置模型时正常规则摘要、展开历史不可用说明且数据不变 | P1 | e2e | FIX-process-summary, SPEC-13.5, SPEC-8.5, SPEC-8.6 | 无模型配置的auto链保留remote/local unavailable持久记录；当前状态均not_configured时折叠显示正常规则及耗时，展开注明当前未配置、历史不可用；无模型调用且存储过程不变。 | 通过 |
+| E2E-037 | 已配置模型调用失败和超时均保留回退提示 | P1 | e2e | FIX-process-summary, SPEC-13.5, F-fallback | 真实假服务HTTP500及超时分别产生unavailable与timeout，当前remote可用；摘要仍显示已回退到规则，展开对应原因，无未配置说明，保存的过程数据不变。 | 通过 |
+| E2E-038 | 当前引擎状态缺失仍提示回退，真实状态到达后只改变摘要 | P1 | e2e | FIX-process-summary, SPEC-13.5 | 新标签延迟真实engines响应但读取真实历史消息，当前状态未知时仍提示回退；释放真实not_configured状态后转为正常规则摘要，持久process不变；前置不可观察时明确记受阻。 | 受阻 |
+| WS-001 | 缺少 Cookie 的升级被拒绝 | P0 | ws | SPEC-12.1, SPEC-19 | 允许的 Origin、无令牌时握手 HTTP 401，不能建立连接。 | 通过 |
+| WS-002 | 无效令牌的升级被拒绝 | P0 | ws | SPEC-12.1, SPEC-19 | 伪造 nc_token 时握手 HTTP 401。 | 通过 |
+| WS-003 | 跨站和缺少 Origin 被拒绝 | P0 | ws | SPEC-12.1, SPEC-19, B-23 | 有效令牌配非法 Origin 或无 Origin 时均为 HTTP 403。 | 通过 |
+| WS-004 | 首次连接 ready 后获取完整快照 | P0 | ws | SPEC-12.2, X-09, H-06 | null 游标先返回带正确 userId 的 ready，不补发旧事件；随后 REST 对话、消息、档案与计划均完整。 | 通过 |
+| WS-005 | 业务事件携带已持久化完整实体 | P0 | ws | SPEC-12.3, SPEC-7.2 | 创建后收到会话、用户与助手消息、任务完成事件；消息 ID/seq 与 REST 一致，会话含档案，任务各阶段 version 严格递增，事件 ID 无重复且递增。 | 通过 |
+| WS-006 | 断线期间事件按序完整补发 | P0 | ws | SPEC-12.2, B-21 | 断线后产生的事件与同时在线见证连接逐个一致；补发 ID 大于游标并升序，ready 之后新事件仍收到。 | 通过 |
+| WS-007 | 正好一千条待补发事件不触发全量同步 | P1 | ws | SPEC-12.2 | 通过一千次公开偏好修改产生恰好一千条事件，重连全部补发且没有 resync_required。 | 通过 |
+| WS-008 | 超过一千条事件触发全量同步 | P0 | ws | SPEC-12.2, X-09, B-21 | 公开操作实际产生一千零一条事件；重连先 resync_required 后 ready，不逐条补发旧事件；REST 恢复完整会话和计划。 | 通过 |
+| WS-009 | 不同用户之间不广播或补发事件 | P0 | ws | SPEC-12.2, SPEC-19 | 用户 B 完成创建与回复后，用户 A 实时流与从 0 补发均无 B 的会话/消息/任务；检查包含完成信号及有界负向观察。 | 通过 |
+| WS-010 | 退出关闭该令牌的全部连接 | P0 | ws | SPEC-12.1, SPEC-11.3, X-07 | 同一令牌的两个连接均以 4401 关闭，旧令牌再握手 401；同用户其他令牌仍可获取新事件，旧连接不再收到事件。 | 通过 |
+| WS-011 | 令牌上限淘汰最早令牌并关闭连接 | P0 | ws | SPEC-11.3, SPEC-12.1 | 上限为 2 时第三次登录关闭第一个令牌连接（4401），第二个仍存活；最早令牌握手 401，新令牌能接收事件。 | 通过 |
+| WS-012 | 计划与已读事件和 REST 一致 | P1 | ws | SPEC-12.3, SPEC-10.6 | plan.created 对应持久化计划，conversation.upserted 标 completed/planId；read_state.updated 为相同会话和序号，REST 同值。 | 通过 |
+| WS-013 | 并发发送的实时序号与存储一致 | P0 | ws | SPEC-12.3, SPEC-11.3, B-06 | 两条同时发送的用户消息均存在且 seq 唯一连续，事件 ID/消息 seq 与 REST 一致，无消息丢失或重复。 | 通过 |
+| WS-014 | 未来游标不补发旧事件但继续接收实时变化 | P1 | ws | SPEC-12.2 | 大于当前最大 ID 的游标收到 ready 且无历史补发，之后公开创建仍收到事件。 | 通过 |
+| WS-015 | 超过四 KB 的客户端帧以 1009 关闭 | P1 | ws | SPEC-12.1 | 发送超过 4096 字节的客户端消息后连接以关闭码 1009 关闭；会话 REST 状态保持不变。 | 通过 |
+| WS-016 | 服务端 ping 与正常 pong 保活 | P1 | ws | SPEC-12.1 | 接收到连续两次服务端 ping，间隔约 25 秒；自动 pong 的连接保持可接收业务事件。 | 通过 |
+| WS-017 | 连续未 pong 的连接被关闭 | P1 | ws | SPEC-12.1 | 禁用自动 pong 后接收到至少两次 ping，并在随后心跳检测中关闭连接。 | 通过 |
+| WS-018 | 显式允许列表与生产同源均能连接 | P1 | ws | SPEC-12.1, SPEC-16 | WEB_ORIGIN 中的两个来源以及服务自身同源均能升级并返回正确 ready.userId。 | 通过 |
+| WS-019 | 损坏 JSON 和结构非法的客户端消息被忽略 | P1 | ws | SPEC-17 | 损坏 JSON、缺字段、错误 type、游标类型或范围非法、错误顶层类型均被忽略；每条非法帧之后以合法 resume/ready 确认连接继续工作，未关闭、无异常业务事件，会话与消息快照不变。 | 通过 |
+| WS-020 | 文本回答提示在实时与补发消息中保留 | P0 | ws | UX-01, SPEC-5.4, SPEC-11.2, SPEC-12.2, SPEC-12.3 | 通过 HTTP 发送带 answeringSlot 的非空文本，POST 消息、GET 持久化消息、实时 message.created 及 ready 完成屏障前的补发事件保留相同提示；完整消息和事件逐项一致，事件 ID 恰好出现一次。 | 通过 |
+| WS-021 | 不完整计划摘要统计与已保存内容一致 | P1 | ws | UX-09, SPEC-9.4, SPEC-11.2, SPEC-11.3, SPEC-12.3 | 通过真实 HTTP 建立达门槛但不完整档案并确认提前生成；POST、GET 计划详情、GET 列表、会话详情和 plan.created 的 generatedEarly/knownCount/unknownCount 均精确来自已保存 PlanContent，完整摘要一致且内容重复读取不变。 | 通过 |
+| WS-022 | 完整计划摘要统计与已保存内容一致 | P1 | ws | UX-09, SPEC-9.4, SPEC-11.2, SPEC-11.3, SPEC-12.3 | 通过真实 HTTP 建立完整档案并以 allowIncomplete=false 生成；POST、GET 计划详情、GET 列表、会话详情和 plan.created 的 generatedEarly=false 及 knownCount/unknownCount 均精确来自已保存 PlanContent，完整摘要一致且内容重复读取不变。 | 通过 |
+| ENV-001 | macOS Node 22.13.0 全新克隆安装与运行 | P0 | env | H-07, H-09, S-01, F-environment, SPEC-24 | 精确 Node 22.13.0；仅按最终 README 安装、初始化、检查、测试、构建、启动；公开 API 完成收集并生成含已知信息、步骤和专业边界的计划。 | 沿用通过（39c6bd8） |
+| ENV-002 | macOS Node 24 全新克隆安装与运行 | P0 | env | H-07, H-09, S-01, F-environment, SPEC-24 | Node 主版本 24；从独立克隆按同版 README 完成安装、初始化、检查、测试、构建、启动和主流程。 | 沿用通过（39c6bd8） |
+| ENV-003 | 无编译工具的干净 Linux Node 环境 | P0 | env | H-07, S-01, F-environment, SPEC-2, SPEC-24 | node:24-bookworm-slim 无 python3/make/g++/gcc；全新克隆按 README 安装、检查、测试、构建、启动及主流程成功；浏览器系统库单独登记。 | 沿用通过（39c6bd8） |
+| ENV-004 | README Docker 路径与数据卷恢复 | P0 | env | H-06, H-07, H-09, S-01, F-docker, SPEC-24.2 | 确认 3001 空闲；独立 compose 项目及卷按 README 启动；生成计划后重启容器，同用户 GET 的计划与重启前逐字段相同；只清理本轮资源。 | 沿用通过（39c6bd8） |
+| ENV-005 | 提交文件与最终包卫生 | P0 | env | S-02, SPEC-19 | git ls-files 和指定最终交付包不含依赖目录、构建产物、数据库、环境文件；可疑密钥只登记路径/行号并交人工判断，不输出值。 | 受阻 |
+| ENV-006 | 生产静态页面和深链接回退 | P1 | env | F-production, SPEC-24.1 | 生产模式 /、/login、/c/unknown、/plans 返回 HTML；未知 /api 路由返回 404 JSON 而非 SPA HTML。 | 沿用通过（39c6bd8） |
+| MAN-001 | README 操作说明与本地验收可读性 | P0 | manual | H-07, S-01, UX-15, SPEC-24.4 | 逐项核对已验证系统/版本、支持范围、安装、初始化、启动、测试及无 Key 验收步骤；每个命令能定位到同版 README。自定义端口的启动与重启示例中 PORT、VITE_PORT、API_URL、WEB_ORIGIN 及访问地址须相互一致，按文档保留同一组配置，不能由 QA 补写缺失命令。 | 沿用通过（39c6bd8） |
 | MAN-002 | 焦点、标题与 favicon 提醒 | P1 | manual | F-attention, SPEC-13.4 | 真实后台标签出现 (n) Nomad Concierge 和红点 favicon；聚焦并打开对应会话后未读减少，标题和 favicon 恢复。 | 未执行 |
 | MAN-003 | 计划打印及专业措辞 | P1 | manual | H-04, H-05, H-08, F-plan, SPEC-13.5, SPEC-14.2 | 打印预览无导航按钮，卡片不截断，黑白可读；示例资料明确标示用途，计划无确定签证资格/金额/税率结论，专业步骤提示持牌判断。 | 未执行 |
 | MAN-004 | 正常与至少两个异常的人工验收移交 | P0 | manual | S-04 | 在同一候选完成登录至计划、停止重试、坏输出回退三个流程，并登记实际结果和录屏；自动化结果不代替人工登记。 | 未执行 |
-| MAN-005 | 提交物密钥与个人数据线索复核 | P0 | manual | S-02, SPEC-19 | 逐条复核脱敏扫描线索，确认无有效密钥、令牌、真实个人或客户数据；不在报告复制敏感值。 | 未执行 |
-| MAN-006 | 开发测试与内部故障边界证据移交 | P0 | manual | S-03, B-24, B-25, F-security, SPEC-11.3, SPEC-21.2, SPEC-21.3, UX-09, UX-14 | 集成方提供同候选自动化执行记录；核对数据库版本超前/资料格式错误拒绝启动、迟到返回和提交前回滚由开发单元或集成测试覆盖；Secure 属性在生产/非生产与 HTTPS/HTTP 四种组合的开发单元测试也须提供同候选证据，记录测试名与结果；QA 不读取实现或伪造内部接口。另移交旧计划摘要缺少 generatedEarly/knownCount/unknownCount 时不虚构数量、无效账号偏好存储回退自动的开发前端测试证据，逐项记录测试名与结果；仅为证据移交，不冒充 QA 真实后端或浏览器验证。 | 未执行 |
+| MAN-005 | 提交物密钥与个人数据线索复核 | P0 | manual | S-02, SPEC-19 | 逐条复核脱敏扫描线索，确认无有效密钥、令牌、真实个人或客户数据；不在报告复制敏感值。 | 受阻 |
+| MAN-006 | 开发测试与内部故障边界证据移交 | P0 | manual | S-03, B-24, B-25, F-security, SPEC-11.3, SPEC-21.2, SPEC-21.3, UX-09, UX-14 | 集成方提供同候选自动化执行记录；核对数据库版本超前/资料格式错误拒绝启动、迟到返回和提交前回滚由开发单元或集成测试覆盖；Secure 属性在生产/非生产与 HTTPS/HTTP 四种组合的开发单元测试也须提供同候选证据，记录测试名与结果；QA 不读取实现或伪造内部接口。另移交旧计划摘要缺少 generatedEarly/knownCount/unknownCount 时不虚构数量、无效账号偏好存储回退自动的开发前端测试证据，逐项记录测试名与结果；仅为证据移交，不冒充 QA 真实后端或浏览器验证。 | 通过 |
 | MAN-007 | HTTPS 场景 Cookie Secure | P1 | manual | F-security, SPEC-11.3 | 按 Q-02 裁定不适用：交付不提供 HTTPS 入口且不信任代理头；QA 不另建 HTTPS 环境。Secure 的生产/非生产与 HTTPS/HTTP 四种组合由开发单元测试覆盖，证据纳入 MAN-006。 | 不适用 |
 
-## 质量边界
-
-负向断言使用任务终态、ready 或明确观察窗口；不会以立即检查空数组证明没有副作用。时序依赖等待公开状态或可控假服务，不使用固定睡眠等待业务完成。页面同步用例转发真实 HTTP/WS，只控制释放时机；超过 1000 条事件由公开操作真实生成。
-
-发布判定：必测项实际通过、本候选要求的完整业务一轮通过、环境复用已核对且无 P0/P1 缺陷；P2/P3 由负责人登记处理结论。准备阶段不作发布判定。
+真实API/WS/浏览器验证；每例独占进程与数据库，固定候选与QA树，retries=0。模型只访问QA假服务，页面同步仅延迟真实HTTP/WS。假服务/开发内部证据、旧环境沿用与新候选实测均分开登记。受阻、未执行、不适用不能计作通过。
