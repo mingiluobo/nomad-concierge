@@ -38,11 +38,20 @@ export default class EvidenceReporter implements Reporter {
     }
   }
   async onEnd(result: FullResult) {
-    if ((process.env.QA_EXECUTION_AUTHORIZED !== 'candidate' && process.env.QA_REPORT_MODE !== 'tooling-self-check') || !process.env.QA_RUN_DIR) return;
+    const localMode = process.env.QA_EXECUTION_AUTHORIZED === 'local' && process.env.QA_REPORT_MODE === 'local';
+    if ((process.env.QA_EXECUTION_AUTHORIZED !== 'candidate' && process.env.QA_REPORT_MODE !== 'tooling-self-check' && !localMode) || !process.env.QA_RUN_DIR) return;
     const destination = resolve(process.env.QA_RUN_DIR, `round-${process.env.QA_ROUND}`, 'results.json');
     await mkdir(resolve(destination, '..'), { recursive: true });
     const purpose = process.env.QA_REPORT_MODE === 'tooling-self-check' ? 'tooling-self-check'
-      : process.env.QA_REPORT_MODE === 'stability-prerun' ? 'stability-prerun' : 'candidate-acceptance';
-    await writeFile(destination, JSON.stringify({ purpose, ...(purpose === 'stability-prerun' ? { label: '预跑，不计入放行', countsTowardRelease: false } : {}), status: result.status, rows: [...this.rows.values()] }, null, 2));
+      : localMode ? 'local-e2e' : process.env.QA_REPORT_MODE === 'stability-prerun' ? 'stability-prerun' : 'candidate-acceptance';
+    await writeFile(destination, JSON.stringify({
+      purpose,
+      ...(purpose === 'stability-prerun' ? { label: '预跑，不计入放行', countsTowardRelease: false } : {}),
+      ...(purpose === 'local-e2e' ? {
+        label: '本地运行，不计入正式放行', countsTowardRelease: false,
+        candidate: null, sourceCommit: process.env.QA_SOURCE_COMMIT ?? null,
+      } : {}),
+      status: result.status, rows: [...this.rows.values()],
+    }, null, 2));
   }
 }

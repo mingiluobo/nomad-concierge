@@ -1,8 +1,8 @@
 import { spawn, type ChildProcess } from 'node:child_process';
 import { createServer } from 'node:net';
-import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { FakeLlmServer } from '../fakes/llm-server.js';
 import { cleanEnv, command, poll } from './process.js';
 
@@ -46,16 +46,39 @@ export class AppInstance {
   private child?: ChildProcess;
   private processOutput = '';
   private exited?: Promise<void>;
+  private localResourcesPath?: string;
   private history: { pid?: number; port: number; args: string[]; node: string; at: string; exitCode?: number | null; signal?: NodeJS.Signals | null }[] = [];
   get pid(): number | undefined { return this.child?.pid; }
   constructor(readonly root: string, readonly overrides: Record<string, string> = {}, readonly selfCheck?: { sourceCommit: string }) {}
 
+  private get localMode(): boolean {
+    return !this.selfCheck && process.env.QA_EXECUTION_AUTHORIZED === 'local' && process.env.QA_REPORT_MODE === 'local';
+  }
+  private async saveLocalResources(): Promise<void> {
+    if (!this.localResourcesPath) return;
+    const temporary = `${this.localResourcesPath}.tmp`;
+    await writeFile(temporary, JSON.stringify({
+      directory: this.directory,
+      processes: this.history,
+      pids: this.history.flatMap(entry => entry.pid === undefined ? [] : [entry.pid]),
+      purpose: 'local-e2e',
+      sourceCommit: process.env.QA_SOURCE_COMMIT ?? null,
+    }, null, 2));
+    await rename(temporary, this.localResourcesPath);
+  }
   async initialize(): Promise<void> {
     if (this.selfCheck) {
       if (await command('git', ['rev-parse', 'HEAD'], this.root) !== this.selfCheck.sourceCommit) throw new Error('Tooling self-check snapshot mismatch');
-    } else if (process.env.QA_EXECUTION_AUTHORIZED !== 'candidate') throw new Error('QA preparation only: a declared candidate is required before execution');
+    } else if (process.env.QA_EXECUTION_AUTHORIZED !== 'candidate' && !this.localMode) throw new Error('QA preparation only: a declared candidate or explicit local mode is required before execution');
     await assertNoEnv(this.root);
+    const localResourcesRoot = this.localMode ? process.env.QA_LOCAL_RESOURCES_ROOT : undefined;
+    if (this.localMode && !localResourcesRoot) throw new Error('Local execution requires QA_LOCAL_RESOURCES_ROOT');
+    if (localResourcesRoot) await mkdir(localResourcesRoot, { recursive: true });
     this.directory = await mkdtemp(join(tmpdir(), 'nc-qa-instance-'));
+    if (localResourcesRoot) {
+      this.localResourcesPath = join(localResourcesRoot, `${basename(this.directory)}.json`);
+      await this.saveLocalResources();
+    }
     this.databasePath = join(this.directory, 'qa.sqlite');
     await this.fakeRemote.start();
     await this.fakeLocal.start();
@@ -112,6 +135,7 @@ export class AppInstance {
         resolve();
       });
     });
+    if (this.localResourcesPath) await this.saveLocalResources();
     const exited = () => spawnError !== undefined || child.exitCode !== null || child.signalCode !== null;
     // Return terminal outcomes instead of throwing inside poll: terminal errors must not be retried for 15 seconds.
     const outcome = await poll(async () => {
@@ -149,8 +173,15 @@ export class AppInstance {
       await writeFile(join(evidenceDirectory, 'api-process.log'), this.processOutput);
       await writeFile(join(evidenceDirectory, 'fake-requests.json'), JSON.stringify({ remote: this.fakeRemote.requests, local: this.fakeLocal.requests }, null, 2));
       const config = Object.fromEntries(Object.entries(this.env).filter(([name]) => /^(PORT|DATABASE_PATH|WEB_ORIGIN|SERVE_WEB_DIST|DEMO_|TURN_|LLM_|LOCAL_LLM_|BREAKER_|LIMIT_|TOKENS_)/.test(name) && name !== 'LLM_API_KEY'));
-      const purpose = this.selfCheck ? 'tooling-self-check' : process.env.QA_REPORT_MODE === 'stability-prerun' ? 'stability-prerun' : 'candidate-acceptance';
-      await writeFile(join(evidenceDirectory, 'instance.json'), JSON.stringify({ baseURL: this.baseURL, processes: this.history, config, purpose, ...(purpose === 'stability-prerun' ? { label: '预跑，不计入放行', countsTowardRelease: false } : {}), sourceCommit: this.selfCheck?.sourceCommit, candidate: this.selfCheck ? null : process.env.QA_CANDIDATE_COMMIT }, null, 2));
+      const purpose = this.selfCheck ? 'tooling-self-check' : this.localMode ? 'local-e2e'
+        : process.env.QA_REPORT_MODE === 'stability-prerun' ? 'stability-prerun' : 'candidate-acceptance';
+      await writeFile(join(evidenceDirectory, 'instance.json'), JSON.stringify({
+        baseURL: this.baseURL, processes: this.history, config, purpose,
+        ...(purpose === 'stability-prerun' ? { label: '预跑，不计入放行', countsTowardRelease: false } : {}),
+        ...(purpose === 'local-e2e' ? { label: '本地运行，不计入正式放行', countsTowardRelease: false } : {}),
+        sourceCommit: this.selfCheck?.sourceCommit ?? (this.localMode ? process.env.QA_SOURCE_COMMIT ?? null : undefined),
+        candidate: this.selfCheck || this.localMode ? null : process.env.QA_CANDIDATE_COMMIT,
+      }, null, 2));
     } catch (error) { errors.push(error); }
     const cleanup = await Promise.allSettled([this.fakeRemote.close(), this.fakeLocal.close(), ...(this.directory ? [rm(this.directory, { recursive: true, force: true })] : [])]);
     for (const result of cleanup) if (result.status === 'rejected') errors.push(result.reason);

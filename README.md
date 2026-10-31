@@ -71,7 +71,7 @@ npm start
 
 打开 <http://localhost:3001>；如果当前终端仍保留上面示例的 `PORT=3201`，则打开 <http://localhost:3201>。生产模式由 API 同时提供页面、静态资源和 WebSocket；直接打开或刷新 `/c/...`、`/plans/...` 路径也能恢复页面。用 Ctrl+C 停止服务。
 
-启动时自动创建数据目录和 SQLite 文件并执行版本化迁移，不需要额外初始化命令。默认数据库位于 `apps/api/data/nomad.sqlite`（相对 API 工作区）；停止再启动会保留咨询、消息和计划。已有数据库版本高于代码支持版本时拒绝启动。需要隔离数据时，通过 `DATABASE_PATH` 指定另一个文件，不要删除已有数据来排查普通启动问题。
+启动时自动创建数据目录和 SQLite 文件并执行版本化迁移，不需要额外初始化命令。默认数据库位于仓库根目录下的 `apps/api/data/nomad.sqlite`（相对 API 工作区为 `./data/nomad.sqlite`）；停止再启动会保留咨询、消息和计划。已有数据库版本高于代码支持版本时拒绝启动。需要隔离数据时，通过 `DATABASE_PATH` 指定另一个文件，不要删除已有数据来排查普通启动问题。
 
 ## 方式二：Docker 启动
 
@@ -105,14 +105,26 @@ npm run build
 
 `check` 包括 ESLint 和 TypeScript；`test` 仅运行 shared、API、Web 单元和集成测试，使用临时数据库、随机端口和假的模型服务。
 
-浏览器端到端测试：
+本地浏览器端到端测试推荐使用 Node 24，npm 需为 10 或更高版本。安装依赖和 Chromium 时需要联网；Linux 还需预先具备 Chromium 所需的系统依赖。在全新克隆的仓库根目录依次执行：
 
 ```bash
+npm ci
 npx playwright install chromium
 npm run test:e2e
 ```
 
-六个覆盖场景：主流程、刷新恢复、多标签同步、停止与补充、专业/无关意图、假远程服务失败后的规则回退。浏览器测试保存录屏和执行轨迹；操作说明及完整业务/环境验收入口见 `qa/README.md`。`test:e2e` 只代表浏览器子集，不能代替完整 QA。
+无需 `.env`、候选声明或预先启动服务，也不调用真实模型；命令会自动准备构建、临时数据库和测试服务。六个覆盖场景：主流程、刷新恢复、多标签同步、停止与补充、专业/无关意图、假远程服务失败后的规则回退。QA 在 macOS、Node 24 的全新克隆中实测三条命令合计约 35 秒，六个场景全部通过；此耗时不含首次浏览器下载，实际耗时因环境和网络而异。
+
+终端会打印本次产物目录 `qa/reports/local/<runId>/`，以下路径均相对于该目录：
+
+| 路径 | 内容 |
+| --- | --- |
+| `summary.md` | 本次执行结果 |
+| `round-local/html/` | HTML 报告，打开其中的 `index.html` 查看 |
+| `videos/` | 场景录屏 |
+| `round-local/artifacts/` | 执行轨迹及附件 |
+
+这些产物已被 Git 忽略。本地结果标注“本地运行，不计入正式放行”，只覆盖上述六个浏览器场景，不能代替完整 QA。正式浏览器验收入口为 `npm run test:e2e:candidate --workspace qa`，需要先完成候选声明和准备；具体操作、完整业务轮次和环境验收入口见 [QA 说明](qa/README.md)。
 
 评估规则方案，不调用模型：
 
@@ -137,7 +149,7 @@ npm run eval --workspace @nomad/api -- --engines rules,remote,local
 | `PORT` | API 端口，默认 `3001` |
 | `VITE_PORT`、`API_URL` | 开发页面端口与代理目标，默认 `5173`、`http://localhost:3001` |
 | `WEB_ORIGIN` | 允许的页面来源，默认 `http://localhost:5173`，多个用逗号分隔 |
-| `DATABASE_PATH` | API 工作区下的 `./data/nomad.sqlite`；Docker 为 `/data/nomad.sqlite` |
+| `DATABASE_PATH` | 默认数据库位于仓库根目录下的 `apps/api/data/nomad.sqlite`（相对 API 工作区为 `./data/nomad.sqlite`）；Docker 为 `/data/nomad.sqlite` |
 | `SERVE_WEB_DIST` | 生产模式默认 `true` |
 | `DEMO_DELAY_MS` | 默认 `0`，最大 `10000`；给任务阶段加入演示延迟，便于操作停止、补充和重启续跑 |
 | `LLM_BASE_URL`、`LLM_MODEL`、`LLM_API_KEY` | 远程默认地址 `https://api.deepseek.com`、模型 `deepseek-chat`；Key 为空时不可用 |
@@ -145,7 +157,7 @@ npm run eval --workspace @nomad/api -- --engines rules,remote,local
 
 远程模型由使用者在自己的环境中设置有效 `LLM_API_KEY` 后启动，页面选择“DeepSeek”或“自动”。自动测试使用假服务，不需要真实 Key。
 
-没有配置远程或本地模型时，“自动”会使用规则引擎。新建咨询沿用该账号上次主动选择的理解方式；尚未选择过时默认为“自动”。已有咨询继续使用各自保存的理解方式。
+没有配置远程或本地模型时，“自动”会使用规则引擎。同一浏览器、同一页面地址下，该账号新建咨询沿用上次主动选择的理解方式；尚未选择过时默认为“自动”。换了页面地址（如开发与生产模式的端口不同）会回到“自动”。已有咨询沿用各自保存的理解方式。
 
 可选本地模型需要 Ollama 已启动，并已下载 `qwen2.5:7b-instruct`。先按 Ctrl+C 停止正在运行的应用，再在仓库根目录执行下面对应系统的命令；无需 Key，也无需创建配置文件。若之前修改了端口，请继续使用设置过四个端口变量的同一终端。
 

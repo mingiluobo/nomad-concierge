@@ -4,6 +4,37 @@
 
 当前修复候选为 `eb2cecbd30571f870876374d429b05ea4eca4a1f`，负责人要求受影响回归加完整业务一轮，环境按影响分析沿用 `39c6bd8`。实际结果、QA自身修正、受阻和人工/交付包待办见 [执行报告](reports/summary.md)、[候选清单](checklists/candidate-eb2cecbd.md) 与 [QA修正记录](checklists/qa-corrections-eb2cecbd.md)。旧候选三轮及环境证据单独保留，不算新候选重新通过。
 
+## 本地浏览器运行（无需候选声明）
+
+全新克隆后，在仓库根目录依次执行：
+
+```sh
+npm ci
+npx playwright install chromium
+npm run test:e2e
+```
+
+前提是使用项目支持的 Node（22 ≥ 22.13.0、24 或 ≥ 26，推荐 24）及 npm ≥ 10；安装依赖与 Chromium 时需要网络，Linux 还需 Chromium 所需的系统库。无需先启动应用、配置模型、准备数据库、运行构建或创建候选声明。无需 Python、Docker 或 `.env`。
+
+`npm run test:e2e` 等价于 `npm run test:e2e --workspace qa`，固定运行 E2E-001～006 六个核心浏览器场景。入口先复制当前工作树和已安装依赖到自有临时目录（包含未提交的代码改动），按文件名排除所有 `.env` / `.env.*`，再构建产品、编译 QA。每例使用独占应用进程、动态端口、临时 SQLite 和两套假模型服务；模型不会访问真实服务。原工作树不产生构建或数据库文件。运行结束后清理自有应用进程、临时数据库与构建副本；跳过、受阻、失败或实际用例数量不是六条均返回非零退出码。
+
+终端会打印本次目录 `qa/reports/local/<runId>/`，产物为：
+
+| 路径（相对本次目录） | 内容 |
+| --- | --- |
+| `summary.md`、`metadata.json` | 结果、分步耗时、来源提交与工作树状态、资源清理记录 |
+| `round-local/results.json` | 六例逐条结果和证据索引 |
+| `round-local/html/index.html` | Playwright HTML 报告 |
+| `videos/` | 六个场景的 WebM 录屏 |
+| `round-local/artifacts/` | 各场景的 `trace.zip`、附件及失败截图 |
+| `build.log`、`compile.log`、`browser.log`、`path-audit.json` | 执行日志与路径规范化核验 |
+
+打开报告：`npm run report --workspace qa -- reports/local/<runId>/round-local/html`。查看轨迹：`npx playwright show-trace qa/reports/local/<runId>/round-local/artifacts/<场景目录>/trace.zip`。报告和录屏由本机保留，默认不提交；其中的路径使用仓库相对路径或临时目录描述。
+
+2026-10-31 在仓库外全新克隆验证：Node 24.22.1 / macOS arm64，三条命令分别耗时 3.816、1.059、29.330 秒，六例全部通过，总计 34.205 秒。Chromium 使用已有缓存，首次下载时间取决于网络。来源提交、精确执行范围和证据见 [本地入口验证清单](checklists/local-e2e-verification.md)。
+
+本地结果统一标注 **“本地运行，不计入正式放行”**，`candidate=null`、`countsTowardRelease=false`。它不读取 `prepared.json`，不修改正式摘要或追踪矩阵。正式验收仍须候选交接和 `prepare:candidate`；原浏览器单独验收入口保留为 `npm run test:e2e:candidate --workspace qa`，覆盖正式完整浏览器集合并校验候选。业务轮次和环境矩阵入口保持不变。
+
 ## 准备检查
 
 从仓库根目录运行：
@@ -74,7 +105,7 @@ npm test --workspace qa
 | `npm run test:business --workspace qa` | API + WS + E2E，三轮 |
 | `npm run test:api --workspace qa` | API，一轮，仅定位 |
 | `npm run test:ws --workspace qa` | WS，一轮，仅定位 |
-| `npm run test:e2e --workspace qa` | 浏览器，一轮，仅定位 |
+| `npm run test:e2e:candidate --workspace qa` | 完整浏览器集合，一轮，仅定位 |
 | `npm run test:env --workspace qa` | 环境，一轮 |
 
 每次执行结束清理本轮候选副本；下一次执行重新准备。`npm run report --workspace qa -- <HTML 报告目录>` 打开指定轮次报告。根 `npm test` 不包括 QA。
