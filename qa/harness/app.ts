@@ -14,13 +14,26 @@ export async function assertNoEnv(root: string): Promise<void> {
     if (entry.isDirectory()) await assertNoEnv(join(root, entry.name));
   }
 }
-async function allocatePort(): Promise<number> {
-  const socket = createServer();
-  await new Promise<void>((resolve, reject) => { socket.once('error', reject); socket.listen(0, '127.0.0.1', resolve); });
-  const address = socket.address();
-  if (!address || typeof address === 'string') throw new Error('Cannot allocate port');
-  await new Promise<void>(resolve => socket.close(() => resolve()));
-  return address.port;
+async function allocatePort(excluded: ReadonlySet<number>): Promise<number> {
+  for (let allocation = 0; allocation < 10; allocation++) {
+    const socket = createServer();
+    // Match the API's default wildcard binding, including IPv6 where available.
+    await new Promise<void>((resolve, reject) => { socket.once('error', reject); socket.listen(0, resolve); });
+    const address = socket.address();
+    await new Promise<void>(resolve => socket.close(() => resolve()));
+    if (!address || typeof address === 'string') throw new Error('Cannot allocate port');
+    if (!excluded.has(address.port)) return address.port;
+  }
+  throw new Error('Cannot allocate a different initial port');
+}
+
+class InitialPortConflict extends Error {}
+
+function isListenConflict(output: string, port: number): boolean {
+  return /\bcode:\s*['"]EADDRINUSE['"]/.test(output)
+    && /\bsyscall:\s*['"]listen['"]/.test(output)
+    && new RegExp(`\\bport:\\s*${port}(?=\\s|[,}])`).test(output)
+    && new RegExp(`\\blisten EADDRINUSE:[^\\r\\n]*:${port}(?=\\s|$)`).test(output);
 }
 
 export class AppInstance {
@@ -33,7 +46,7 @@ export class AppInstance {
   private child?: ChildProcess;
   private processOutput = '';
   private exited?: Promise<void>;
-  private history: { pid?: number; args: string[]; node: string; at: string }[] = [];
+  private history: { pid?: number; port: number; args: string[]; node: string; at: string; exitCode?: number | null; signal?: NodeJS.Signals | null }[] = [];
   get pid(): number | undefined { return this.child?.pid; }
   constructor(readonly root: string, readonly overrides: Record<string, string> = {}, readonly selfCheck?: { sourceCommit: string }) {}
 
@@ -46,16 +59,25 @@ export class AppInstance {
     this.databasePath = join(this.directory, 'qa.sqlite');
     await this.fakeRemote.start();
     await this.fakeLocal.start();
-    const port = await allocatePort();
-    this.baseURL = `http://127.0.0.1:${port}`;
-    this.env = cleanEnv({
-      NODE_ENV: 'production', SERVE_WEB_DIST: 'true', LLM_MODEL: 'qa-model',
-      ...this.overrides,
-      PORT: String(port), WEB_ORIGIN: this.overrides.WEB_ORIGIN ?? this.baseURL,
-      DATABASE_PATH: this.databasePath,
-      LLM_BASE_URL: this.fakeRemote.baseURL, LOCAL_LLM_BASE_URL: this.fakeLocal.baseURL,
-    });
-    await this.start();
+    const triedPorts = new Set<number>();
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const port = await allocatePort(triedPorts);
+      triedPorts.add(port);
+      this.baseURL = `http://127.0.0.1:${port}`;
+      this.env = cleanEnv({
+        NODE_ENV: 'production', SERVE_WEB_DIST: 'true', LLM_MODEL: 'qa-model',
+        ...this.overrides,
+        PORT: String(port), WEB_ORIGIN: this.overrides.WEB_ORIGIN ?? this.baseURL,
+        DATABASE_PATH: this.databasePath,
+        LLM_BASE_URL: this.fakeRemote.baseURL, LOCAL_LLM_BASE_URL: this.fakeLocal.baseURL,
+      });
+      try { await this.start(); return; }
+      catch (error) {
+        if (!(error instanceof InitialPortConflict)) throw error;
+        this.processOutput += `\ninitial port conflict attempt=${attempt}/3 pid=${this.pid} port=${port}; ${attempt < 3 ? 'retrying with a new port' : 'attempt limit reached'}\n`;
+        if (attempt === 3) throw error;
+      }
+    }
   }
   async start(): Promise<void> {
     if (this.child && this.child.exitCode === null && this.child.signalCode === null) throw new Error('This instance is already running');
@@ -72,20 +94,43 @@ export class AppInstance {
     await access(join(this.root, 'node_modules'));
     const child = spawn(process.execPath, tokens.slice(nodeIndex + 1), { cwd: join(this.root, 'apps/api'), env: this.env, stdio: ['ignore', 'pipe', 'pipe'] });
     this.child = child;
-    this.history.push({ pid: child.pid, args: tokens.slice(nodeIndex + 1), node: process.version, at: new Date().toISOString() });
-    this.processOutput += `\nstart pid=${child.pid} command=node ${tokens.slice(nodeIndex + 1).join(' ')}\n`;
-    child.stdout?.on('data', data => { this.processOutput += String(data); });
-    child.stderr?.on('data', data => { this.processOutput += String(data); });
-    this.exited = new Promise<void>(resolve => { child.once('close', (code, signal) => { this.processOutput += `\nexit code=${code} signal=${signal}\n`; resolve(); }); child.once('error', error => { this.processOutput += String(error); resolve(); }); });
-    await poll(async () => {
-      if (child.exitCode !== null || child.signalCode !== null) throw new Error(`Owned API exited before readiness: ${this.processOutput}`);
+    const port = Number(this.env.PORT);
+    const entry: (typeof this.history)[number] = { pid: child.pid, port, args: tokens.slice(nodeIndex + 1), node: process.version, at: new Date().toISOString() };
+    this.history.push(entry);
+    this.processOutput += `\nstart pid=${child.pid} port=${port} command=node ${tokens.slice(nodeIndex + 1).join(' ')}\n`;
+    let output = '';
+    let spawnError: Error | undefined;
+    const capture = (data: unknown) => { output += String(data); this.processOutput += String(data); };
+    child.stdout?.on('data', capture);
+    child.stderr?.on('data', capture);
+    child.once('error', error => { spawnError = error; capture(error); });
+    this.exited = new Promise<void>(resolve => {
+      child.once('close', (code, signal) => {
+        entry.exitCode = code;
+        entry.signal = signal;
+        this.processOutput += `\nexit pid=${child.pid} port=${port} code=${code} signal=${signal}\n`;
+        resolve();
+      });
+    });
+    const exited = () => spawnError !== undefined || child.exitCode !== null || child.signalCode !== null;
+    // Return terminal outcomes instead of throwing inside poll: terminal errors must not be retried for 15 seconds.
+    const outcome = await poll(async () => {
+      if (exited()) return 'exited' as const;
       const response = await fetch(`${this.baseURL}/api/health`, { signal: AbortSignal.timeout(700) });
-      if (child.exitCode !== null || child.signalCode !== null) throw new Error('Owned API exited during readiness check');
-      return response.status;
-    }, status => status === 200, 15_000);
-    if (process.platform === 'darwin') {
-      const owned = await command('/usr/sbin/lsof', ['-nP', '-a', '-p', String(child.pid), `-iTCP:${new URL(this.baseURL).port}`, '-sTCP:LISTEN', '-Fp'], this.root, undefined, cleanEnv(), 5000);
-      if (!owned.split('\n').includes(`p${child.pid}`)) throw new Error('Readiness endpoint is not owned by this API process');
+      if (exited()) return 'exited' as const;
+      if (response.status !== 200) return 'pending' as const;
+      if (process.platform === 'darwin') {
+        const owned = await command('/usr/sbin/lsof', ['-nP', '-a', '-p', String(child.pid), `-iTCP:${port}`, '-sTCP:LISTEN', '-Fp'], this.root, undefined, cleanEnv(), 5000);
+        if (!owned.split('\n').includes(`p${child.pid}`)) throw new Error('Readiness endpoint is not owned by this API process');
+      }
+      return exited() ? 'exited' as const : 'ready' as const;
+    }, status => status !== 'pending', 15_000);
+    if (outcome === 'exited') {
+      // close follows exit and drains stdout/stderr; classify only this attempt's complete output.
+      await this.exited;
+      const failure = `Owned API exited before readiness: pid=${child.pid} port=${port} code=${child.exitCode} signal=${child.signalCode}\n${output}`;
+      if (!spawnError && child.exitCode !== null && child.exitCode !== 0 && isListenConflict(output, port)) throw new InitialPortConflict(failure);
+      throw new Error(failure, { cause: spawnError });
     }
   }
   async stop(signal: NodeJS.Signals = 'SIGTERM'): Promise<void> {
@@ -104,7 +149,8 @@ export class AppInstance {
       await writeFile(join(evidenceDirectory, 'api-process.log'), this.processOutput);
       await writeFile(join(evidenceDirectory, 'fake-requests.json'), JSON.stringify({ remote: this.fakeRemote.requests, local: this.fakeLocal.requests }, null, 2));
       const config = Object.fromEntries(Object.entries(this.env).filter(([name]) => /^(PORT|DATABASE_PATH|WEB_ORIGIN|SERVE_WEB_DIST|DEMO_|TURN_|LLM_|LOCAL_LLM_|BREAKER_|LIMIT_|TOKENS_)/.test(name) && name !== 'LLM_API_KEY'));
-      await writeFile(join(evidenceDirectory, 'instance.json'), JSON.stringify({ baseURL: this.baseURL, processes: this.history, config, purpose: this.selfCheck ? 'tooling-self-check' : 'candidate-acceptance', sourceCommit: this.selfCheck?.sourceCommit, candidate: this.selfCheck ? null : process.env.QA_CANDIDATE_COMMIT }, null, 2));
+      const purpose = this.selfCheck ? 'tooling-self-check' : process.env.QA_REPORT_MODE === 'stability-prerun' ? 'stability-prerun' : 'candidate-acceptance';
+      await writeFile(join(evidenceDirectory, 'instance.json'), JSON.stringify({ baseURL: this.baseURL, processes: this.history, config, purpose, ...(purpose === 'stability-prerun' ? { label: '预跑，不计入放行', countsTowardRelease: false } : {}), sourceCommit: this.selfCheck?.sourceCommit, candidate: this.selfCheck ? null : process.env.QA_CANDIDATE_COMMIT }, null, 2));
     } catch (error) { errors.push(error); }
     const cleanup = await Promise.allSettled([this.fakeRemote.close(), this.fakeLocal.close(), ...(this.directory ? [rm(this.directory, { recursive: true, force: true })] : [])]);
     for (const result of cleanup) if (result.status === 'rejected') errors.push(result.reason);
