@@ -28,7 +28,7 @@ describe('OpenAI-compatible client and interpretation', () => {
     let captured: { url?: string; authorization?: string; body?: unknown } = {};
     const baseUrl = await fake((request, res, body) => { captured = { url: request.url, authorization: request.headers.authorization, body: JSON.parse(body) }; res.end(response(JSON.stringify(legal))); });
     const result = await new LlmInterpreter('remote', { baseUrl, model: 'test-model', apiKey: 'fake-key', timeoutMs: 1000 }).interpret(input(), new AbortController().signal);
-    expect(result).toMatchObject({ interpretation: legal, engineUsed: 'remote', fallbacks: [], droppedUpdates: [], promptVersion: 'v1' });
+    expect(result).toMatchObject({ interpretation: legal, engineUsed: 'remote', fallbacks: [], droppedUpdates: [], promptVersion: 'v2' });
     expect(captured.url).toBe('/v1/chat/completions');
     expect(captured.authorization).toBe('Bearer fake-key');
     expect(captured.body).toEqual({ model: 'test-model', messages: buildPrompt(input()), temperature: 0, max_tokens: 800, response_format: { type: 'json_object' } });
@@ -84,7 +84,7 @@ describe('OpenAI-compatible client and interpretation', () => {
     request.profile.slots.goals = { status: 'known', value: ['tax'] };
     request.profile.slots.incomeSource = { status: 'known', value: 'freelancer' };
     const prompt = buildPrompt(request);
-    expect(PROMPT_VERSION).toBe('v1');
+    expect(PROMPT_VERSION).toBe('v2');
     for (const slot of slotDefinitions) expect(prompt[0]!.content).toContain(slot.llmHint);
     expect(prompt[0]!.content).toContain('不能根据用户使用的语言推断');
     expect(prompt[0]!.content).toContain('只输出newMessages');
@@ -92,5 +92,41 @@ describe('OpenAI-compatible client and interpretation', () => {
     expect(context.profile).not.toHaveProperty('partnerNationality');
     expect(context.profile).toHaveProperty('incomeSource', { status: 'known', value: 'freelancer' });
     expect(context.profile).not.toHaveProperty('destination');
+  });
+  it('describes actual JSON value types and allowed operations from the slot registry', () => {
+    const system = buildPrompt(input())[0]!.content;
+    const prefix = '字段定义：';
+    const line = system.split('\n').find(line => line.startsWith(prefix))!;
+    const fields = JSON.parse(line.slice(prefix.length)) as { key: string; valueFormat: unknown; operations: string[]; question: string; options: unknown[] }[];
+    const field = (key: string) => fields.find(item => item.key === key)!;
+    expect(field('hasPartner').valueFormat).toEqual({ type: 'boolean' });
+    expect(field('childrenCount').valueFormat).toEqual({ type: 'integer', minimum: 0, maximum: 10 });
+    expect(field('childrenAges').valueFormat).toEqual({ type: 'array', items: { type: 'integer', minimum: 0, maximum: 25 } });
+    expect(field('destination').valueFormat).toEqual({ type: 'string' });
+    const goalOptions = slotDefinitions.find(slot => slot.key === 'goals')!.options!;
+    expect(field('goals').valueFormat).toEqual({ type: 'array', items: { type: 'string', enum: goalOptions.flatMap(option => option.value) } });
+    expect(field('goals').operations).toEqual(['add', 'remove', 'set']);
+    for (const definition of slotDefinitions) {
+      expect(field(definition.key).question).toBe(definition.question);
+      expect(field(definition.key).options).toEqual(definition.options ?? []);
+      if (definition.key !== 'goals') expect(field(definition.key).operations).toEqual(['set']);
+    }
+  });
+  it('provides ordered pending question context without changing new messages or known facts', () => {
+    const request = input();
+    request.pendingSlots = ['childrenCount', 'timeline'];
+    request.profile.slots.currentResidence = { status: 'known', value: 'DE' };
+    request.profile.slots.residenceStatus = { status: 'known', value: 'citizen' };
+    request.newMessages = [{ id: 'fresh', content: '四个' }];
+    const original = structuredClone(request);
+    const context = JSON.parse(buildPrompt(request)[1]!.content) as { pendingSlots: string[]; pendingQuestions: unknown[]; newMessages: unknown; profile: Record<string, unknown> };
+    expect(context.pendingSlots).toEqual(['childrenCount', 'timeline']);
+    expect(context.pendingQuestions).toEqual(request.pendingSlots.map(key => {
+      const definition = slotDefinitions.find(slot => slot.key === key)!;
+      return { slot: key, question: definition.question, allowUnsure: definition.allowUnsure, options: definition.options ?? [] };
+    }));
+    expect(context.newMessages).toEqual(original.newMessages);
+    expect(context.profile.residenceStatus).toEqual(original.profile.slots.residenceStatus);
+    expect(request).toEqual(original);
   });
 });
