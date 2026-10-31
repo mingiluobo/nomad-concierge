@@ -5343,5 +5343,176 @@
       "explicit-request"
     ],
     "reviewed": true
+  },
+  {
+    "id": "G069",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "missing"
+          },
+          "goals": {
+            "status": "missing"
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": []
+      },
+      "pendingSlots": [],
+      "text": "我持有美利坚合众国护照，目前在德意志，收入来自法兰西，计划前往大不列颠。"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "applicantNationality",
+          "value": "US",
+          "op": "set"
+        },
+        {
+          "slot": "currentResidence",
+          "value": "DE",
+          "op": "set"
+        },
+        {
+          "slot": "incomeCountry",
+          "value": "FR",
+          "op": "set"
+        },
+        {
+          "slot": "destination",
+          "value": "GB",
+          "op": "set"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "country-alias",
+      "country-context"
+    ],
+    "reviewed": false
+  },
+  {
+    "id": "G070",
+    "input": {
+      "profile": {
+        "slots": {
+          "destination": {
+            "status": "known",
+            "value": "GB"
+          },
+          "goals": {
+            "status": "known",
+            "value": [
+              "tax"
+            ]
+          },
+          "applicantNationality": {
+            "status": "missing"
+          },
+          "hasPartner": {
+            "status": "missing"
+          },
+          "partnerNationality": {
+            "status": "missing"
+          },
+          "childrenCount": {
+            "status": "missing"
+          },
+          "childrenAges": {
+            "status": "missing"
+          },
+          "currentResidence": {
+            "status": "missing"
+          },
+          "residenceStatus": {
+            "status": "missing"
+          },
+          "timeline": {
+            "status": "missing"
+          },
+          "incomeSource": {
+            "status": "missing"
+          },
+          "businessType": {
+            "status": "missing"
+          },
+          "incomeCountry": {
+            "status": "missing"
+          },
+          "schoolPreference": {
+            "status": "missing"
+          },
+          "hasHealthInsurance": {
+            "status": "missing"
+          }
+        },
+        "pendingSlots": [
+          "applicantNationality"
+        ]
+      },
+      "pendingSlots": [
+        "applicantNationality"
+      ],
+      "text": "美利坚"
+    },
+    "expected": {
+      "intent": "provide_info",
+      "updates": [
+        {
+          "slot": "applicantNationality",
+          "value": "US",
+          "op": "set"
+        }
+      ],
+      "unsure": []
+    },
+    "tags": [
+      "rules",
+      "country-alias",
+      "short-answer"
+    ],
+    "reviewed": false
   }
 ]
