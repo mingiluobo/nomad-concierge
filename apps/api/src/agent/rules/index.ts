@@ -24,8 +24,9 @@ function professionalTopic(text: string, profile: Profile): ProfessionalTopic | 
   for (const clause of text.split(/[，。！？；,!?;\n]+/)) {
     const judgment = /能不能|能否|可不可以|(?:能|可以).{0,20}(?:吗|么)|有(?:没有)?资格|符合.{0,20}条件|需要(?:什么|哪些)(?:资格|条件)|合法吗|合规吗|申请得下来|会被拒吗/;
     if (/税/.test(clause) && /税率|多少税|(?:税额|税款|交税|缴税).{0,12}(?:多少|几成|怎么算|如何计算)/.test(clause)) return 'tax_amount';
-    if (/公司|注册|创业/.test(clause) && judgment.test(clause)) return 'company_setup';
-    if (/签证|居留/.test(clause) && (judgment.test(clause) || /(?:能|可以)申请哪(?:个|种)/.test(clause))) return 'visa_eligibility';
+    const subject = [...clause.matchAll(/税|公司|注册|创业|签证|居留/g)].at(-1)?.[0];
+    if (subject && judgment.test(clause)) return ({ 税: 'tax_amount', 公司: 'company_setup', 注册: 'company_setup', 创业: 'company_setup', 签证: 'visa_eligibility', 居留: 'visa_eligibility' } as Record<string, ProfessionalTopic>)[subject];
+    if (/签证|居留/.test(clause) && /(?:能|可以)申请哪(?:个|种)/.test(clause)) return 'visa_eligibility';
     if (/(?:能不能|能否|可以|能)申请(?:吗|么)?$|(?:能否|能不能)获批|申请得下来(?:吗|么)?$/.test(clause)) return 'visa_eligibility';
     if (/有(?:没有)?资格|符合.{0,20}条件|合法吗|会被拒吗/.test(clause)) return context ?? 'other';
   }
