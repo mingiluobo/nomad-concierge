@@ -117,7 +117,7 @@ function interpretMessage(text: string, input: InterpretInput, droppedUpdates: I
     if (input.pendingSlots[0] === 'childrenCount' && /^(没有|无)$/.test(clause)) add('childrenCount', 0);
   }
   const topic = professionalTopic(text, input.profile);
-  const related = /出国|出海|移民|签证|目的国|居留|葡萄牙|税|学校|孩子|配偶|公司|医疗/.test(text);
+  const related = /出国|出海|移民|签证|目的国|居留|葡萄牙|税|学校|孩子|配偶|公司|医疗|出发|启程|动身|时间/.test(text);
   const intent = topic ? 'ask_professional' : updates.length || unsure.size || unsureWords.test(text) || related ? 'provide_info' : 'off_topic';
   const combined: SlotUpdate[] = [];
   let lastGoals: SlotUpdate | undefined;
