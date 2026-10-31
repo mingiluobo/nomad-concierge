@@ -5431,7 +5431,7 @@
       "country-alias",
       "country-context"
     ],
-    "reviewed": false
+    "reviewed": true
   },
   {
     "id": "G070",
@@ -5513,6 +5513,6 @@
       "country-alias",
       "short-answer"
     ],
-    "reviewed": false
+    "reviewed": true
   }
 ]
