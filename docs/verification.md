@@ -32,9 +32,9 @@ AI 验收和人工验收的主体都在冻结前完成；冻结后的验收发�
 | 单元和集成测试 | `npm test`（shared、API、前端） | Node 22.13.0 和 24 各 678 项通过（92 + 485 + 101） |
 | 浏览器端到端测试（本地运行） | `npm run test:e2e` | 全新克隆中 6 个场景通过 |
 | 独立 QA | 见 [qa/README.md](../qa/README.md) | QA 目录共 181 项，包含接口、实时推送、浏览器、环境和人工检查。`39c6bd8` 上当时的完整业务测试连续 3 轮通过；`eb2cecb` 上受影响用例 45/46、完整业务测试 1 轮 167/168 通过，未通过的 1 项是"受阻"（见第 9 节），没有失败 |
-| CI | GitHub Actions，Node 22.13.0 和 24 | 最终提交 `c9ab1e0` 的两组安装、检查、测试和构建均通过，见 [运行记录](https://github.com/mingiluobo/nomad-concierge/actions/runs/41230021581)；之后的提交只改文档 |
+| CI | GitHub Actions，Node 22.13.0 和 24 | 交付版本的两组安装、检查、测试和构建均通过，见 [运行记录](https://github.com/mingiluobo/nomad-concierge/actions) |
 
-运行环境：开发和 QA 在 macOS（Node 22.13.0、24）上进行；QA 另在 Linux 容器（Node 24）和 Docker 上验证了安装、构建和运行。Windows 没有实测。
+运行环境：开发和 QA 在 macOS（Node 22.13.0、24）上进行；QA 另在 Linux 容器（Node 24）和 Docker 上验证了安装、构建和运行。交付前最后一次复核在 macOS 的 Node 26.13.0 上跑通了安装、检查、678 项测试、构建和 6 个浏览器场景。Windows 没有实测。
 
 QA 的完整报告见 [qa/reports/summary.md](../qa/reports/summary.md)。
 

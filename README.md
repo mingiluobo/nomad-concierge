@@ -153,6 +153,8 @@ npm run eval --workspace @nomad/api -- --engines rules,remote,local
 
 评估命令与开发、生产启动一样，会加载存在的 `apps/api/.env`；文件不存在时继续运行，进程环境变量优先于文件中的同名配置。未配置或不可用的引擎会明确跳过。报告打印到终端并更新 `docs/eval-results.md`，包含各指标分母、模型与提示词版本；关键标准用例的人工审核状态另列，不把未审核当作已审核。
 
+注意：评估会整份覆盖 `docs/eval-results.md`，其中保存的 DeepSeek、本地模型历史对比会被替换。想恢复原文件，执行 `git checkout -- docs/eval-results.md`。
+
 ## 配置与可选模型
 
 环境变量在启动或评估前设置，优先于 API 可选的 `apps/api/.env` 文件。`npm run dev`、`npm start` 和 `npm run eval --workspace @nomad/api` 都会加载该文件；文件不存在也能运行。完整默认值见 `apps/api/.env.example` 和 `docs/SPEC.md` 第 16 节。
@@ -228,7 +230,7 @@ DEMO_DELAY_MS=1500 npm run dev
 
 ## CI
 
-`.github/workflows/ci.yml` 在 push 和 pull request 时运行，环境为 `ubuntu-latest`，Node 矩阵为精确的 `22.13.0` 和 `24`：`npm ci` → `npm run check` → `npm test` → `npm run build`。不运行浏览器端到端测试，不需要真实模型配置。最终提交 `c9ab1e0` 的两组检查均通过，见 [CI 运行记录](https://github.com/mingiluobo/nomad-concierge/actions/runs/41230021581)。
+`.github/workflows/ci.yml` 在 push 和 pull request 时运行，环境为 `ubuntu-latest`，Node 矩阵为精确的 `22.13.0` 和 `24`：`npm ci` → `npm run check` → `npm test` → `npm run build`。不运行浏览器端到端测试，不需要真实模型配置。交付版本的两组检查均通过，见 [CI 运行记录](https://github.com/mingiluobo/nomad-concierge/actions)。
 
 ## 技术选型
 
