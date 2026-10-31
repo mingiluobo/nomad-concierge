@@ -109,6 +109,11 @@ const rows: [
     ['101', '诉求整体替换不被同句背景反加', 'P0', ['SPEC-5.4', 'SPEC-8.2', 'UX-04'], '只想/只要/改成税务替换既有五类诉求，同句保险、业务及学校事实保留但不把被移除诉求加回；回复显示诉求修正。'],
     ['102', '固定相对时间映射覆盖十二种表达', 'P0', ['SPEC-8.2', 'UX-03'], '下周、两个月后、三个月内/后、四个月后、半年后、一年后/以后及原明年/下个月/尽快/半年内固定映射到对应枚举；不再追问已知时间。'],
     ['103', '第三次尝试优雅停机不耗恢复次数', 'P0', ['SPEC-7.2', 'SPEC-9.5', 'B-20'], '两次崩溃恢复达到 attempt=3 后 SIGTERM，queued 事件及再次启动完成均仍为 3；不触发 RECOVERY_LIMIT，仅一条助手回复。'],
+    ['104', '新增国家别称映射及上下文归属', 'P1', ['SPEC-5.1', 'SPEC-8.2'], '47 条新增别称经公开 API 识别为既定国家代码与展示名；另覆盖本人/配偶国籍、居住国、收入国、签证目的国五种显式上下文，其他国家槽位不变。'],
+    ['105', '排除国家短称碰词并保留标准国名', 'P1', ['SPEC-5.1', 'SPEC-8.2'], '参加国际会议、大马士革、加国、大马均不被识别为国家；加拿大和马来西亚仍按待答目的国正确归属。'],
+    ['106', '追问中的无法归属短答不猜档案', 'P1', ['SPEC-8.2', 'SPEC-15', 'F-questions', 'F-intents'], '国家槽位追问中输入 2、嗯、好的走 not_understood 而非 off_topic；档案及 pendingSlots 不变，无新增事实、修正或 unsure，继续原追问。'],
+    ['107', '无追问时不启用短答相关兜底', 'P1', ['SPEC-8.2', 'SPEC-15', 'F-intents'], '完整档案 pendingSlots 为空时输入 2、嗯、好的保持 off_topic；不出现 not_understood、不修改档案、不产生追问。'],
+    ['108', '明确无关请求与可归属短答保留原行为', 'P1', ['SPEC-8.2', 'SPEC-15', 'F-questions', 'F-intents'], '有追问时午饭、唱歌、吃啥仍 off_topic 且档案不变；随后中国、一个人、两个按当前问题分别记录国籍、同行与孩子人数，已有目的国保留。'],
 
 ];
 export const apiCases: CaseDefinition[] = rows.map(([number, title, priority, requirements, assertions]) => ({ id: `API-${number}`, title, type: 'api', priority, requirements, assertions, evidence: 'Playwright 请求追踪及 JSON 响应附件；恢复用例另附独占进程日志' }));

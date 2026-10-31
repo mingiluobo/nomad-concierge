@@ -187,4 +187,46 @@ export const cases: CaseDefinition[] = [
     assertions: '首次账号默认 auto，主动规则选择在退出重新登录及刷新后保留；另一新账号仍 auto 且没有配置模型时实际使用 rules；再次切换账号仍隔离。非法存储值回到自动另需开发证据，不猜存储键。',
     evidence: 'trace、录屏、真实偏好和过程快照',
   },
+  {
+    id: 'E2E-032', title: '本标签远离底部发送仍平滑滚动到底部', type: 'e2e', priority: 'P1',
+    requirements: ['FIX-scroll', 'SPEC-13.5'],
+    assertions: '本人发送真实用户消息，助手事件单独延迟；从远离底部的位置经过至少两个中间动画帧到达消息底部，释放真实助手回复后继续跟随。',
+    evidence: 'trace、录屏、真实 HTTP/WS 快照、几何或过程附件',
+  },
+  {
+    id: 'E2E-033', title: '其他标签消息和助手回复仅在距底部小于80px时跟随', type: 'e2e', priority: 'P1',
+    requirements: ['FIX-scroll', 'SPEC-13.5', 'F-multi-tab'],
+    assertions: '分别在距底部40px和远离底部时接收另一标签真实用户消息及助手回复；近处平滑跟随到底，远处同一消息相对视口位置保持不变。',
+    evidence: 'trace、录屏、真实 HTTP/WS 快照、几何或过程附件',
+  },
+  {
+    id: 'E2E-034', title: '顶部自动翻页prepend后保持原消息阅读锚点', type: 'e2e', priority: 'P1',
+    requirements: ['FIX-scroll', 'SPEC-13.5', 'F-pagination'],
+    assertions: '顶部滚动实际触发before分页；释放真实旧消息响应后消息齐全无重复，同一阅读锚点相对视口偏移保持在2px以内，不跳到底部。',
+    evidence: 'trace、录屏、真实 HTTP/WS 快照、几何或过程附件',
+  },
+  {
+    id: 'E2E-035', title: '切换咨询后旧翻页异步响应不改变新咨询定位', type: 'e2e', priority: 'P1',
+    requirements: ['FIX-scroll', 'SPEC-13.5', 'X-12', 'F-pagination'],
+    assertions: '延迟旧咨询真实分页响应，切换到新咨询并向上阅读；释放旧响应后及新咨询真实事件处理完成后，新咨询消息及阅读锚点保持不变，不出现瞬时旧定位。',
+    evidence: 'trace、录屏、真实 HTTP/WS 快照、几何或过程附件',
+  },
+  {
+    id: 'E2E-036', title: '未配置模型时正常规则摘要、展开历史不可用说明且数据不变', type: 'e2e', priority: 'P1',
+    requirements: ['FIX-process-summary', 'SPEC-13.5', 'SPEC-8.5', 'SPEC-8.6'],
+    assertions: '无模型配置的auto链保留remote/local unavailable持久记录；当前状态均not_configured时折叠显示正常规则及耗时，展开注明当前未配置、历史不可用；无模型调用且存储过程不变。',
+    evidence: 'trace、录屏、真实 HTTP/WS 快照、几何或过程附件',
+  },
+  {
+    id: 'E2E-037', title: '已配置模型调用失败和超时均保留回退提示', type: 'e2e', priority: 'P1',
+    requirements: ['FIX-process-summary', 'SPEC-13.5', 'F-fallback'],
+    assertions: '真实假服务HTTP500及超时分别产生unavailable与timeout，当前remote可用；摘要仍显示已回退到规则，展开对应原因，无未配置说明，保存的过程数据不变。',
+    evidence: 'trace、录屏、真实 HTTP/WS 快照、几何或过程附件',
+  },
+  {
+    id: 'E2E-038', title: '当前引擎状态缺失仍提示回退，真实状态到达后只改变摘要', type: 'e2e', priority: 'P1',
+    requirements: ['FIX-process-summary', 'SPEC-13.5'],
+    assertions: '新标签延迟真实engines响应但读取真实历史消息，当前状态未知时仍提示回退；释放真实not_configured状态后转为正常规则摘要，持久process不变；前置不可观察时明确记受阻。',
+    evidence: 'trace、录屏、真实 HTTP/WS 快照、几何或过程附件',
+  },
 ];
