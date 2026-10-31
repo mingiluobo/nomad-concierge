@@ -14,7 +14,9 @@ export function createShutdown({ server, realtime, runner, database, forceExit =
       deadline.unref();
       try {
         realtime.stopAccepting();
-        const httpClosed = new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+        const httpClosed = server.listening
+          ? new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
+          : Promise.resolve();
         runner.dispose();
         await Promise.all([httpClosed, realtime.close(1012)]);
         database.close();
