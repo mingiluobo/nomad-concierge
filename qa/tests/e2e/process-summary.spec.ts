@@ -4,7 +4,7 @@ import { WorkspacePage, deferred } from '../../fixtures/pages.js';
 import { enginesResponseSchema } from '../../../packages/shared/src/dto.js';
 import { TID } from '../../../packages/shared/src/testids.js';
 
-const historyNote = '当前未配置，历史记录为不可用';
+const historyNote = /当前未配置|历史记录为不可用/;
 const enginesResponse = (page: Page) => page.waitForResponse(response =>
   response.request().method() === 'GET' && new URL(response.url()).pathname === '/api/engines');
 
@@ -36,11 +36,14 @@ test('E2E-036 未配置模型时正常规则摘要、展开历史不可用说明
   }
   const process = page.getByTestId(TID.message(assistant.seq)).getByTestId(TID.processInfo);
   await normalRulesSummary(process);
-  expect(await process.innerText()).not.toContain(historyNote);
+  expect(await process.innerText()).not.toMatch(historyNote);
   await process.click();
-  await expect.poll(() => process.innerText()).toContain(historyNote);
-  await expect.poll(() => process.innerText()).toMatch(/远程|remote|DeepSeek/);
-  await expect.poll(() => process.innerText()).toMatch(/本地|local/);
+  await expect.poll(async () => {
+    const lines = (await process.innerText()).split(/\r?\n/);
+    const explained = (engine: RegExp) => lines.some(line => engine.test(line)
+      && line.includes('当前未配置') && line.includes('历史记录为不可用'));
+    return { remote: explained(/远程|remote|DeepSeek/), local: explained(/本地|local/) };
+  }).toEqual({ remote: true, local: true });
   const after = await ui.latestAssistant(id);
   expect(after.payload!.process).toEqual(assistant.payload!.process);
   expect([...app.fakeRemote.requests, ...app.fakeLocal.requests].filter(request => request.path.endsWith('/chat/completions'))).toHaveLength(0);
@@ -51,7 +54,7 @@ test('E2E-036 未配置模型时正常规则摘要、展开历史不可用说明
 });
 
 test.describe('已配置模型的真实故障回退摘要', () => {
-  test.use({ appEnv: { LLM_API_KEY: 'qa-fake-key', LLM_TIMEOUT_MS: '200', TURN_TIMEOUT_MS: '5000', BREAKER_FAILURES: '100' } });
+  test.use({ appEnv: { LLM_API_KEY: 'qa-fake-key', LLM_TIMEOUT_MS: '200', LOCAL_LLM_TIMEOUT_MS: '200', TURN_TIMEOUT_MS: '5000', BREAKER_FAILURES: '100' } });
 
   test('E2E-037 已配置模型调用失败和超时均保留回退提示', async ({ page, app }, testInfo) => {
     const ui = new WorkspacePage(page);
@@ -79,7 +82,7 @@ test.describe('已配置模型的真实故障回退摘要', () => {
       await process.click();
       await expect.poll(() => process.innerText()).toMatch(/远程|remote|DeepSeek/);
       await expect.poll(() => process.innerText()).toMatch(scenario.reason === 'timeout' ? /timeout|超时/ : /unavailable|不可用|调用失败/);
-      expect(await process.innerText()).not.toContain(historyNote);
+      expect(await process.innerText()).not.toMatch(historyNote);
       expect((await ui.latestAssistant(id)).payload!.process).toEqual(assistant.payload!.process);
       observations.push({ reason: scenario.reason, engines, process: assistant.payload!.process, expanded: await process.innerText() });
     }
@@ -130,7 +133,7 @@ test('E2E-038 当前引擎状态缺失仍提示回退，真实状态到达后只
     expect(delivered).toBe(0);
     await expect.poll(() => process.innerText()).toContain('已回退到规则');
     missingStateSummary = await process.innerText();
-    expect(missingStateSummary).not.toContain(historyNote);
+    expect(missingStateSummary).not.toMatch(historyNote);
     expect(delivered).toBe(0);
     release.resolve();
     await expect.poll(() => delivered).toBeGreaterThan(0);
