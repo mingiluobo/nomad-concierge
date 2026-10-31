@@ -42,6 +42,11 @@ export function WorkspacePage() {
   const composer = useRef<HTMLTextAreaElement>(null);
   const scroll = useRef<HTMLDivElement>(null);
   const pinned = useRef(true);
+  const smoothFollowing = useRef(false);
+  const lastScrollTop = useRef(0);
+  const ownSend = useRef(false);
+  const scrollRevision = useRef(0);
+  const renderedScroll = useRef<{ view: string; node: HTMLDivElement; lastSeq: number; pendingIds: Set<string> }>();
   const homeDecision = useRef(false);
   const conversation = conversationId ? state.conversationDetails[conversationId]?.data : undefined;
   const bucket = conversationId ?? '@new';
@@ -54,7 +59,7 @@ export function WorkspacePage() {
   const lastAssistant = [...messages].reverse().find(message => message.role === 'assistant');
   const completed = conversation?.status === 'completed';
   const cannotSend = full || (conversation?.messageCount ?? 0) > state.limits.messagesPerConversation - 2;
-  useEffect(() => { setText(''); setInputHint(''); setAnsweringSlot(undefined); setError(''); setFull(false); setUnprocessed(false); setGenerating(false); setTurnBusy(false); setEngineBusy(false); pinned.current = true; homeDecision.current = false; }, [conversationId, location.search, state.generation]);
+  useEffect(() => { setText(''); setInputHint(''); setAnsweringSlot(undefined); setError(''); setFull(false); setUnprocessed(false); setGenerating(false); setTurnBusy(false); setEngineBusy(false); homeDecision.current = false; }, [conversationId, location.search, state.generation]);
   useEffect(() => { setNewEngine(savedEngine(state.user?.id)); }, [state.user?.id]);
   useEffect(() => { setFull(false); }, [state.limits.messagesPerConversation]);
   useEffect(() => {
@@ -63,7 +68,53 @@ export function WorkspacePage() {
     const recent = Object.values(state.conversationSummaries).filter(item => item.status === 'collecting').sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
     if (recent) navigate(`/c/${recent.id}`, { replace: true });
   }, [conversationId, location.search, state.loadedPages, state.page, state.conversationSummaries, navigate]);
-  useLayoutEffect(() => { if (pinned.current && scroll.current) scroll.current.scrollTop = scroll.current.scrollHeight; }, [messages.length, pending.length, active?.stage, conversationId]);
+  useLayoutEffect(() => {
+    const node = scroll.current;
+    if (!node) return;
+    const view = `${state.generation}:${state.page}`;
+    const previous = renderedScroll.current;
+    const lastSeq = messages.at(-1)?.seq ?? 0;
+    const pendingIds = new Set(pending.map(message => message.clientMessageId));
+    renderedScroll.current = { view, node, lastSeq, pendingIds };
+    if (!previous || previous.view !== view || previous.node !== node) {
+      scrollRevision.current += 1;
+      pinned.current = true; smoothFollowing.current = false; ownSend.current = false;
+      node.scrollTop = node.scrollHeight;
+      lastScrollTop.current = node.scrollTop;
+      return;
+    }
+    // A confirmed pending message is the same visible message; prepended history is not an arrival.
+    const arrived = messages.some(message => message.seq > previous.lastSeq && !(message.clientMessageId && previous.pendingIds.has(message.clientMessageId)));
+    if (ownSend.current || (pinned.current && arrived)) {
+      pinned.current = true; smoothFollowing.current = true;
+      lastScrollTop.current = node.scrollTop;
+      node.scrollTo({ top: node.scrollHeight, behavior: 'smooth' });
+    }
+    ownSend.current = false;
+  });
+  function stopFollowing() {
+    const node = scroll.current;
+    pinned.current = false;
+    scrollRevision.current += 1;
+    if (node && smoothFollowing.current) node.scrollTo({ top: node.scrollTop, behavior: 'instant' });
+    smoothFollowing.current = false;
+  }
+  function onChatScroll() {
+    const node = scroll.current;
+    if (!node) return;
+    const movedUp = node.scrollTop < lastScrollTop.current - 1;
+    const nearBottom = node.scrollHeight - node.scrollTop - node.clientHeight < 80;
+    if (smoothFollowing.current) {
+      // Confirmation can remove the pending label and clamp the browser to a shorter bottom.
+      if (node.scrollHeight - node.scrollTop - node.clientHeight <= 1) smoothFollowing.current = false;
+      else if (movedUp) stopFollowing();
+    } else if (node.scrollTop !== lastScrollTop.current) {
+      scrollRevision.current += 1;
+      pinned.current = nearBottom;
+    }
+    lastScrollTop.current = node.scrollTop;
+    if (movedUp && !smoothFollowing.current && node.scrollTop < 20 && messagePage?.nextCursor) void loadOlder();
+  }
   function operationError(caught: unknown) {
     setError(handleError(caught));
     if (caught instanceof ApiError && caught.code === 'CONVERSATION_FULL') setFull(true);
@@ -76,9 +127,10 @@ export function WorkspacePage() {
     const expectedLatestId = conversationId ? getState().latestTurnByConversation[conversationId] ?? null : null;
     const clientMessageId = retry?.clientMessageId ?? crypto.randomUUID();
     const message: PendingMessage = { clientMessageId, content: content.trim(), payload, status: 'sending' };
+    ownSend.current = true; scrollRevision.current += 1;
     dispatch({ type: 'pending', conversationId: bucket, message, scope: token });
     if (!retry && !payload?.answers) setText('');
-    setError(''); setInputHint(''); setAnsweringSlot(undefined); pinned.current = true;
+    setError(''); setInputHint(''); setAnsweringSlot(undefined);
     try {
       if (!conversationId) {
         const result = await api.createConversation(message.content, clientMessageId, newEngine);
@@ -107,6 +159,7 @@ export function WorkspacePage() {
   async function turnAction(kind: 'cancel' | 'retry') {
     const target = kind === 'cancel' ? active : latest;
     if (!conversationId || !target || turnBusy) return;
+    if (kind === 'retry') { ownSend.current = true; scrollRevision.current += 1; }
     const token = scope(true); setTurnBusy(true); setError('');
     const expectedLatestId = getState().latestTurnByConversation[conversationId] ?? null;
     try { const result = await api[kind](conversationId, target.id); dispatch({ type: 'turn', turn: result.turn, expectedLatestId, scope: token }); if (isCurrent(token)) setUnprocessed(false); }
@@ -141,13 +194,22 @@ export function WorkspacePage() {
     const page = getState().messages[conversationId];
     if (!page?.nextCursor || page.loadingOlder) return;
     const token = scope(true);
-    const beforeHeight = scroll.current?.scrollHeight ?? 0;
-    const beforeTop = scroll.current?.scrollTop ?? 0;
     dispatch({ type: 'loadingOlder', conversationId, loading: true, scope: token });
     try {
       const result = await api.messages(conversationId, page.nextCursor);
+      if (!isCurrent(token)) return;
+      const node = scroll.current;
+      const anchor = node?.querySelector<HTMLElement>('.message');
+      const beforeOffset = anchor?.offsetTop ?? 0;
+      const beforeTop = node?.scrollTop ?? 0;
+      const revision = scrollRevision.current;
       dispatch({ type: 'messages', conversationId, ...result, scope: token });
-      requestAnimationFrame(() => { if (isCurrent(token) && scroll.current) scroll.current.scrollTop = beforeTop + scroll.current.scrollHeight - beforeHeight; });
+      requestAnimationFrame(() => {
+        if (isCurrent(token) && node && anchor?.isConnected && scroll.current === node && revision === scrollRevision.current) {
+          node.scrollTop = beforeTop + anchor.offsetTop - beforeOffset;
+          lastScrollTop.current = node.scrollTop;
+        }
+      });
     } catch (caught) { if (isCurrent(token)) operationError(caught); }
     finally { dispatch({ type: 'loadingOlder', conversationId, loading: false, scope: token }); }
   }
@@ -155,7 +217,7 @@ export function WorkspacePage() {
   function sendText() { return send(text, answeringSlot ? { answeringSlot } : undefined); }
   return <PageStatus><div className="workspace"><section className="chat-area"><header className="chat-header"><div><p className="eyebrow">YOUR NEXT CHAPTER</p><h1 data-testid={TID.chatTitle}>{conversation?.title ?? '开始新的咨询'}</h1></div><label className="engine-label">理解方式<select data-testid={TID.engineSelect} value={conversation?.enginePreference ?? newEngine} disabled={completed || engineBusy} onChange={event => void changeEngine(event.target.value as EnginePreference)}>{(['auto', 'remote', 'local', 'rules'] as const).map(engine => { const status = state.engines.find(item => item.id === engine); return <option key={engine} value={engine} disabled={engine !== 'auto' && engine !== 'rules' && !status?.available} title={status?.reason ? unavailable[status.reason] : undefined}>{engineNames[engine]}{status?.reason ? `（${unavailable[status.reason]}）` : ''}</option>; })}</select></label></header>
     <div className="disclaimer-bar" data-testid={TID.disclaimerBar}>ⓘ 基于演示用示例资料整理，不能替代持牌专业人士的意见</div>
-    <div className="message-scroll" ref={scroll} onScroll={() => { if (!scroll.current) return; const node = scroll.current; pinned.current = node.scrollHeight - node.scrollTop - node.clientHeight < 80; if (node.scrollTop < 20 && messagePage?.nextCursor) void loadOlder(); }}>
+    <div className="message-scroll" ref={scroll} onScroll={onChatScroll} onWheel={event => { if (event.deltaY < 0 && smoothFollowing.current) stopFollowing(); }} onKeyDown={event => { if (smoothFollowing.current && ['ArrowUp', 'PageUp', 'Home'].includes(event.key)) stopFollowing(); }}>
       {!conversationId && <div className="empty-workspace"><span className="empty-symbol">↗</span><h2>你的想法，下一步就能更清晰。</h2><p>告诉我你想去哪里、和谁一起，以及最关心的事。<br />我们会一步一步，把它整理成可执行的初步计划。</p><div className="example-cards">{examples.map((example, index) => <button key={example.title} data-testid={TID.exampleCard(index)} onClick={() => { setText(example.text); composer.current?.focus(); }}><span>{example.icon}</span><strong>{example.title}</strong><small>{example.text}</small><b>从这个想法开始 ↗</b></button>)}</div></div>}
       {messagePage?.nextCursor && <button className="load-older" data-testid={TID.loadOlder} disabled={messagePage.loadingOlder} onClick={() => void loadOlder()}>{messagePage.loadingOlder ? '正在加载…' : '↑ 加载更早的消息'}</button>}
       {messages.map(message => <article key={message.id} className={`message message-${message.role}`} data-testid={TID.message(message.seq)}><div className="message-author">{message.role === 'user' ? '你' : 'NOMAD CONCIERGE'}</div><div className="message-bubble">{message.role === 'assistant' && message.payload ? <AssistantMessage payload={message.payload} enabled={message.id === lastAssistant?.id && !completed && !cannotSend} onAnswer={(content, payload) => void send(content, payload)} onInput={inputFor} /> : <p className="message-text">{message.content}</p>}</div></article>)}
