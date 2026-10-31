@@ -104,7 +104,8 @@ export class AppInstance {
       await writeFile(join(evidenceDirectory, 'api-process.log'), this.processOutput);
       await writeFile(join(evidenceDirectory, 'fake-requests.json'), JSON.stringify({ remote: this.fakeRemote.requests, local: this.fakeLocal.requests }, null, 2));
       const config = Object.fromEntries(Object.entries(this.env).filter(([name]) => /^(PORT|DATABASE_PATH|WEB_ORIGIN|SERVE_WEB_DIST|DEMO_|TURN_|LLM_|LOCAL_LLM_|BREAKER_|LIMIT_|TOKENS_)/.test(name) && name !== 'LLM_API_KEY'));
-      await writeFile(join(evidenceDirectory, 'instance.json'), JSON.stringify({ baseURL: this.baseURL, processes: this.history, config, purpose: this.selfCheck ? 'tooling-self-check' : 'candidate-acceptance', sourceCommit: this.selfCheck?.sourceCommit, candidate: this.selfCheck ? null : process.env.QA_CANDIDATE_COMMIT }, null, 2));
+      const purpose = this.selfCheck ? 'tooling-self-check' : process.env.QA_REPORT_MODE === 'stability-prerun' ? 'stability-prerun' : 'candidate-acceptance';
+      await writeFile(join(evidenceDirectory, 'instance.json'), JSON.stringify({ baseURL: this.baseURL, processes: this.history, config, purpose, ...(purpose === 'stability-prerun' ? { label: '预跑，不计入放行', countsTowardRelease: false } : {}), sourceCommit: this.selfCheck?.sourceCommit, candidate: this.selfCheck ? null : process.env.QA_CANDIDATE_COMMIT }, null, 2));
     } catch (error) { errors.push(error); }
     const cleanup = await Promise.allSettled([this.fakeRemote.close(), this.fakeLocal.close(), ...(this.directory ? [rm(this.directory, { recursive: true, force: true })] : [])]);
     for (const result of cleanup) if (result.status === 'rejected') errors.push(result.reason);
