@@ -84,6 +84,95 @@ describe('real application composition', () => {
     expect(next.conversation.profile.slots.applicantNationality.value).toBe('JP');
   });
 
+  it('rejects empty, invalid and mixed hints without inserting messages', async () => {
+    const app = await fixture();
+    const created = await app.agent.post('/api/conversations').send({ content: '我想了解税务。', clientMessageId: randomUUID(), enginePreference: 'rules' }).expect(201);
+    const id = created.body.conversation.id as string;
+    await completed(app.agent, id);
+    for (const body of [
+      { content: '', payload: { answeringSlot: 'applicantNationality' } },
+      { content: '日本', payload: { answeringSlot: 'not-a-slot' } },
+      { content: '日本', payload: { answeringSlot: 'applicantNationality', answers: [{ slot: 'destination', value: 'PT', label: '葡萄牙' }] } },
+    ]) {
+      const rejected = await app.agent.post(`/api/conversations/${id}/messages`).send({ ...body, clientMessageId: randomUUID() }).expect(422);
+      expect(rejected.body.error.code).toBe('VALIDATION_ERROR');
+    }
+    expect((await app.agent.get(`/api/conversations/${id}/messages`).expect(200)).body.items).toHaveLength(2);
+  });
+
+  it('sends a narrowed hint to the fake model while preserving the profile and explicit text', async () => {
+    const contexts: { profile: Record<string, unknown>; pendingSlots: string[]; newMessages: { content: string }[] }[] = [];
+    const fake = await localServer(async (request, response) => {
+      let raw = ''; for await (const chunk of request) raw += String(chunk);
+      const body = JSON.parse(raw) as { messages: { role: string; content: string }[] };
+      contexts.push(JSON.parse(body.messages.find(message => message.role === 'user')!.content));
+      const updates = contexts.length === 1 ? [{ slot: 'goals', value: ['tax'], op: 'add' }]
+        : [{ slot: 'applicantNationality', value: 'JP', op: 'set' }];
+      response.setHeader('content-type', 'application/json');
+      response.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ intent: 'provide_info', updates, unsure: [] }) } }] }));
+    });
+    const app = await fixture({ LLM_BASE_URL: fake.baseUrl, LLM_API_KEY: 'fake-key', LLM_MODEL: 'fake-model' });
+    const created = await app.agent.post('/api/conversations').send({ content: '我想了解税务。', clientMessageId: randomUUID(), enginePreference: 'remote' }).expect(201);
+    const id = created.body.conversation.id as string;
+    const initial = await completed(app.agent, id);
+    expect(initial.conversation.profile.pendingSlots).toEqual(['destination', 'applicantNationality']);
+    await app.agent.post(`/api/conversations/${id}/messages`).send({ content: '日本', clientMessageId: randomUUID(), payload: { answeringSlot: 'applicantNationality' } }).expect(202);
+    const answered = await completed(app.agent, id);
+    expect(contexts).toHaveLength(2);
+    expect(contexts[1]!.pendingSlots).toEqual(['applicantNationality']);
+    expect(contexts[1]!.newMessages.map(message => message.content)).toEqual(['日本']);
+    expect(contexts[1]!.profile.goals).toMatchObject({ status: 'known', value: ['tax'] });
+    expect(answered.conversation.profile.slots.applicantNationality.value).toBe('JP');
+    expect(answered.conversation.profile.slots.destination.status).toBe('missing');
+  });
+
+  it('retains hints in live events, idempotent replay and retry after reopening the database', async () => {
+    const first = await fixture();
+    const created = await first.agent.post('/api/conversations').send({ content: '我想了解税务。', clientMessageId: randomUUID(), enginePreference: 'rules' }).expect(201);
+    const id = created.body.conversation.id as string;
+    await completed(first.agent, id);
+    await first.shutdown();
+    const app = await fixture({ DEMO_DELAY_MS: '10000' }, first.databasePath);
+    const frames: ServerMessage[] = [];
+    const socket = new WebSocket(app.origin.replace('http:', 'ws:') + '/ws', { headers: { Cookie: app.cookie, Origin: 'http://localhost:5173' } });
+    cleanup.push(() => { if (socket.readyState !== WebSocket.CLOSED) socket.terminate(); });
+    socket.on('message', raw => frames.push(serverMessageSchema.parse(JSON.parse(raw.toString()))));
+    await once(socket, 'open');
+    socket.send(JSON.stringify({ type: 'resume', lastEventId: null }));
+    await vi.waitFor(() => expect(frames.some(frame => frame.type === 'ready')).toBe(true));
+    const clientMessageId = randomUUID(); const payload = { answeringSlot: 'applicantNationality' };
+    const posted = await app.agent.post(`/api/conversations/${id}/messages`).send({ content: '日本', clientMessageId, payload }).expect(202);
+    const turnId = posted.body.turn.id as string;
+    await vi.waitFor(() => expect(frames.some(frame => frame.type === 'event' && frame.eventType === 'message.created'
+      && frame.payload.message.id === posted.body.message.id && frame.payload.message.role === 'user'
+      && frame.payload.message.payload?.answeringSlot === 'applicantNationality')).toBe(true));
+    const replay = await app.agent.post(`/api/conversations/${id}/messages`).send({ content: '德国', clientMessageId, payload: { answeringSlot: 'destination' } }).expect(200);
+    expect(replay.body.message).toEqual(posted.body.message);
+    await app.agent.post(`/api/conversations/${id}/turns/${turnId}/cancel`).expect(200);
+    await app.shutdown();
+    const restored = await fixture({}, first.databasePath);
+    const retry = await restored.agent.post(`/api/conversations/${id}/turns/${turnId}/retry`).expect(202);
+    expect(retry.body.turn.retryOfTurnId).toBe(turnId);
+    const detail = await completed(restored.agent, id);
+    expect(detail.conversation.profile.slots.applicantNationality.value).toBe('JP');
+    expect(detail.conversation.profile.slots.destination.status).toBe('missing');
+    const history = messagesResponseSchema.parse((await restored.agent.get(`/api/conversations/${id}/messages`).expect(200)).body);
+    expect(history.items.find(message => message.id === posted.body.message.id)?.payload).toEqual(payload);
+    expect(history.items.filter(message => message.role === 'assistant')).toHaveLength(2);
+  });
+
+  it('uses hints only to resolve short answers without overriding explicit country roles', async () => {
+    const app = await fixture();
+    const created = await app.agent.post('/api/conversations').send({ content: '我想了解税务。', clientMessageId: randomUUID(), enginePreference: 'rules' }).expect(201);
+    const id = created.body.conversation.id as string;
+    await completed(app.agent, id);
+    await app.agent.post(`/api/conversations/${id}/messages`).send({ content: '我现在住在德国。', clientMessageId: randomUUID(), payload: { answeringSlot: 'applicantNationality' } }).expect(202);
+    const detail = await completed(app.agent, id);
+    expect(detail.conversation.profile.slots.currentResidence.value).toBe('DE');
+    expect(detail.conversation.profile.slots.applicantNationality.status).toBe('missing');
+    expect(detail.conversation.profile.slots.destination.status).toBe('missing');
+  });
+
   it.each([true, false])('publishes persisted plan completeness metadata across every summary surface (early=%s)', async early => {
     const app = await fixture();
     const created = await app.agent.post('/api/conversations').send({ content: '我想了解税务。', clientMessageId: randomUUID(), enginePreference: 'rules' }).expect(201);

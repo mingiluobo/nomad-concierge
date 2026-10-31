@@ -16,6 +16,46 @@ const setup = (options?: Parameters<typeof createHarness>[0]) => { const h = cre
 function assistantCount(h: ReturnType<typeof createHarness>, id: string) { return h.database.prepare("SELECT COUNT(*) AS n FROM messages WHERE conversation_id = ? AND role = 'assistant'").get<{ n: number }>(id)!.n; }
 
 describe('turn execution and transactional persistence', () => {
+  it('isolates hinted text from adjacent ordinary text and quick answers in the same batch', async () => {
+    const controlled = controlledInterpreter(); const h = setup({ interpreter: controlled.interpreter });
+    const profile = createEmptyProfile(); profile.pendingSlots = ['destination', 'applicantNationality'];
+    profile.slots.goals = { status: 'known', value: ['tax'] };
+    const id = h.conversation(profile);
+    const prefixA = h.send(id, 'first ordinary'); const prefixB = h.send(id, 'second ordinary');
+    const nationality = h.send(id, '日本', { answeringSlot: 'applicantNationality' });
+    const suffixA = h.send(id, 'third ordinary'); const suffixB = h.send(id, 'fourth ordinary');
+    const quick = h.send(id, '2 个', { answers: [{ slot: 'childrenCount', value: 2, label: '2 个' }] });
+    const residence = h.send(id, '德国', { answeringSlot: 'currentResidence' });
+    const last = h.send(id, 'final ordinary');
+    h.runner.start();
+    const expected = [
+      { ids: [prefixA.messageId, prefixB.messageId], pending: ['destination', 'applicantNationality'], updates: [{ slot: 'destination' as const, value: 'CA' }] },
+      { ids: [nationality.messageId], pending: ['applicantNationality'], updates: [{ slot: 'applicantNationality' as const, value: 'JP' }] },
+      { ids: [suffixA.messageId, suffixB.messageId], pending: ['destination', 'applicantNationality'], updates: [{ slot: 'destination' as const, value: 'PT' }] },
+      { ids: [residence.messageId], pending: ['currentResidence'], updates: [{ slot: 'currentResidence' as const, value: 'DE' }] },
+      { ids: [last.messageId], pending: ['destination', 'applicantNationality'], updates: [{ slot: 'applicantNationality' as const, value: 'CN' }] },
+    ];
+    for (const [index, segment] of expected.entries()) {
+      await vi.waitFor(() => expect(controlled.calls).toHaveLength(index + 1));
+      const call = controlled.calls[index]!;
+      expect(call.input.newMessages.map(message => message.id)).toEqual(segment.ids);
+      expect(call.input.pendingSlots).toEqual(segment.pending);
+      expect(call.input.profile.pendingSlots).toEqual(['destination', 'applicantNationality']);
+      if (index === 3) expect(call.input.profile.slots.childrenCount.value).toBe(2);
+      call.release(result({ updates: segment.updates }));
+    }
+    await h.runner.settled();
+    const saved = h.turns.conversation(id)!.conversation.profile;
+    expect(saved.slots.destination).toMatchObject({ value: 'PT', sourceMessageId: suffixB.messageId });
+    expect(saved.slots.applicantNationality).toMatchObject({ value: 'CN', sourceMessageId: last.messageId });
+    expect(saved.slots.currentResidence).toMatchObject({ value: 'DE', sourceMessageId: residence.messageId });
+    expect(saved.slots.childrenCount).toMatchObject({ value: 2, sourceMessageId: quick.messageId });
+    expect(assistantCount(h, id)).toBe(1);
+    expect(h.database.prepare('SELECT id FROM messages WHERE consumed_by_turn_id = ? ORDER BY seq').all(last.turn.id)).toEqual(
+      [prefixA, prefixB, nationality, suffixA, suffixB, quick, residence, last].map(message => ({ id: message.messageId })),
+    );
+  });
+
   it.each(['superseded', 'cancelled', 'timeout'] as const)('rejects an interpreter that returns late after %s at the commit guard', async outcome => {
     const controlled = controlledInterpreter();
     const h = setup({ interpreter: controlled.interpreter, timeoutMs: outcome === 'timeout' ? 50 : 3000, concurrency: 1 });
