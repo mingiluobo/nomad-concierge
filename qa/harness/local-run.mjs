@@ -34,6 +34,7 @@ function signalGroup(child, signal) {
 }
 function interrupt(signal) {
   interrupted = signal;
+  outcome = '失败';
   signalGroup(active, signal);
 }
 process.on('SIGINT', interrupt);
@@ -162,5 +163,5 @@ try {
   process.removeListener('SIGINT', interrupt);
   process.removeListener('SIGTERM', interrupt);
   console.log(`\n${label}：${outcome}；耗时 ${((Date.now() - started) / 1000).toFixed(2)} 秒。\n报告：${relativeDirectory}/summary.md`);
-  process.exitCode = outcome === '通过' ? 0 : interrupted ? 130 : 1;
+  process.exitCode = interrupted ? 130 : outcome === '通过' ? 0 : 1;
 }
