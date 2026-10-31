@@ -12,11 +12,12 @@
     "self-check": "npm run compile && node dist/qa/harness/self-check.js",
     "test": "npm run compile && node dist/qa/harness/run.js full",
     "test:business": "npm run compile && node dist/qa/harness/run.js business",
-    "test:e2e": "npm run compile && node dist/qa/harness/run.js e2e",
+    "test:e2e": "node harness/local-run.mjs",
     "test:api": "npm run compile && node dist/qa/harness/run.js api",
     "test:ws": "npm run compile && node dist/qa/harness/run.js ws",
     "test:env": "npm run compile && node dist/qa/harness/run.js env",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "test:e2e:candidate": "npm run compile && node dist/qa/harness/run.js e2e"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
